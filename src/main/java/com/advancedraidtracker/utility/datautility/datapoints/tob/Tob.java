@@ -44,6 +44,8 @@ public class Tob extends Raid
     @Getter
     private RaidMode mode;
 
+	private List<Integer> nyloStalls = new ArrayList<>();
+
 
     public Tob(Path logfile, List<LogEntry> raidData)
     {
@@ -263,6 +265,10 @@ public class Tob extends Raid
 						data.set(OVERALL_TIME, ticks);
 						data.set(TIME_OUTSIDE_ROOMS, get(OVERALL_TIME) - get(CHALLENGE_TIME));
 					}
+					else if(entry.logEntry.equals(LogID.NYLO_STALL))
+					{
+						nyloStalls.add(entry.getValueAsInt("Wave")-1);
+					}
                 }
             }
         } catch (Exception ignored)
@@ -305,6 +311,11 @@ public class Tob extends Raid
         }
         return true;
     }
+
+	public List<Integer> getNyloStalls()
+	{
+		return nyloStalls;
+	}
 
 	public boolean getCompletedRoomsAccurate()
 	{

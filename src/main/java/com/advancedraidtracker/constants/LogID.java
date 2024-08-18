@@ -121,6 +121,7 @@ public enum LogID
             new ParseInstruction(MAP, NYLO_STALLS_TOTAL),
             new ParseInstruction(INCREMENT_IF_GREATER_THAN, NYLO_STALLS_POST_20, "Wave", 19),
             new ParseInstruction(INCREMENT_IF_LESS_THAN, NYLO_STALLS_PRE_20, "Wave", 20),
+			new ParseInstruction(MANUAL_PARSE),
             "Stall", "Wave", "Room Tick", "Nylos Alive"),
     RANGE_SPLIT(32, true, NYLOCAS,
             new ParseInstruction(INCREMENT, NYLO_SPLITS_RANGE),
