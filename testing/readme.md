@@ -18,14 +18,6 @@ If it asks you to trust the project select trust:
 
 ![](resources/4.jpg)
 
-Select which branch you're using, expand the 'remote' menu option:
-
-![](resources/5.jpg)
-
-Select working -> checkout
-
-![](resources/6.jpg)
-
 Expand the directory tree all the way to 'src/test/java/com/advancedraidtracker/AdvancedRaidTrackerTest.java' and right click and hit run
 
 IF THERE IS NO RUN OPTION YOU HAVE TO WAIT FOR THE PROJECT TO FINISH INDEXING. THIS PROGRESS CAN BE SEEN IN THE PROGRESS BAR AT THE BOTTOM OF THE PROGRAM. IT CAN TAKE A FEW MINUTES.
