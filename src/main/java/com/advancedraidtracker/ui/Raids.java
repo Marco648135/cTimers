@@ -15,6 +15,7 @@ import com.advancedraidtracker.ui.crableaks.CrabLeakInfo;
 import com.advancedraidtracker.ui.exportraids.SaveRaids;
 import com.advancedraidtracker.ui.filters.LoadFilter;
 import com.advancedraidtracker.ui.filters.SaveFilter;
+import com.advancedraidtracker.ui.nylostalls.ViewNyloStalls;
 import com.advancedraidtracker.ui.statistics.StatisticTab;
 import com.advancedraidtracker.utility.*;
 import com.advancedraidtracker.utility.datautility.*;
@@ -2014,7 +2015,32 @@ public class Raids extends BaseFrame implements UpdateableWindow
 			}
             new CrabLeakInfo(crabData); //todo "s" prefix(*/
         });
+
+		JMenuItem analyzeNyloStalls = getThemedMenuItem("View Selection Nylo Stalls");
+		analyzeNyloStalls.addActionListener(e ->
+		{
+			List<Integer> allStalls = new ArrayList<>();
+			int count = 0;
+			int[] toRemove = table.getSelectedRows();
+			for(int j : toRemove)
+			{
+				Raid row = currentData.get(Integer.parseInt(table.getModel().getValueAt(j, 0).toString()));
+				if(row instanceof Tob)
+				{
+					Tob tob = (Tob) row;
+					if(tob.get(DataPoint.NYLOCAS_TIME) > 0)
+					{
+						count++;
+						List<Integer> stalls = tob.getNyloStalls();
+						allStalls.addAll(stalls);
+					}
+				}
+			}
+			new ViewNyloStalls(allStalls, count, config);
+		});
+
         raidPopup.add(analyzeCrabs);
+		raidPopup.add(analyzeNyloStalls);
         raidPopup.add(exportRaids);
         filterOptionsSubMenu.add(filterRaids);
         filterOptionsSubMenu.add(filterExclusiveRaids);
