@@ -38,7 +38,7 @@ public class RaidTrackerSidePanel extends PluginPanel
     private Raids raids;
 
     private AdvancedRaidTrackerPlugin plugin;
-    private static AdvancedRaidTrackerConfig config;
+    public static AdvancedRaidTrackerConfig config;
     private static ItemManager itemManager;
     private final ConfigManager configManager;
     private final ClientThread clientThread;

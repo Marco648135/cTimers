@@ -79,6 +79,15 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	// Dimensions for the action icons box
 
+	private int sidebarWidth = 200; // Initial width, will adjust dynamically
+	private int sidebarPadding = 10;
+	private int iconSize = 32;
+	private int iconSpacing = 10;
+	private int buttonHeight = 40;
+	private int buttonSpacing = 10;
+	private int sidebarX;
+	private int sidebarY;
+
 	String associatedFileName = "";
     int scale;
     int boxCount;
@@ -86,7 +95,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
     int boxWidth;
     private int windowHeight = 600;
     private int windowWidth = 1470;
-    int RIGHT_MARGIN = 50;
+    int RIGHT_MARGIN = 30;
     int TOP_MARGIN = 30;
     int NAME_MARGIN = 6;
     int LEFT_MARGIN = 100;
@@ -94,9 +103,6 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
     int ticksToShow = 50;
 
 	private int actionIconsBoxWidth = 50;
-	private int actionIconSize = 25;
-	private int actionIconsBoxX; // Will be calculated based on the panel width
-	private int actionIconsBoxY = TOP_MARGIN + 20; // Start below the top margin
     int hoveredTick = -1;
 
     List<ChartTick> selectedTicks = new ArrayList<>();
@@ -104,35 +110,16 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
     String hoveredPlayer = "";
 
+	private List<SidebarButton> sidebarButtons = new ArrayList<>();
     int hoveredColumn = -1;
-    boolean checkBoxHovered = false;
-    boolean checkBox2Hovered = false;
-    boolean checkBox3Hovered = false;
-	private boolean checkBox4Hovered = false;
-	private boolean checkBox5Hovered = false;
-	private boolean checkBox6Hovered = false;
-	private boolean checkBox7Hovered = false;
+
 
 	// Configuration booleans for the new features
 	private boolean showSpells = true;
-	private boolean showSecondaryIcons = true;
+	private boolean showSubIcons = true;
 	private boolean showThrallBoxes = true;
 	private boolean highlightIdleTicks = false;
 
-	// Opacity for hover effect
-	private int tempSecondaryIconOpacity = 255;
-
-	// Variables to control hover effects after clicking
-	private boolean checkBox4HoverEffectEnabled = true;
-	private boolean checkBox5HoverEffectEnabled = true;
-	private boolean checkBox6HoverEffectEnabled = true;
-	private boolean checkBox7HoverEffectEnabled = true;
-
-	// Variables to keep track of previous hover state
-	private boolean checkBox4PreviouslyHovered = false;
-	private boolean checkBox5PreviouslyHovered = false;
-	private boolean checkBox6PreviouslyHovered = false;
-	private boolean checkBox7PreviouslyHovered = false;
 
     public int startTick;
     public int endTick;
@@ -165,6 +152,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
     private PlayerAnimation selectedPrimary = PlayerAnimation.NOT_SET;
     private PlayerAnimation selectedSecondary = PlayerAnimation.NOT_SET;
 
+	private Rectangle sidebarToggleButtonBounds;
     private ConfigManager configManager;
     @Getter
     private boolean isActive = false;
@@ -203,7 +191,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
             addMouseListener(this);
             addMouseMotionListener(this);
             addMouseWheelListener(this);
-            createImage();
+            createImage(true);
         }
     }
 
@@ -231,56 +219,251 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		animationCounts = countsMap;
 	}
 
-	private void drawActionIconsBox(Graphics2D g)
-	{
-		// Calculate the position of the box
-		actionIconsBoxX = img.getWidth() - actionIconsBoxWidth - 10; // 10px padding from the right
-		int x = actionIconsBoxX;
-		int y = actionIconsBoxY;
+	int sidebarHeight;
+	int availableHeight;
 
-		// Optional: Draw the background of the box
-		g.setColor(config.primaryMiddle());
-		g.fillRect(x, y, actionIconsBoxWidth, img.getHeight() - y);
-		g.setColor(config.boxColor());
-		g.drawRect(x, y, actionIconsBoxWidth, img.getHeight() - y);
+	private int iconsYStart;
+	private int iconsAreaHeight;
+	private int buttonsYStart;
+	private int buttonsAreaHeight;
 
-		// Draw each icon
+	private boolean isSidebarCollapsed = false;
+	private void drawSidebar(Graphics2D g) {
+		// Toggle button width
+		int toggleButtonWidth = 25;
+
+		// Calculate the sidebar's X position based on its state
+		sidebarX = isSidebarCollapsed
+			? getWidth() - RIGHT_MARGIN / 2 - toggleButtonWidth
+			: getWidth() - sidebarWidth - RIGHT_MARGIN / 2;
+
+		// Calculate the sidebar's Y position and total height
+		sidebarY = 10; // Start a little below the top, adjust as needed
+		sidebarHeight = getHeight() - sidebarY - 10; // Leave some space at the bottom
+
+		// Calculate the height available for content inside the sidebar
+		availableHeight = sidebarHeight - 2 * sidebarPadding;
+
+		// Determine Y positions and heights for icons and buttons areas
+		iconsYStart = sidebarY + sidebarPadding;
+		iconsAreaHeight = (int) (availableHeight * 0.6); // 60% of available height for icons
+		buttonsYStart = iconsYStart + iconsAreaHeight + sidebarPadding;
+		buttonsAreaHeight = (int) (availableHeight * 0.4); // 40% for buttons
+
+		// Draw the sidebar background only if not collapsed
+		if (!isSidebarCollapsed) {
+			// Draw the sidebar background
+			g.setColor(config.primaryMiddle());
+			g.fillRect(sidebarX, sidebarY, sidebarWidth, sidebarHeight);
+
+			// Draw the sidebar border
+			g.setColor(config.boxColor());
+			g.drawRect(sidebarX, sidebarY, sidebarWidth, sidebarHeight);
+
+			// Draw action icons and buttons
+			drawActionIcons(g, sidebarX, iconsYStart, iconsAreaHeight);
+			drawSidebarButtons(g, sidebarX, buttonsYStart, buttonsAreaHeight);
+		}
+
+		// Draw the toggle button
+		drawSidebarToggleButton(g, sidebarX, toggleButtonWidth);
+	}
+
+	private void drawSidebarToggleButton(Graphics2D g, int sidebarX, int toggleButtonWidth) {
+		int toggleButtonHeight = 20;
+		int toggleButtonX = isSidebarCollapsed
+			? getWidth() - RIGHT_MARGIN / 2 - toggleButtonWidth
+			: sidebarX - toggleButtonWidth;
+		int toggleButtonY = sidebarY; // Position it near the top of the sidebar
+
+		// Update the bounds for click detection
+		sidebarToggleButtonBounds = new Rectangle(toggleButtonX, toggleButtonY, toggleButtonWidth, toggleButtonHeight);
+
+		// Draw the chevrons
+		drawChevrons(g, toggleButtonX, toggleButtonY, toggleButtonWidth, toggleButtonHeight);
+	}
+	private void drawChevrons(Graphics2D g, int x, int y, int width, int height) {
+		int chevronCount = 3;
+		int chevronSize = Math.min(width, height) / 3; // Size of each chevron
+		int chevronSpacing = chevronSize / 4; // Spacing between chevrons
+
+		// Calculate total width of all chevrons and spacing
+		int totalChevronsWidth = chevronCount * chevronSize + (chevronCount - 1) * chevronSpacing;
+
+		// Starting X position to center chevrons horizontally
+		int startX = x + (width - totalChevronsWidth) / 2;
+
+		// Y position to center chevrons vertically
+		int chevronY = y + (height - chevronSize) / 2;
+
+		g.setColor(config.fontColor());
+		g.setStroke(new BasicStroke(1)); // Set line thickness
+
+		for (int i = 0; i < chevronCount; i++) {
+			int chevronX = startX + i * (chevronSize + chevronSpacing);
+
+			if (isSidebarCollapsed) {
+				// Draw chevron pointing left (`<`)
+				drawChevronLeft(g, chevronX, chevronY, chevronSize);
+			} else {
+				// Draw chevron pointing right (`>`)
+				drawChevronRight(g, chevronX, chevronY, chevronSize);
+			}
+		}
+
+		// Reset stroke to default if needed elsewhere
+		g.setStroke(new BasicStroke());
+	}
+
+	private void drawChevronRight(Graphics2D g, int x, int y, int size) {
+		int x1 = x;
+		int y1 = y;
+		int x2 = x + size / 2;
+		int y2 = y + size / 2;
+		int x3 = x;
+		int y3 = y + size;
+
+		// Draw two lines to form a chevron `>`
+		g.drawLine(x1, y1, x2, y2);
+		g.drawLine(x3, y3, x2, y2);
+	}
+
+	private void drawChevronLeft(Graphics2D g, int x, int y, int size) {
+		int x1 = x + size / 2;
+		int y1 = y;
+		int x2 = x;
+		int y2 = y + size / 2;
+		int x3 = x + size / 2;
+		int y3 = y + size;
+
+		// Draw two lines to form a chevron `<`
+		g.drawLine(x1, y1, x2, y2);
+		g.drawLine(x3, y3, x2, y2);
+	}
+
+	private void drawActionIcons(Graphics2D g, int x, int yStart, int iconsAreaHeight) {
 		actionIconPositions.clear();
 
-		for (PlayerAnimation animation : playerAnimationsInUse)
-		{
-			// Draw the icon
-			BufferedImage icon = iconMap.get(animation);
-			if (icon != null)
-			{
-				BufferedImage scaledIcon = getScaledImage(icon, actionIconSize, actionIconSize);
+		// Calculate number of icons per row based on sidebarWidth
+		int iconsPerRow = (sidebarWidth - 2 * sidebarPadding + iconSpacing) / (iconSize + iconSpacing);
+		if (iconsPerRow < 1) iconsPerRow = 1;
 
-				int iconX = x + 10;
-				int iconY = y + 10;
+		// Now, calculate the number of rows that can fit in iconsAreaHeight
+		int maxRows = (iconsAreaHeight + iconSpacing) / (iconSize + iconSpacing);
+		if (maxRows < 1) maxRows = 1;
 
-				g.drawImage(scaledIcon, iconX, iconY, null);
+		int iconsNeeded = playerAnimationsInUse.size();
+		int totalRows = (int) Math.ceil((double) iconsNeeded / iconsPerRow);
 
-				// Store the position for hover detection
-				Rectangle rect = new Rectangle(x + 10, y + 10, actionIconSize, actionIconSize);
-				actionIconPositions.put(animation, rect);
+		// Adjust iconsPerRow if totalRows exceeds maxRows
+		if (totalRows > maxRows) {
+			totalRows = maxRows;
+			iconsPerRow = (int) Math.ceil((double) iconsNeeded / totalRows);
+		}
 
-				int count = animationCounts.getOrDefault(animation, 0);
-				drawCountOnIcon(g, count, iconX, iconY, actionIconSize, actionIconSize);
+		int iconIndex = 0;
 
-				if (hoveredAction == animation)
-				{
-					g.setColor(config.markerColor()); // Choose a color for the hover box
-					g.drawRect(iconX - 2, iconY - 2, actionIconSize + 4, actionIconSize + 4);
+		// Define the expanded size for hover areas
+		int hoverExpansion = iconSpacing / 2;
+
+		for (int row = 0; row < totalRows; row++) {
+			int iconY = yStart + row * (iconSize + iconSpacing);
+
+			for (int col = 0; col < iconsPerRow; col++) {
+				if (iconIndex >= playerAnimationsInUse.size()) {
+					break;
+				}
+				int iconX = x + sidebarPadding + col * (iconSize + iconSpacing);
+
+				PlayerAnimation animation = playerAnimationsInUse.get(iconIndex);
+
+				BufferedImage icon = iconMap.get(animation);
+				if (icon != null) {
+					BufferedImage scaledIcon = getScaledImage(icon, iconSize, iconSize);
+
+					g.drawImage(scaledIcon, iconX, iconY, null);
+
+					// Store the expanded position for hover detection
+					// Adjust the rectangle to fill the gap spaces
+					int hoverX = iconX - hoverExpansion;
+					int hoverY = iconY - hoverExpansion;
+					int hoverWidth = iconSize + iconSpacing;
+					int hoverHeight = iconSize + iconSpacing;
+
+					// Ensure the hover rectangle stays within the sidebar bounds
+					hoverX = Math.max(hoverX, x + sidebarPadding);
+					hoverY = Math.max(hoverY, yStart);
+					if (hoverX + hoverWidth > x + sidebarWidth - sidebarPadding) {
+						hoverWidth = x + sidebarWidth - sidebarPadding - hoverX;
+					}
+					if (hoverY + hoverHeight > yStart + iconsAreaHeight) {
+						hoverHeight = yStart + iconsAreaHeight - hoverY;
+					}
+
+					Rectangle rect = new Rectangle(hoverX, hoverY, hoverWidth, hoverHeight);
+					actionIconPositions.put(animation, rect);
+
+					int count = animationCounts.getOrDefault(animation, 0);
+					drawCountOnIcon(g, count, iconX, iconY, iconSize, iconSize);
+
+					if (hoveredAction == animation) {
+						g.setColor(config.markerColor()); // Choose a color for the hover box
+						g.drawRect(iconX - 2, iconY - 2, iconSize + 4, iconSize + 4);
+					}
 				}
 
-				y += actionIconSize + 10; // Move down for the next icon
+				iconIndex++;
 			}
 		}
 
 		// Draw the summary box if hovering over an icon
-		if (hoveredAction != null)
-		{
+		if (hoveredAction != null) {
 			drawActionSummaryBox(g);
+		}
+	}
+
+	private int minButtonWidth = 80;
+
+	private void drawSidebarButtons(Graphics2D g, int x, int yStart, int buttonsAreaHeight) {
+		int buttonsNeeded = sidebarButtons.size();
+
+		// Calculate number of buttons per row based on sidebarWidth
+		int buttonsPerRow = (sidebarWidth - 2 * sidebarPadding + buttonSpacing) / (minButtonWidth + buttonSpacing);
+		if (buttonsPerRow < 1) buttonsPerRow = 1;
+
+		// Now, calculate the number of rows that can fit in buttonsAreaHeight
+		int maxRows = (buttonsAreaHeight + buttonSpacing) / (buttonHeight + buttonSpacing);
+		if (maxRows < 1) maxRows = 1;
+
+		int totalRows = (int) Math.ceil((double) buttonsNeeded / buttonsPerRow);
+
+		// Adjust buttonsPerRow if totalRows exceeds maxRows
+		if (totalRows > maxRows) {
+			totalRows = maxRows;
+			buttonsPerRow = (int) Math.ceil((double) buttonsNeeded / totalRows);
+		}
+
+		// Calculate button width to fit the number of buttons per row
+		int buttonWidth = (sidebarWidth - (buttonsPerRow + 1) * buttonSpacing) / buttonsPerRow;
+
+		int buttonIndex = 0;
+
+		for (int row = 0; row < totalRows; row++) {
+			int buttonY = yStart + row * (buttonHeight + buttonSpacing);
+
+			for (int col = 0; col < buttonsPerRow; col++) {
+				if (buttonIndex >= sidebarButtons.size()) {
+					break;
+				}
+
+				int buttonX = x + buttonSpacing + col * (buttonWidth + buttonSpacing);
+
+				SidebarButton button = sidebarButtons.get(buttonIndex);
+				button.setPosition(buttonX, buttonY, buttonWidth, buttonHeight);
+				button.draw(g);
+
+				buttonIndex++;
+			}
 		}
 	}
 
@@ -370,7 +553,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		else
 		{
 			// Position to the right of the cursor
-			summaryX = iconRect.x + 10;
+			summaryX = iconRect.x  + iconRect.width;
 		}
 
 		// Adjust summaryY if the box goes off the bottom edge
@@ -417,17 +600,17 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
     {
         windowWidth = x;
         windowHeight = y;
-        createImage();
+        createImage(false);
     }
 
 	public void setSize()
 	{
 		windowWidth = getWidth();
 		windowHeight = getHeight();
-		createImage();
+		createImage(false);
 	}
 
-    public void createImage()
+    public void createImage(boolean sendToBottom)
     {
         if (isActive || !live)
         {
@@ -438,7 +621,10 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
                 img.flush();
             }
             img = new BufferedImage(windowWidth, windowHeight, BufferedImage.TYPE_INT_ARGB);
-            sendToBottom();
+			if(sendToBottom)
+			{
+				sendToBottom();
+			}
             drawGraph();
         }
     }
@@ -727,37 +913,35 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         recalculateSize();
     }
 
-    public void recalculateSize()
-    {
-        if (!shouldDraw())
-        {
-            return;
-        }
-        try
-        {
-            scale = config.chartScaleSize();
-            setBackground(config.primaryDark());
-        } catch (Exception ignored)
-        {
+	public void recalculateSize() {
+		if (!shouldDraw()) {
+			return;
+		}
+		try {
+			scale = config.chartScaleSize();
+			setBackground(config.primaryDark());
+		} catch (Exception ignored) {
+		}
 
-        }
-        int length = endTick - startTick;
-        ticksToShow = ((windowWidth - LEFT_MARGIN - RIGHT_MARGIN) / (scale)) - 1;
-        boxCount = (length / ticksToShow);
-        if (boxCount % ticksToShow != 0)
-        {
-            boxCount++;
-        }
-        if (boxCount < 1)
-        {
-            boxCount = 1;
-        }
-        int additionalRows = 2 + getAdditionalRow();
-        boxHeight = ((attackers.size() + additionalRows) * scale);
-        boxWidth = (LEFT_MARGIN + (scale * (ticksToShow + 1)));
-        boxesToShow = Math.min(1 + ((windowHeight - TITLE_BAR_PLUS_TAB_HEIGHT - scale) / boxHeight), boxCount);
-        drawGraph();
-    }
+		int effectiveSidebarWidth = isSidebarCollapsed ? 0 : sidebarWidth;
+		ticksToShow = ((windowWidth - LEFT_MARGIN - RIGHT_MARGIN - effectiveSidebarWidth) / scale) - 1;
+
+		if (ticksToShow < 1) ticksToShow = 1;
+
+		int length = endTick - startTick;
+		boxCount = (length / ticksToShow);
+		if (length % ticksToShow != 0) {
+			boxCount++;
+		}
+		if (boxCount < 1) {
+			boxCount = 1;
+		}
+		int additionalRows = 2 + getAdditionalRow();
+		boxHeight = ((attackers.size() + additionalRows) * scale);
+		boxWidth = LEFT_MARGIN + (scale * (ticksToShow + 1));
+		boxesToShow = Math.min(1 + ((windowHeight - TITLE_BAR_PLUS_TAB_HEIGHT - scale) / boxHeight), boxCount);
+		drawGraph();
+	}
 
     public void sendToBottom()
     {
@@ -864,6 +1048,96 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
     }
 
     public static boolean isEditingBoxText = false;
+	private boolean showVengApplied = true;
+	private static final Font BUTTON_FONT = new Font("Arial", Font.PLAIN, 12);
+	private static final int BUTTON_VERTICAL_PADDING = 5; // Padding at top and bottom
+	private static final int BUTTON_HORIZONTAL_PADDING = 10; // Padding on left and right within the button
+	private static final int BUTTON_HALF_WIDTH_PADDING = 5; // Padding within left half
+
+	private class SidebarButton {
+		String id;
+		String label;
+		boolean isChecked;
+		boolean isHovered;
+		boolean hoverEffectEnabled = true;
+		Rectangle bounds;
+		Runnable onClick;
+
+		public SidebarButton(String id, String label, boolean isChecked, Runnable onClick) {
+			this.id = id;
+			this.label = label;
+			this.isChecked = isChecked;
+			this.onClick = onClick;
+			this.bounds = new Rectangle();
+		}
+
+		public void setPosition(int x, int y, int width, int height) {
+			bounds.setBounds(x, y, width, height);
+		}
+
+		public void draw(Graphics2D g) {
+			// Draw background
+			if (isHovered) {
+				g.setColor(config.boxColor().brighter());
+			} else {
+				g.setColor(config.primaryDark());
+			}
+			g.fillRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, 10, 10);
+
+			// Draw border
+			g.setColor(config.boxColor());
+			g.drawRoundRect(bounds.x, bounds.y, bounds.width, bounds.height, 10, 10);
+
+			// Split the bounds into left and right halves
+			int halfWidth = (bounds.width - 2 * BUTTON_HORIZONTAL_PADDING) / 2;
+			Rectangle leftHalf = new Rectangle(bounds.x + BUTTON_HORIZONTAL_PADDING, bounds.y, halfWidth, bounds.height);
+			Rectangle rightHalf = new Rectangle(bounds.x + BUTTON_HORIZONTAL_PADDING + halfWidth, bounds.y, halfWidth, bounds.height);
+
+			// Use consistent font
+			Font originalFont = g.getFont();
+			g.setFont(BUTTON_FONT);
+			FontMetrics fm = g.getFontMetrics();
+
+			// Split the label into words
+			String[] words = label.split(" ");
+
+			// Calculate positions for drawing
+			int lineHeight = fm.getHeight();
+			int totalTextHeight = lineHeight * words.length;
+			int textY = leftHalf.y + (leftHalf.height - totalTextHeight) / 2 + fm.getAscent();
+
+			// Draw each word on a new line
+			g.setColor(config.fontColor());
+			for (String word : words) {
+				int wordWidth = fm.stringWidth(word);
+				int textX = leftHalf.x + (leftHalf.width - wordWidth) / 2;
+				g.drawString(word, textX, textY);
+				textY += lineHeight;
+			}
+
+			// Draw the check mark on the right half if the button is checked
+			if (isChecked) {
+				int checkSize = Math.min(rightHalf.width, rightHalf.height) / 2;
+				int checkX = 10+rightHalf.x + (rightHalf.width - checkSize) / 2;
+				int checkY = rightHalf.y + (rightHalf.height - checkSize) / 2;
+
+				g.setColor(config.fontColor());
+				g.setStroke(new BasicStroke(2));
+
+				// Draw the check mark
+				g.drawLine(checkX, checkY + checkSize / 2, checkX + checkSize / 2, checkY + checkSize);
+				g.drawLine(checkX + checkSize / 2, checkY + checkSize, checkX + checkSize, checkY);
+			}
+
+			// Reset font
+			g.setFont(originalFont);
+		}
+
+		public boolean contains(int x, int y) {
+			return bounds.contains(x, y);
+		}
+	}
+
 
     public ChartPanel(String room, boolean isLive, AdvancedRaidTrackerConfig config, ClientThread clientThread, ConfigManager configManager, ItemManager itemManager, SpriteManager spriteManager)
     {
@@ -933,11 +1207,99 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		});
 
 
+		sidebarButtons.add(new SidebarButton("useIcons", "Use Icons", config.useIconsOnChart(), () -> {
+			configManager.setConfiguration("Advanced Raid Tracker", "useIconsOnChart", !config.useIconsOnChart());
+			SidebarButton button = getButtonById("useIcons");
+			if (button != null) {
+				button.isChecked = config.useIconsOnChart();
+			}
+			drawGraph();
+		}));
+
+		sidebarButtons.add(new SidebarButton("useTime", "Use Time", config.useTimeOnChart(), () -> {
+			configManager.setConfiguration("Advanced Raid Tracker", "useTimeOnChart", !config.useTimeOnChart());
+			SidebarButton button = getButtonById("useTime");
+			if (button != null) {
+				button.isChecked = config.useTimeOnChart();
+			}
+			drawGraph();
+		}));
+
+		sidebarButtons.add(new SidebarButton("showVengApplied", "Show Veng", showVengApplied, () -> {
+			showVengApplied = !showVengApplied;
+			SidebarButton button = getButtonById("showVengApplied");
+			if (button != null) {
+				button.isChecked = showVengApplied;
+				button.hoverEffectEnabled = false;
+			}
+			drawGraph();
+		}));
+
+		sidebarButtons.add(new SidebarButton("showSpells", "Show Spells", showSpells, () -> {
+			showSpells = !showSpells;
+			SidebarButton button = getButtonById("showSpells");
+			if (button != null) {
+				button.isChecked = showSpells;
+				button.hoverEffectEnabled = false;
+			}
+			drawGraph();
+		}));
+
+		sidebarButtons.add(new SidebarButton("showSecondaryIcons", "Show Subicon", showSubIcons, () -> {
+			showSubIcons = !showSubIcons;
+			SidebarButton button = getButtonById("showSecondaryIcons");
+			if (button != null) {
+				button.isChecked = showSubIcons;
+				button.hoverEffectEnabled = false;
+			}
+			drawGraph();
+		}));
+
+		sidebarButtons.add(new SidebarButton("showThrallBoxes", "Show Thralls", showThrallBoxes, () -> {
+			showThrallBoxes = !showThrallBoxes;
+			SidebarButton button = getButtonById("showThrallBoxes");
+			if (button != null) {
+				button.isChecked = showThrallBoxes;
+				button.hoverEffectEnabled = false;
+			}
+			drawGraph();
+		}));
+
+		sidebarButtons.add(new SidebarButton("showAutos", "Show Autos", showAutos, () -> {
+			showAutos = !showAutos;
+			SidebarButton button = getButtonById("showAutos");
+			if (button != null) {
+				button.isChecked = showAutos;
+				button.hoverEffectEnabled = false;
+			}
+			drawGraph();
+		}));
+
+		sidebarButtons.add(new SidebarButton("highlightIdleTicks", "Show Idle", highlightIdleTicks, () -> {
+			highlightIdleTicks = !highlightIdleTicks;
+			SidebarButton button = getButtonById("highlightIdleTicks");
+			if (button != null) {
+				button.isChecked = highlightIdleTicks;
+				button.hoverEffectEnabled = false;
+			}
+			drawGraph();
+		}));
+
+
         setFocusable(true);
         requestFocus();
         recalculateSize();
 
     }
+
+	private SidebarButton getButtonById(String id) {
+		for (SidebarButton button : sidebarButtons) {
+			if (button.id.equals(id)) {
+				return button;
+			}
+		}
+		return null;
+	}
 
 	public void openFile()
 	{
@@ -1240,24 +1602,38 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
     List<Integer> potentialAutos = new ArrayList<>();
 
-    private void drawAuto(Graphics2D g, int tick, int opacity)
-    {
-        g.setColor(new Color(255, 80, 80, opacity));
-        int xOffset = getXOffset(tick);
-        int yOffset = getYOffset(tick);
-        g.fillRect(xOffset, yOffset + scale, scale, boxHeight - (scale * (2 + getAdditionalRow())));
-    }
+	private void drawAuto(Graphics2D g, int tick, int opacity)
+	{
+		g.setColor(new Color(255, 80, 80, opacity));
+		int xOffset = getXOffset(tick);
+		int yOffset = getYOffset(tick);
+		g.fillRect(xOffset, yOffset + scale, scale, boxHeight - (scale * (2 + getAdditionalRow())));
+	}
 
-    private void drawAutos(Graphics2D g)
-    {
-        for (ChartAuto auto : autos)
-        {
-            if (shouldTickBeDrawn(auto.tick))
-            {
-                drawAuto(g, auto.tick, 40);
-            }
-        }
-    }
+	private void drawAutos(Graphics2D g)
+	{
+		for (ChartAuto auto : autos)
+		{
+			if (shouldTickBeDrawn(auto.tick))
+			{
+				int opacity;
+				if (showAutos)
+				{
+					opacity = 40; // Normal opacity when autos are shown
+				}
+				else if (isHoveredAndEffectEnabled("showAutos"))
+				{
+					opacity = 25; // 10% opacity when button is hovered
+				}
+				else
+				{
+					// Skip drawing autos when they are hidden and button is not hovered
+					continue;
+				}
+				drawAuto(g, auto.tick, opacity);
+			}
+		}
+	}
 
     private void drawPotentialAutos(Graphics2D g)
     {
@@ -1424,6 +1800,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         }
     }
 
+	private boolean showAutos = true;
+
     private void drawDawnSpecs(Graphics2D g)
     {
         for (DawnSpec dawnSpec : dawnSpecs)
@@ -1483,14 +1861,37 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 						{
 							g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.1f));
 						}
+
+						// Check for Vengeance Applied
+						boolean isVengApplied = (box.playerAnimation == PlayerAnimation.VENG_APPLIED);
+
+						// Handle the visibility of Veng Applied indicators
+						if (isVengApplied)
+						{
+							if (!showVengApplied)
+							{
+								g.setComposite(originalComposite);
+								// Skip drawing Veng Applied boxes if not shown
+								continue;
+							}
+
+							// Apply hover effect
+							SidebarButton button = getButtonById("showVengApplied");
+							if (button != null && button.isHovered && button.hoverEffectEnabled)
+							{
+								g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+							}
+						}
+
 						// Determine if this box is a spell or 0-tick action (excluding VENG_APPLIED)
 						boolean isSpellOrZeroTick = box.playerAnimation.attackTicks < 1 && box.playerAnimation != PlayerAnimation.VENG_APPLIED;
 
 						// Decide whether to draw this box
-						boolean shouldDrawSpell = showSpells || (checkBox4Hovered && checkBox4HoverEffectEnabled);
+						boolean shouldDrawSpell = showSpells || isHoveredAndEffectEnabled("showSpells");
 
 						if (!shouldDrawSpell && isSpellOrZeroTick)
 						{
+							g.setComposite(originalComposite);
 							continue; // Skip drawing this box
 						}
 
@@ -1525,7 +1926,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 									// Apply 30% opacity to spells when hovering over the "Show Spells" button
 									Composite originalComposite2 = g.getComposite();
-									if (checkBox4Hovered && checkBox4HoverEffectEnabled && isSpellOrZeroTick)
+									if (getButtonById("showSpells").hoverEffectEnabled && getButtonById("showSpells").isHovered && isSpellOrZeroTick)
 									{
 										g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
 									}
@@ -1545,7 +1946,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 									g.setComposite(originalComposite2);
 
 									// Draw secondary icons if enabled
-									if (showSecondaryIcons && box.secondaryID != -2)
+									// Update for secondary icons
+									if (showSubIcons && box.secondaryID != -2)
 									{
 										BufferedImage secondary = getSpellSpecificIcon(box.secondaryID);
 										if (secondary != null && secondary != icon)
@@ -1553,7 +1955,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 											BufferedImage scaledSecondary = getScaledImage(secondary, scale / 2, scale / 2);
 											// Apply temporary opacity if hovered
 											Composite originalCompositeSec = g.getComposite();
-											if (checkBox5Hovered && checkBox5HoverEffectEnabled)
+											if (isHoveredAndEffectEnabled("showSubIcons"))
 											{
 												g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
 											}
@@ -1561,13 +1963,22 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 											g.setComposite(originalCompositeSec);
 										}
 									}
-									if(box.tertiaryID != -2)
+
+// Update for tertiary icons
+									if (showSubIcons && box.tertiaryID != -2)
 									{
 										BufferedImage tertiary = getSpellSpecificIcon(box.tertiaryID);
 										if (tertiary != null)
 										{
-											BufferedImage scaledTertiary = getScaledImage(tertiary, scale/2, scale/2);
-											g.drawImage(scaledTertiary, xOffset + (scale/2), yOffset, null);
+											BufferedImage scaledTertiary = getScaledImage(tertiary, scale / 2, scale / 2);
+											// Apply temporary opacity if hovered
+											Composite originalCompositeTert = g.getComposite();
+											if (isHoveredAndEffectEnabled("showSubIcons"))
+											{
+												g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+											}
+											g.drawImage(scaledTertiary, xOffset + (scale / 2), yOffset, null);
+											g.setComposite(originalCompositeTert);
 										}
 									}
                                     if (!box.additionalText.isEmpty())
@@ -1629,6 +2040,18 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         }
     }
 
+	public boolean isHoveredAndEffectEnabled(String button)
+	{
+		SidebarButton button1 = getButtonById(button);
+		if(button1 != null)
+		{
+			return button1.isHovered && button1.hoverEffectEnabled;
+		}
+		else
+		{
+			return false;
+		}
+	}
 
 
     private void drawMarkerLines(Graphics2D g)
@@ -1679,7 +2102,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	private void drawThrallBoxes(Graphics2D g)
 	{
-		boolean shouldDrawThralls = showThrallBoxes || (checkBox6Hovered && checkBox6HoverEffectEnabled);
+		boolean shouldDrawThralls = showThrallBoxes || isHoveredAndEffectEnabled("showThrallBoxes");
 
 		if (shouldDrawThralls)
 		{
@@ -1694,7 +2117,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 				{
 					int opacity;
 
-					if (checkBox6Hovered && checkBox6HoverEffectEnabled)
+					if (isHoveredAndEffectEnabled("showThrallBoxes"))
 					{
 						// When hovering, display at 10% opacity
 						opacity = 25; // Approximately 10% opacity
@@ -1896,7 +2319,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 						}
 					}
                     int xPosition = location.getX() + 10;
-                    if (xPosition + hoverBox.getWidth(g) > windowWidth) //box would render off screen
+                    if (xPosition + hoverBox.getWidth(g) > windowWidth-RIGHT_MARGIN-sidebarWidth) //box would render off screen
                     {
                         xPosition = xPosition - hoverBox.getWidth(g) - scale * 2; //render to the left side of the selected action
                     }
@@ -2047,193 +2470,6 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         g.setFont(oldFont);
     }
 
-    private void drawCheckBox(Graphics2D g)
-    {
-        Font oldFont = g.getFont();
-        g.setColor(config.fontColor());
-        setConfigFont(g);
-        g.drawString("Use Icons? ", 100, 20);
-        if (!checkBoxHovered)
-        {
-            g.setColor(config.boxColor());
-        }
-
-        g.drawRect(180, 2, 20, 20);
-        if (checkBoxHovered)
-        {
-            g.setColor(config.boxColor().brighter().brighter().brighter()); //todo hmmm
-            g.fillRect(181, 3, 19, 19);
-        }
-        g.setColor(config.fontColor());
-        if (config.useIconsOnChart())
-        {
-            g.drawString("x", 186, 17);
-        }
-        g.setFont(oldFont);
-    }
-
-    private void drawCheckBox2(Graphics2D g)
-    {
-        Font oldFont = g.getFont();
-        g.setColor(config.fontColor());
-        setConfigFont(g);
-        g.drawString("Use Time? ", 210, 20);
-        if (!checkBox2Hovered)
-        {
-            g.setColor(config.boxColor());
-        }
-
-        g.drawRect(290, 2, 20, 20);
-        if (checkBox2Hovered)
-        {
-            g.setColor(config.boxColor().brighter().brighter().brighter()); //todo hmmm
-            g.fillRect(291, 3, 19, 19);
-        }
-        g.setColor(config.fontColor());
-        if (config.useTimeOnChart())
-        {
-            g.drawString("x", 296, 17);
-        }
-        g.setFont(oldFont);
-    }
-
-    private void drawCheckBox3(Graphics2D g)
-    {
-        Font oldFont = g.getFont();
-        g.setColor(config.fontColor());
-        setConfigFont(g);
-        g.drawString("Show Config? ", 320, 20);
-        if (!checkBox3Hovered)
-        {
-            g.setColor(config.boxColor());
-        }
-
-        g.drawRect(410, 2, 20, 20);
-        if (checkBox3Hovered)
-        {
-            g.setColor(config.boxColor().brighter().brighter().brighter()); //todo hmmm
-            g.fillRect(411, 3, 19, 19);
-        }
-        g.setColor(config.fontColor());
-        if (config.showConfigOnChart())
-        {
-            g.drawString("x", 416, 17);
-        }
-        g.setFont(oldFont);
-    }
-
-	private void drawCheckBox4(Graphics2D g)
-	{
-		Font oldFont = g.getFont();
-		g.setColor(config.fontColor());
-		setConfigFont(g);
-		g.drawString("Show Spells? ", 450, 20);
-
-		if (!checkBox4Hovered)
-		{
-			g.setColor(config.boxColor());
-		}
-
-		g.drawRect(540, 2, 20, 20);
-
-		if (checkBox4Hovered)
-		{
-			g.setColor(new Color(255, 255, 255, 77)); // 30% opacity
-			g.fillRect(541, 3, 19, 19);
-		}
-
-		g.setColor(config.fontColor());
-		if (showSpells)
-		{
-			g.drawString("x", 546, 17);
-		}
-		g.setFont(oldFont);
-	}
-
-	private void drawCheckBox5(Graphics2D g)
-	{
-		Font oldFont = g.getFont();
-		g.setColor(config.fontColor());
-		setConfigFont(g);
-		g.drawString("Show Secondary Icons? ", 570, 20);
-
-		if (!checkBox5Hovered)
-		{
-			g.setColor(config.boxColor());
-		}
-
-		g.drawRect(720, 2, 20, 20);
-
-		if (checkBox5Hovered)
-		{
-			g.setColor(new Color(255, 255, 255, 77)); // 30% opacity
-			g.fillRect(721, 3, 19, 19);
-		}
-
-		g.setColor(config.fontColor());
-		if (showSecondaryIcons)
-		{
-			g.drawString("x", 726, 17);
-		}
-		g.setFont(oldFont);
-	}
-
-	private void drawCheckBox6(Graphics2D g)
-	{
-		Font oldFont = g.getFont();
-		g.setColor(config.fontColor());
-		setConfigFont(g);
-		g.drawString("Show Thrall Boxes? ", 750, 20);
-
-		if (!checkBox6Hovered)
-		{
-			g.setColor(config.boxColor());
-		}
-
-		g.drawRect(860, 2, 20, 20);
-
-		if (checkBox6Hovered)
-		{
-			g.setColor(new Color(255, 255, 255, 77)); // 30% opacity
-			g.fillRect(861, 3, 19, 19);
-		}
-
-		g.setColor(config.fontColor());
-		if (showThrallBoxes)
-		{
-			g.drawString("x", 866, 17);
-		}
-		g.setFont(oldFont);
-	}
-
-	private void drawCheckBox7(Graphics2D g)
-	{
-		Font oldFont = g.getFont();
-		g.setColor(config.fontColor());
-		setConfigFont(g);
-		g.drawString("Highlight Idle Ticks? ", 890, 20);
-
-		if (!checkBox7Hovered)
-		{
-			g.setColor(config.boxColor());
-		}
-
-		g.drawRect(1020, 2, 20, 20);
-
-		if (checkBox7Hovered)
-		{
-			g.setColor(new Color(255, 255, 255, 77)); // 30% opacity
-			g.fillRect(1021, 3, 19, 19);
-		}
-
-		g.setColor(config.fontColor());
-		if (highlightIdleTicks)
-		{
-			g.drawString("x", 1026, 17);
-		}
-		g.setFont(oldFont);
-	}
-
 	private void drawBaseBoxes(Graphics2D g)
 	{
 		for (int i = startTick; i < endTick; i++)
@@ -2262,7 +2498,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 							// If the feature is enabled, draw idle ticks in solid red
 							g.setColor(Color.RED);
 						}
-						else if (checkBox7Hovered && checkBox7HoverEffectEnabled)
+						else if (isHoveredAndEffectEnabled("highlightIdleTicks"))
 						{
 							// If hovering over the button, draw idle ticks in red with 30% opacity
 							g.setColor(new Color(255, 0, 0, 77)); // 30% opacity red
@@ -2381,7 +2617,6 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         fontHeight = getStringBounds(g, "a").height; //todo is "a" really the best option here?
 
 		int chartWidth = img.getWidth() - actionIconsBoxWidth;
-		//g.setClip(0, 0, chartWidth, img.getHeight());
 
         drawTicks(g);
         drawGraphBoxes(g);
@@ -2395,8 +2630,6 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         drawPotentialAutos(g);
         drawMarkerLines(g);
         drawMaidenCrabs(g);
-		//g.setClip(null);
-		drawActionIconsBox(g);
 
         if (currentTool != ADD_LINE_TOOL && currentTool != ADD_TEXT_TOOL)
         {
@@ -2406,17 +2639,6 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
         drawHoverBox(g);
         drawRoomTime(g);
-
-        if (config.showConfigOnChart())
-        {
-            drawCheckBox(g);
-            drawCheckBox2(g);
-            drawCheckBox3(g);
-			drawCheckBox4(g);
-			drawCheckBox5(g);
-			drawCheckBox6(g);
-			drawCheckBox7(g);
-        }
 
         if (currentTool == ADD_LINE_TOOL)
         {
@@ -2432,6 +2654,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
             drawCurrentlyEditedTextBox(g);
             drawAlignmentMarkers(g);
         }
+
+		drawSidebar(g);
 
         updateStatus();
         g.setColor(oldColor);
@@ -2536,7 +2760,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
             if (y > 20) //todo why do I use 20 here when TOP_MARGIN is 30?
             {
                 int boxNumber = (y - 20) / boxHeight;
-                if (x > LEFT_MARGIN-5)
+                if (x > LEFT_MARGIN-5&& x < windowWidth-sidebarWidth-RIGHT_MARGIN)
                 {
                     int tick = startTick + (ticksToShow * boxNumber + ((x - LEFT_MARGIN) / scale));
                     int playerOffsetPosition = (((y - TOP_MARGIN - scale) % boxHeight) / scale);
@@ -2689,47 +2913,33 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
     }
 
-    private void checkRelease(MouseEvent e, boolean wasDragging)
-    {
-		requestFocus();
-        if (checkBoxHovered)
-        {
-            configManager.setConfiguration("Advanced Raid Tracker", "useIconsOnChart", !config.useIconsOnChart());
-            drawGraph();
-        } else if (checkBox2Hovered)
-        {
-            configManager.setConfiguration("Advanced Raid Tracker", "useTimeOnChart", !config.useTimeOnChart());
-            drawGraph();
-        } else if (checkBox3Hovered)
-        {
-            configManager.setConfiguration("Advanced Raid Tracker", "showConfigOnChart", !config.showConfigOnChart());
-            drawGraph();
-        }
-		else if (checkBox4Hovered)
-		{
-			showSpells = !showSpells;
-			checkBox4HoverEffectEnabled = false; // Disable hover effect until mouse moves off and back on
-			drawGraph();
+	private void checkRelease(MouseEvent e, boolean wasDragging) {
+		// First, check if any sidebar button was clicked
+		if (sidebarToggleButtonBounds != null && sidebarToggleButtonBounds.contains(e.getPoint())) {
+			// Toggle the sidebar state
+			isSidebarCollapsed = !isSidebarCollapsed;
+			// Recalculate layout and redraw the chart
+			recalculateSize();
+			return; // Exit early as we've handled the click
 		}
-		else if (checkBox5Hovered)
-		{
-			showSecondaryIcons = !showSecondaryIcons;
-			checkBox5HoverEffectEnabled = false;
-			drawGraph();
+		if (SwingUtilities.isLeftMouseButton(e)) {
+			for (SidebarButton button : sidebarButtons) {
+				if (button.contains(e.getX(), e.getY())) {
+					button.isChecked = !button.isChecked;
+					button.hoverEffectEnabled = false;
+					if (button.onClick != null) {
+						button.onClick.run(); // Execute the button's action
+					}
+					drawGraph();
+					return; // Exit as we've handled the click
+				}
+			}
 		}
-		else if (checkBox6Hovered)
-		{
-			showThrallBoxes = !showThrallBoxes;
-			checkBox6HoverEffectEnabled = false;
-			drawGraph();
+
+		// Handle action icons click if needed (optional)
+		if (hoveredAction != null && actionIconPositions.get(hoveredAction).contains(e.getPoint())) {
+			// Handle action icon click if needed
 		}
-		else if (checkBox7Hovered)
-		{
-			highlightIdleTicks = !highlightIdleTicks;
-			checkBox7HoverEffectEnabled = false;
-			drawGraph();
-		}
-		else
         {
             switch(currentTool)
             {
@@ -3465,90 +3675,66 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         }
     }
 
-    @Override
-    public void mouseMoved(MouseEvent e)
-    {
-		boolean prevCheckBox4Hovered = checkBox4Hovered;
-		boolean prevCheckBox5Hovered = checkBox5Hovered;
-		boolean prevCheckBox6Hovered = checkBox6Hovered;
-		boolean prevCheckBox7Hovered = checkBox7Hovered;
-
-        checkBoxHovered = e.getX() >= 180 && e.getX() <= 200 && e.getY() >= 2 && e.getY() <= 22;
-        checkBox2Hovered = e.getX() >= 290 && e.getX() <= 310 && e.getY() >= 2 && e.getY() <= 22;
-        checkBox3Hovered = e.getX() >= 410 && e.getX() <= 430 && e.getY() >= 2 && e.getY() <= 22;
-		checkBox4Hovered = e.getX() >= 540 && e.getX() <= 560 && e.getY() >= 2 && e.getY() <= 22;
-		checkBox5Hovered = e.getX() >= 720 && e.getX() <= 740 && e.getY() >= 2 && e.getY() <= 22;
-		checkBox6Hovered = e.getX() >= 860 && e.getX() <= 880 && e.getY() >= 2 && e.getY() <= 22;
-		checkBox7Hovered = e.getX() >= 1020 && e.getX() <= 1040 && e.getY() >= 2 && e.getY() <= 22;
-
-		// Check for hover state changes
-		if (prevCheckBox4Hovered && !checkBox4Hovered)
-		{
-			checkBox4HoverEffectEnabled = true;
-		}
-		if (prevCheckBox5Hovered && !checkBox5Hovered)
-		{
-			checkBox5HoverEffectEnabled = true;
-		}
-		if (prevCheckBox6Hovered && !checkBox6Hovered)
-		{
-			checkBox6HoverEffectEnabled = true;
-		}
-		if (prevCheckBox7Hovered && !checkBox7Hovered)
-		{
-			checkBox7HoverEffectEnabled = true;
-		}
-
-		// Implement hover effects
-		if (checkBox5Hovered)
-		{
-			// Reduce opacity of secondary icons to 30% when hovering
-			tempSecondaryIconOpacity = 77; // 30% of 255
-		}
-		else
-		{
-			tempSecondaryIconOpacity = 255;
-		}
-
+	@Override
+	public void mouseMoved(MouseEvent e) {
 		java.awt.Point mousePoint = e.getPoint();
+
+		boolean hoverChanged = false;
 		PlayerAnimation previousHoveredAction = hoveredAction;
 		hoveredAction = null;
 
-		for (Map.Entry<PlayerAnimation, Rectangle> entry : actionIconPositions.entrySet())
-		{
-			if (entry.getValue().contains(mousePoint))
-			{
-				hoveredAction = entry.getKey();
-				break;
+		// Handle hover for the toggle button
+		if (sidebarToggleButtonBounds != null && sidebarToggleButtonBounds.contains(mousePoint)) {
+			setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+			hoverChanged = true;
+		} else {
+			setCursor(Cursor.getDefaultCursor());
+
+			if (!isSidebarCollapsed) {
+				// Handle hover for action icons
+				for (Map.Entry<PlayerAnimation, Rectangle> entry : actionIconPositions.entrySet()) {
+					if (entry.getValue().contains(mousePoint)) {
+						hoveredAction = entry.getKey();
+						break;
+					}
+				}
+
+				// Handle hover for sidebar buttons
+				for (SidebarButton button : sidebarButtons) {
+					boolean wasHovered = button.isHovered;
+					button.isHovered = button.contains(e.getX(), e.getY());
+
+					// Reset hover effect if hover state changed
+					if (button.isHovered != wasHovered) {
+						button.hoverEffectEnabled = true;
+						hoverChanged = true;
+					}
+				}
 			}
 		}
 
-		if (hoveredAction != previousHoveredAction)
-		{
-			// Hovered action changed, redraw the graph
+		if (hoverChanged || hoveredAction != previousHoveredAction) {
 			drawGraph();
 		}
 
-		checkBox4PreviouslyHovered = checkBox4Hovered;
-		checkBox5PreviouslyHovered = checkBox5Hovered;
-		checkBox6PreviouslyHovered = checkBox6Hovered;
-		checkBox7PreviouslyHovered = checkBox7Hovered;
+		// Skip chart hover actions if over the sidebar or if sidebar is collapsed and over the toggle button
+		if (sidebarToggleButtonBounds != null && sidebarToggleButtonBounds.contains(e.getX(), e.getY())) {
+			return;
+		}
+		if (!isSidebarCollapsed && e.getX() > getWidth() - sidebarWidth - RIGHT_MARGIN * 2) {
+			return;
+		}
 
+		// Process chart-specific hover actions
 		setTickHovered(e.getX(), e.getY());
+		setAlignmentMarkers(e.getX(), e.getY());
 
-
-        setAlignmentMarkers(e.getX(), e.getY());
-
-        if(currentTool == ADD_AUTO_TOOL)
-        {
-            setPotentialAutos();
-        }
-        else
-        {
-            potentialAutos.clear();
-        }
-        drawGraph();
-    }
+		if (currentTool == ADD_AUTO_TOOL) {
+			setPotentialAutos();
+		} else {
+			potentialAutos.clear();
+		}
+	}
 
     public String getBossName(int id, int index, int tick)
     {
