@@ -42,7 +42,8 @@ public class ItemReference
 					"magma",
 					"goblin paint cannon",
 					"strength",
-					"combat bracelet"
+					"combat bracelet",
+					"rancour",
             },
             {
                     "masori",

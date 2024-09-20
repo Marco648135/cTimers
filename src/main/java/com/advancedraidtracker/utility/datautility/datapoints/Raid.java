@@ -308,7 +308,7 @@ public abstract class Raid
         DataPoint pointFound = DataPoint.getValue(point);
         if(pointFound != DataPoint.UNKNOWN)
         {
-            return pointFound.isTime() && getTimeAccurate(pointFound);
+            return !pointFound.isTime() || getTimeAccurate(pointFound);
         }
         return true;
     }

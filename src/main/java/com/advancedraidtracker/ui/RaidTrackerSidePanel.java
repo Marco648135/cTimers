@@ -2,6 +2,7 @@ package com.advancedraidtracker.ui;
 
 import com.advancedraidtracker.*;
 import com.advancedraidtracker.ui.charts.chartcreator.ChartCreatorFrame;
+import com.advancedraidtracker.ui.dpsanalysis.DPSWindow;
 import com.advancedraidtracker.utility.UISwingUtility;
 import com.advancedraidtracker.utility.datautility.datapoints.Raid;
 import com.advancedraidtracker.utility.wrappers.RaidsArrayWrapper;
@@ -155,6 +156,12 @@ public class RaidTrackerSidePanel extends PluginPanel
             }
         });
 
+		JButton viewDPSComparisons = new JButton("View DPS Comparisons");
+		viewDPSComparisons.addActionListener(al ->
+		{
+			DPSWindow dpsWindow = new DPSWindow(itemManager, spriteManager, clientThread);
+		});
+
         raidCountLabel = new JLabel("", SwingConstants.CENTER);
         updateRaidCountLabel();
         primaryContainer.add(raidCountLabel);
@@ -164,6 +171,7 @@ public class RaidTrackerSidePanel extends PluginPanel
         primaryContainer.add(livePanelButton);
         primaryContainer.add(chartCreatorButton);
         primaryContainer.add(copyLastSplitsButton);
+		primaryContainer.add(viewDPSComparisons);
 
         DefaultTableModel model = getTableModel();
         loadRaidsTable = new JTable(model)

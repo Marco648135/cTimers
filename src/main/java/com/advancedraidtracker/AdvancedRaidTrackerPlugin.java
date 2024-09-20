@@ -12,6 +12,7 @@ import com.advancedraidtracker.ui.charts.ChartTheme;
 import com.advancedraidtracker.ui.charts.LiveChart;
 import com.advancedraidtracker.ui.RaidTrackerSidePanel;
 import com.advancedraidtracker.ui.charts.chartelements.OutlineBox;
+import com.advancedraidtracker.ui.dpsanalysis.Prayers;
 import com.advancedraidtracker.utility.*;
 import com.advancedraidtracker.utility.datautility.DataReader;
 import com.advancedraidtracker.utility.datautility.DataWriter;
@@ -296,6 +297,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 		{
 			clog.setName(client.getLocalPlayer().getName());
 		}
+
     }
 
     @Subscribe
