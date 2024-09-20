@@ -72,11 +72,9 @@ public class ViewNyloStallsPanel extends JPanel
 			{
 				max = stallCounts.get(i);
 			}
-			log.info("Wave " + i + " has " + stallCounts.get(i) + " stalls");
 		}
 		highestCount = max;
 		stalls = stallCounts;
-		log.info("Highest Count :" + highestCount);
 	}
 
 	private void drawPanel()
