@@ -30,6 +30,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.beans.PropertyChangeListener;
 import java.util.stream.Collectors;
+import javax.swing.Timer;
 import javax.swing.border.LineBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -2588,14 +2589,40 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	private long lastRefresh = 0;
 
+	private Timer redrawTimer;
+
+	private void scheduleRedraw()
+	{
+		if (redrawTimer == null || !redrawTimer.isRunning())
+		{
+			long delay = (20 * 1000000 - (System.nanoTime() - lastRefresh)) / 1000000;
+			if (delay < 0)
+			{
+				delay = 0;
+			}
+			redrawTimer = new Timer((int) delay, e ->
+			{
+				drawGraph();
+				redrawTimer.stop();
+			});
+			redrawTimer.setRepeats(false);
+			redrawTimer.start();
+		}
+		else if(redrawTimer.isRunning())
+		{
+			redrawTimer.restart();
+		}
+	}
+
     private synchronized void drawGraph()
     {
         if (!shouldDraw() || img == null)
         {
             return;
         }
-		if(System.nanoTime()-lastRefresh < 20*1000000) //don't redraw more often than every 20ms
+		if (System.nanoTime() - lastRefresh < 20 * 1000000) //don't redraw more than once every 20ms
 		{
+			scheduleRedraw();
 			return;
 		}
 		lastRefresh = System.nanoTime();
@@ -2661,6 +2688,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         g.setColor(oldColor);
         g.dispose();
         repaint();
+		log.info("reached end!");
     }
 
     private void drawAlignmentMarkers(Graphics2D g)
