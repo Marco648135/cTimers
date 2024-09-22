@@ -12,6 +12,8 @@ import com.advancedraidtracker.utility.datautility.datapoints.col.Colo;
 import com.advancedraidtracker.utility.datautility.datapoints.Raid;
 import com.advancedraidtracker.utility.datautility.datapoints.inf.Inf;
 import com.advancedraidtracker.utility.datautility.datapoints.toa.Toa;
+import com.advancedraidtracker.utility.weapons.PlayerAnimation;
+import com.advancedraidtracker.utility.wrappers.PlayerDidAttack;
 import java.awt.event.ComponentListener;
 import static java.awt.event.KeyEvent.KEY_RELEASED;
 import static java.awt.event.KeyEvent.VK_LEFT;
@@ -197,10 +199,12 @@ public class ChartFrame extends BaseFrame
                 chartPanel.setStartTick((bossName.contains("Verzik") || bossName.contains("Wardens")) ? //Just trust
                         (bossName.contains("P1") ? 1 : (bossName.contains("P2") ? roomData.get(bossName.replace('2', '1') + " Time") :
                                 roomData.get(bossName.replace('3', '1') + " Time") + roomData.get(bossName.replace('3', '2') + " Time"))) : 1);
-                chartPanel.setEndTick(((bossName.contains("Verzik") || bossName.contains("Wardens")) && !bossName.contains("P1"))
-                        ? (bossName.contains("P2")) ? roomData.get(bossName + " Time") +
-                        roomData.get(bossName.replace('2', '1') + " Time") :
-                        roomData.get(bossName.substring(0, bossName.length() - 2) + "Time") : roomData.get(bossName + " Time"));
+				chartPanel.setEndTick(((bossName.contains("Verzik") || bossName.contains("Wardens")) && !bossName.contains("P1"))
+					? (bossName.contains("P2")) ? roomData.get(bossName + " Time") +
+					roomData.get(bossName.replace('2', '1') + " Time") :
+					roomData.get(bossName.substring(0, bossName.length() - 2) + "Time") : roomData.get(bossName + " Time"));
+
+				chartPanel.setEndTick(Math.max(chartPanel.endTick+1, getLastAttackTick(chartData.getAttacks(room))));
             }
             chartPanel.addThrallBoxes(chartData.getThralls(room));
             chartPanel.addLines(roomData.getLines(room));
@@ -253,4 +257,20 @@ public class ChartFrame extends BaseFrame
         add(basepane);
         pack();
     }
+
+	private static int getLastAttackTick(Collection<PlayerDidAttack> attacks)
+	{
+		int highestDeathTick = 0;
+		for(PlayerDidAttack attack : attacks)
+		{
+			if(attack.getPlayerAnimation().equals(PlayerAnimation.DEATH))
+			{
+				if(attack.tick > highestDeathTick)
+				{
+					highestDeathTick = attack.tick;
+				}
+			}
+		}
+		return highestDeathTick+1;
+	}
 }

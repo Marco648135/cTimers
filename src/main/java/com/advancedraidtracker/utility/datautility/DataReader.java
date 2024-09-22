@@ -138,79 +138,86 @@ public class DataReader //todo move any methods that read files to here. I belie
             List<DawnSpec> dawnSpecs = new ArrayList<>();
             while (scanner.hasNextLine())
             {
-                String[] line = scanner.nextLine().split(",");
-                if (!RaidRoom.getRoom(line[line.length - 1]).equals(RaidRoom.UNKNOWN))
-                {
-                    currentRoom = RaidRoom.getRoom(line[line.length - 1]);
-                }
-                switch (line[3])
-                {
-                    case "587": //Add NPC Mapping
-                        chartData.addNPCMapping(currentRoom, Integer.parseInt(line[4]), line[5]);
-                        break;
-                    case "576": //Update HP
-                        chartData.addHPMapping(currentRoom, Integer.parseInt(line[5]), Integer.parseInt(line[4]));
-                        break;
-                    case "801": //Player Attacked
-                        chartData.addAttack(currentRoom, ChartData.getPlayerDidAttack(line, itemManager));
-                        break;
-                    case "410": //Thrall Spawned
-                        chartData.addThrallOutlineBox(currentRoom, line[4], Integer.parseInt(line[5]), Integer.parseInt(line[6]));
-                        break;
-                    case "6": //TOB New Region
-                        currentRoom = RaidRoom.values()[Integer.parseInt(line[4])];
-                        break;
-                    case "1006": //TOA New Region
-                        currentRoom = RaidRoom.getRoom(line[4]);
-                        break;
-                    case "12": //Maiden Spawned
-                        currentRoom = RaidRoom.MAIDEN;
-                        break;
-                    case "18": //Maiden Crab Spawn:
-                        chartData.addMaidenCrab(line[4]);
-                        break;
-                    case "77": //verzik bounce
-                        chartData.addAttack(RaidRoom.VERZIK, new PlayerDidAttack(itemManager, line[4], VERZIK_BOUNCE_ANIMATION, Integer.parseInt(line[5]), 1965, "-1", "-1", -1, -1, "-1", "-1"));
-                        break;
-                    case "487":
-                        dawnSpecs.add(new DawnSpec(line[4], Integer.parseInt(line[5])));
-                        break;
-                    case "488":
-                        for (DawnSpec dawnSpec : dawnSpecs)
-                        {
-                            if (dawnSpec.tick == Integer.parseInt(line[5]))
-                            {
-                                dawnSpec.setDamage(Integer.parseInt(line[4]));
-                            }
-                        }
-                        break;
-					case "406": //veng procced
-						if(line.length > 6)
-						{
-							PlayerDidAttack attack = new PlayerDidAttack(itemManager, line[4], "-3", Integer.parseInt(line[6]), -1, "-1", "-1", -1, -1, "-1", "-1");
-							attack.damage = Integer.parseInt(line[5]);
-							chartData.addAttack(currentRoom, attack);
-						}
-						break;
-					case "411":
-						if(!line[7].isEmpty())
-						{
-							chartData.addMaidenStoodInSpawnedBlood(line[4], Integer.parseInt(line[7]));
-						}
-						break;
-					case "412":
-						if(!line[6].isEmpty())
-						{
-							chartData.addMaidenStoodInThrownBlood(line[4], Integer.parseInt(line[6]));
-						}
-						break;
-					case "530":
-						chartData.addPlayerChancedDrain(line[4], Integer.parseInt(line[5]));
-						break;
-					case "987":
-						chartData.addPlayerHanded(line[4], Integer.parseInt(line[5]));
-						break;
-                }
+				String[] line = scanner.nextLine().split(",");
+				try
+				{
+					if (!RaidRoom.getRoom(line[line.length - 1]).equals(RaidRoom.UNKNOWN))
+					{
+						currentRoom = RaidRoom.getRoom(line[line.length - 1]);
+					}
+					switch (line[3])
+					{
+						case "587": //Add NPC Mapping
+							chartData.addNPCMapping(currentRoom, Integer.parseInt(line[4]), line[5]);
+							break;
+						case "576": //Update HP
+							chartData.addHPMapping(currentRoom, Integer.parseInt(line[5]), Integer.parseInt(line[4]));
+							break;
+						case "801": //Player Attacked
+							chartData.addAttack(currentRoom, ChartData.getPlayerDidAttack(line, itemManager));
+							break;
+						case "410": //Thrall Spawned
+							chartData.addThrallOutlineBox(currentRoom, line[4], Integer.parseInt(line[5]), Integer.parseInt(line[6]));
+							break;
+						case "6": //TOB New Region
+							currentRoom = RaidRoom.values()[Integer.parseInt(line[4])];
+							break;
+						case "1006": //TOA New Region
+							currentRoom = RaidRoom.getRoom(line[4]);
+							break;
+						case "12": //Maiden Spawned
+							currentRoom = RaidRoom.MAIDEN;
+							break;
+						case "18": //Maiden Crab Spawn:
+							chartData.addMaidenCrab(line[4]);
+							break;
+						case "77": //verzik bounce
+							chartData.addAttack(RaidRoom.VERZIK, new PlayerDidAttack(itemManager, line[4], VERZIK_BOUNCE_ANIMATION, Integer.parseInt(line[5]), 1965, "-1", "-1", -1, -1, "-1", "-1"));
+							break;
+						case "487":
+							dawnSpecs.add(new DawnSpec(line[4], Integer.parseInt(line[5])));
+							break;
+						case "488":
+							for (DawnSpec dawnSpec : dawnSpecs)
+							{
+								if (dawnSpec.tick == Integer.parseInt(line[5]))
+								{
+									dawnSpec.setDamage(Integer.parseInt(line[4]));
+								}
+							}
+							break;
+						case "406": //veng procced
+							if (line.length > 6)
+							{
+								PlayerDidAttack attack = new PlayerDidAttack(itemManager, line[4], "-3", Integer.parseInt(line[6]), -1, "-1", "-1", -1, -1, "-1", "-1");
+								attack.damage = Integer.parseInt(line[5]);
+								chartData.addAttack(currentRoom, attack);
+							}
+							break;
+						case "411":
+							if (!line[7].isEmpty())
+							{
+								chartData.addMaidenStoodInSpawnedBlood(line[4], Integer.parseInt(line[7]));
+							}
+							break;
+						case "412":
+							if (!line[6].isEmpty())
+							{
+								chartData.addMaidenStoodInThrownBlood(line[4], Integer.parseInt(line[6]));
+							}
+							break;
+						case "530":
+							chartData.addPlayerChancedDrain(line[4], Integer.parseInt(line[5]));
+							break;
+						case "987":
+							chartData.addPlayerHanded(line[4], Integer.parseInt(line[5]));
+							break;
+					}
+				}
+				catch (Exception ignored)
+				{
+
+				}
             }
             chartData.addDawnSpecs(dawnSpecs);
         } catch (Exception ignore)
