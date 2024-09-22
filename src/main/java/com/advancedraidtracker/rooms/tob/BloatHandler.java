@@ -216,7 +216,7 @@ public class BloatHandler extends TOBRoomHandler
 				{
 					int currentTick = (client.getTickCount()-roomStartTick);
 					plugin.sendChatMessage(p.getName() + " got handed on room tick " + currentTick + " (" + RoomUtil.time(currentTick) + " )");
-					clog.addLine(BLOAT_PLAYER_HANDED, p.getName() + currentTick);
+					clog.addLine(BLOAT_PLAYER_HANDED, p.getName(), String.valueOf(currentTick));
 					plugin.liveFrame.addPlayerHanded(getName(), p.getName(), currentTick);
 				}
 			}
