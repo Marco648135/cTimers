@@ -386,10 +386,10 @@ public class MaidenHandler extends TOBRoomHandler
             {
                 if (p.bloodTicksAlive == -1)
                 {
-                    clog.addLine(PLAYER_STOOD_IN_SPAWNED_BLOOD, p.playerName, String.valueOf(bloodDamage)); //player, dmg
+                    clog.addLine(PLAYER_STOOD_IN_SPAWNED_BLOOD, p.playerName, String.valueOf(bloodDamage), String.valueOf((client.getTickCount()-roomStartTick))); //player, dmg, room tick
                 } else
                 {
-                    clog.addLine(PLAYER_STOOD_IN_THROWN_BLOOD, p.playerName, String.valueOf(bloodDamage), String.valueOf(p.bloodTicksAlive)); //player, dmg, blood tick
+                    clog.addLine(PLAYER_STOOD_IN_THROWN_BLOOD, p.playerName, String.valueOf(bloodDamage), String.valueOf(p.bloodTicksAlive), String.valueOf(client.getTickCount()-roomStartTick)); //player, dmg, blood tick, room tick
                 }
                 bloodHeals++;
             }

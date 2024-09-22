@@ -6,6 +6,7 @@ import com.advancedraidtracker.utility.weapons.PlayerAnimation;
 import com.advancedraidtracker.utility.wrappers.DawnSpec;
 import com.advancedraidtracker.utility.wrappers.PlayerDidAttack;
 import com.advancedraidtracker.ui.charts.chartelements.ThrallOutlineBox;
+import com.advancedraidtracker.utility.wrappers.StringInt;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,8 @@ public class ChartData
 
     private final Map<RaidRoom, List<ThrallOutlineBox>> thrallBoxes;
     public final List<String> maidenCrabs = new ArrayList<>();
+	public final List<StringInt> playerStoodInBlood = new ArrayList<>();
+	public final List<StringInt> playerChancedDrain = new ArrayList<>();
     public List<DawnSpec> dawnSpecs = new ArrayList<>();
 
 
@@ -166,6 +169,16 @@ public class ChartData
     {
         maidenCrabs.add(crab);
     }
+
+	public void addMaidenStoodInBlood(String player, int tick)
+	{
+		playerStoodInBlood.add(new StringInt(player, tick));
+	}
+
+	public void addPlayerChancedDrain(String player, int tick)
+	{
+		playerChancedDrain.add(new StringInt(player, tick));
+	}
 
     public void addDawnSpec(DawnSpec dawnSpec)
     {

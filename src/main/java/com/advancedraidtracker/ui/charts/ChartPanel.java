@@ -1,6 +1,7 @@
 package com.advancedraidtracker.ui.charts;
 
 import com.advancedraidtracker.AdvancedRaidTrackerConfig;
+import com.advancedraidtracker.AdvancedRaidTrackerPlugin;
 import com.advancedraidtracker.constants.RaidRoom;
 import com.advancedraidtracker.constants.TobIDs;
 import static com.advancedraidtracker.constants.TobIDs.MAGE_THRALL;
@@ -63,6 +64,8 @@ import static com.advancedraidtracker.utility.UISwingUtility.*;
 import static com.advancedraidtracker.utility.datautility.DataWriter.PLUGIN_DIRECTORY;
 import static com.advancedraidtracker.ui.charts.chartelements.OutlineBox.getIcon;
 import static com.advancedraidtracker.utility.weapons.PlayerAnimation.*;
+import net.runelite.client.util.ImageUtil;
+
 @Slf4j
 public class ChartPanel extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener, FocusListener, KeyEventDispatcher
 {
@@ -810,6 +813,51 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         this.crabDescriptions.addAll(crabDescriptions);
     }
 
+	private List<StringInt> playerInBloodList = new ArrayList<>();
+	private List<StringInt> playerChancedDrainList = new ArrayList<>();
+
+	private boolean isDrainEvent(String player, int tick)
+	{
+		for (StringInt si : playerChancedDrainList)
+		{
+			if (si.string.equals(player) && si.val == tick)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private boolean isBloodEvent(String player, int tick)
+	{
+		for (StringInt si : playerInBloodList)
+		{
+			if (si.string.equals(player) && si.val == tick)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public void addPlayerStoodInBlood(List<StringInt> playerInBloodList)
+	{
+		this.playerInBloodList = playerInBloodList;
+		for(StringInt stringInt : playerInBloodList)
+		{
+			log.info("Stood in Blood: " + stringInt.string + ", " + stringInt.val);
+		}
+	}
+
+	public void addPlayerChancedDrain(List<StringInt> playerChancedDrainList)
+	{
+		this.playerChancedDrainList = playerChancedDrainList;
+		for(StringInt stringInt : playerInBloodList)
+		{
+			log.info("Stood in Blood: " + stringInt.string + ", " + stringInt.val);
+		}
+	}
+
     public void addMaidenCrab(String description)
     {
         crabDescriptions.add(description);
@@ -1139,6 +1187,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		}
 	}
 
+	private BufferedImage bloodSpawn;
+	private BufferedImage drainSymbol;
 
     public ChartPanel(String room, boolean isLive, AdvancedRaidTrackerConfig config, ClientThread clientThread, ConfigManager configManager, ItemManager itemManager, SpriteManager spriteManager)
     {
@@ -1162,7 +1212,10 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         boxWidth = LEFT_MARGIN + scale * (ticksToShow + 1);
         windowWidth = boxWidth+10;
         windowHeight = 600;
-        if(!isLive)
+		drainSymbol = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/drain.png");
+		bloodSpawn = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/bloodspawn.png");
+
+		if(!isLive)
         {
             addMouseListener(this);
             addMouseMotionListener(this);
@@ -2001,6 +2054,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 										g.drawString(String.valueOf(box.damage), xOffset+textOffset, yOffset+3+getStringHeight(g));
 										g.setFont(f);
 									}
+
                                 }
                             } catch (Exception e)
                             {
@@ -2051,6 +2105,54 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		else
 		{
 			return false;
+		}
+	}
+
+	private void drawDrainSymbols(Graphics2D g)
+	{
+		for (StringInt si : playerChancedDrainList)
+		{
+			if (shouldTickBeDrawn(si.val))
+			{
+				int xOffset = getXOffset(si.val);
+				Integer playerOffset = playerOffsets.get(si.string);
+				if (playerOffset != null)
+				{
+					int yOffset = ((playerOffset + 1) * scale) + getYOffset(si.val);
+					if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
+					{
+						BufferedImage scaledDrainSymbol = getScaledImage(drainSymbol, scale/2, scale/2);
+						if (scaledDrainSymbol != null)
+						{
+							g.drawImage(scaledDrainSymbol, xOffset, yOffset, null);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private void drawBloodSymbols(Graphics2D g)
+	{
+		for (StringInt si : playerInBloodList)
+		{
+			if (shouldTickBeDrawn(si.val))
+			{
+				int xOffset = getXOffset(si.val);
+				Integer playerOffset = playerOffsets.get(si.string);
+				if (playerOffset != null)
+				{
+					int yOffset = ((playerOffset + 1) * scale) + getYOffset(si.val);
+					if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
+					{
+						BufferedImage scaledBloodSymbol = getScaledImage(bloodSpawn, scale/2, scale/2);
+						if (scaledBloodSymbol != null)
+						{
+							g.drawImage(scaledBloodSymbol, xOffset, yOffset + (scale / 2), null);
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -2653,6 +2755,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         drawDawnSpecs(g);
         drawThrallBoxes(g);
         drawPrimaryBoxes(g);
+		drawDrainSymbols(g);
+		drawBloodSymbols(g);
         drawAutos(g);
         drawPotentialAutos(g);
         drawMarkerLines(g);

@@ -209,6 +209,8 @@ public class ChartFrame extends BaseFrame
             chartPanel.setRoomSpecificText(roomData.getRoomSpecificText(room));
             chartPanel.addAutos(roomData.getRoomAutos(room));
             chartPanel.addMaidenCrabs(chartData.maidenCrabs);
+			chartPanel.addPlayerChancedDrain(chartData.playerChancedDrain);
+			chartPanel.addPlayerStoodInBlood(chartData.playerStoodInBlood);
             if (room.equals(RaidRoom.VERZIK))
             {
                 chartPanel.addDawnSpecs(chartData.dawnSpecs);

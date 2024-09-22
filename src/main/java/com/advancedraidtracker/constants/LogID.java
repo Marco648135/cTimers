@@ -322,12 +322,12 @@ public enum LogID
             new ParseInstruction(INCREMENT, MAIDEN_PLAYER_STOOD_IN_THROWN_BLOOD),
             new ParseInstruction(ADD_TO_VALUE, MAIDEN_HEALS_FROM_THROWN_BLOOD),
             new ParseInstruction(ADD_TO_VALUE, MAIDEN_HP_HEALED),
-            "Player Stood In Thrown Blood", "Player", "Damage", "Ticks blood was alive for"), //player, damage, blood tick
+            "Player Stood In Thrown Blood", "Player", "Damage", "Ticks blood was alive for", "Room Tick"), //player, damage, blood tick
     PLAYER_STOOD_IN_SPAWNED_BLOOD(412, true, MAIDEN,
             new ParseInstruction(INCREMENT, MAIDEN_PLAYER_STOOD_IN_SPAWNED_BLOOD),
             new ParseInstruction(ADD_TO_VALUE, MAIDEN_HEALS_FROM_ANY_BLOOD),
             new ParseInstruction(ADD_TO_VALUE, MAIDEN_HP_HEALED),
-            "Player Stood In Spawned Blood", "Player", "Damage"),  //player, damage
+            "Player Stood In Spawned Blood", "Player", "Damage", "Room Tick"),  //player, damage
     CRAB_HEALED_MAIDEN(413, true, MAIDEN, //DO NOT USE
             new ParseInstruction(MANUAL_PARSE),
             "Crab Healed Maiden", "Damage"), //damage
