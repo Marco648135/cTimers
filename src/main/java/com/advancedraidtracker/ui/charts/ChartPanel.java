@@ -2115,21 +2115,24 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	private void drawDrainSymbols(Graphics2D g)
 	{
-		for (StringInt si : playerChancedDrainList)
+		if (room.equals("Maiden"))
 		{
-			if (shouldTickBeDrawn(si.val))
+			for (StringInt si : playerChancedDrainList)
 			{
-				int xOffset = getXOffset(si.val);
-				Integer playerOffset = playerOffsets.get(si.string);
-				if (playerOffset != null)
+				if (shouldTickBeDrawn(si.val))
 				{
-					int yOffset = ((playerOffset + 1) * scale) + getYOffset(si.val);
-					if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
+					int xOffset = getXOffset(si.val);
+					Integer playerOffset = playerOffsets.get(si.string);
+					if (playerOffset != null)
 					{
-						BufferedImage scaledDrainSymbol = getScaledImage(drainSymbol, scale/2, scale/2);
-						if (scaledDrainSymbol != null)
+						int yOffset = ((playerOffset + 1) * scale) + getYOffset(si.val);
+						if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
 						{
-							g.drawImage(scaledDrainSymbol, xOffset, yOffset, null);
+							BufferedImage scaledDrainSymbol = getScaledImage(drainSymbol, scale / 2, scale / 2);
+							if (scaledDrainSymbol != null)
+							{
+								g.drawImage(scaledDrainSymbol, xOffset, yOffset, null);
+							}
 						}
 					}
 				}
@@ -2139,21 +2142,24 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	private void drawHandSymbols(Graphics2D g)
 	{
-		for (StringInt si : playersHandedList)
+		if (room.equals("Bloat"))
 		{
-			if (shouldTickBeDrawn(si.val))
+			for (StringInt si : playersHandedList)
 			{
-				int xOffset = getXOffset(si.val);
-				Integer playerOffset = playerOffsets.get(si.string);
-				if (playerOffset != null)
+				if (shouldTickBeDrawn(si.val))
 				{
-					int yOffset = ((playerOffset + 1) * scale) + getYOffset(si.val);
-					if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
+					int xOffset = getXOffset(si.val);
+					Integer playerOffset = playerOffsets.get(si.string);
+					if (playerOffset != null)
 					{
-						BufferedImage handSymbol = getScaledImage(hand, scale/2, scale/2);
-						if (handSymbol != null)
+						int yOffset = ((playerOffset + 1) * scale) + getYOffset(si.val);
+						if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
 						{
-							g.drawImage(handSymbol, xOffset, yOffset + (scale / 2), null);
+							BufferedImage handSymbol = getScaledImage(hand, scale / 2, scale / 2);
+							if (handSymbol != null)
+							{
+								g.drawImage(handSymbol, xOffset, yOffset + (scale / 2), null);
+							}
 						}
 					}
 				}
@@ -2163,54 +2169,49 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	private void drawBloodSymbols(Graphics2D g)
 	{
-		RenderingHints qualityHints = new RenderingHints(
-			RenderingHints.KEY_ANTIALIASING,
-			RenderingHints.VALUE_ANTIALIAS_OFF);
-		g.setRenderingHints(qualityHints);
-		for (StringInt si : playerInThrownBloodList)
+		if (room.equals("Maiden"))
 		{
-			if (shouldTickBeDrawn(si.val))
+			for (StringInt si : playerInThrownBloodList)
 			{
-				int xOffset = getXOffset(si.val);
-				Integer playerOffset = playerOffsets.get(si.string);
-				if (playerOffset != null)
+				if (shouldTickBeDrawn(si.val))
 				{
-					int yOffset = ((playerOffset + 1) * scale) + getYOffset(si.val);
-					if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
+					int xOffset = getXOffset(si.val);
+					Integer playerOffset = playerOffsets.get(si.string);
+					if (playerOffset != null)
 					{
-						BufferedImage scaledBloodSymbol = getScaledImage(thrownBlood, scale/2, scale/2);
-						if (scaledBloodSymbol != null)
+						int yOffset = ((playerOffset + 1) * scale) + getYOffset(si.val);
+						if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
 						{
-							g.drawImage(scaledBloodSymbol, xOffset, yOffset + (scale / 2), null);
+							BufferedImage scaledBloodSymbol = getScaledImage(thrownBlood, scale / 2, scale / 2);
+							if (scaledBloodSymbol != null)
+							{
+								g.drawImage(scaledBloodSymbol, xOffset, yOffset + (scale / 2), null);
+							}
+						}
+					}
+				}
+			}
+			for (StringInt si : playerInSpawnedBloodList)
+			{
+				if (shouldTickBeDrawn(si.val))
+				{
+					int xOffset = getXOffset(si.val);
+					Integer playerOffset = playerOffsets.get(si.string);
+					if (playerOffset != null)
+					{
+						int yOffset = ((playerOffset + 1) * scale) + getYOffset(si.val);
+						if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
+						{
+							BufferedImage scaledBloodSymbol = getScaledImage(spawnedBlood, scale / 2, scale / 2);
+							if (scaledBloodSymbol != null)
+							{
+								g.drawImage(scaledBloodSymbol, xOffset, yOffset + (scale / 2), null);
+							}
 						}
 					}
 				}
 			}
 		}
-		for (StringInt si : playerInSpawnedBloodList)
-		{
-			if (shouldTickBeDrawn(si.val))
-			{
-				int xOffset = getXOffset(si.val);
-				Integer playerOffset = playerOffsets.get(si.string);
-				if (playerOffset != null)
-				{
-					int yOffset = ((playerOffset + 1) * scale) + getYOffset(si.val);
-					if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
-					{
-						BufferedImage scaledBloodSymbol = getScaledImage(spawnedBlood, scale/2, scale/2);
-						if (scaledBloodSymbol != null)
-						{
-							g.drawImage(scaledBloodSymbol, xOffset, yOffset + (scale / 2), null);
-						}
-					}
-				}
-			}
-		}
-		qualityHints = new RenderingHints(
-			RenderingHints.KEY_ANTIALIASING,
-			RenderingHints.VALUE_ANTIALIAS_ON);
-		g.setRenderingHints(qualityHints);
 	}
 
 
