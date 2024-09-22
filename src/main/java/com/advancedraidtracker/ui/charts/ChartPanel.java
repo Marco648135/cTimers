@@ -813,49 +813,39 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         this.crabDescriptions.addAll(crabDescriptions);
     }
 
-	private List<StringInt> playerInBloodList = new ArrayList<>();
+	private List<StringInt> playerInThrownBloodList = new ArrayList<>();
+	private List<StringInt> playerInSpawnedBloodList = new ArrayList<>();
 	private List<StringInt> playerChancedDrainList = new ArrayList<>();
 
-	private boolean isDrainEvent(String player, int tick)
+
+	public void addPlayerStoodInSpawnedBlood(String player, int tick)
 	{
-		for (StringInt si : playerChancedDrainList)
-		{
-			if (si.string.equals(player) && si.val == tick)
-			{
-				return true;
-			}
-		}
-		return false;
+		playerInSpawnedBloodList.add(new StringInt(player, tick));
 	}
 
-	private boolean isBloodEvent(String player, int tick)
+	public void addPlayerStoodInThrownBlood(String player, int tick)
 	{
-		for (StringInt si : playerInBloodList)
-		{
-			if (si.string.equals(player) && si.val == tick)
-			{
-				return true;
-			}
-		}
-		return false;
+		playerInThrownBloodList.add(new StringInt(player, tick));
 	}
 
-	public void addPlayerStoodInBlood(List<StringInt> playerInBloodList)
+	public void addPlayerChancedDrain(String player, int tick)
 	{
-		this.playerInBloodList = playerInBloodList;
-		for(StringInt stringInt : playerInBloodList)
-		{
-			log.info("Stood in Blood: " + stringInt.string + ", " + stringInt.val);
-		}
+		playerChancedDrainList.add(new StringInt(player,tick));
 	}
 
-	public void addPlayerChancedDrain(List<StringInt> playerChancedDrainList)
+	public void addPlayerStoodInThrownBloods(List<StringInt> playerInThrownBloodList)
+	{
+		this.playerInThrownBloodList = playerInThrownBloodList;
+	}
+
+	public void addPlayerStoodInSpawnedBloods(List<StringInt> playerInSpawnedBloodList)
+	{
+		this.playerInSpawnedBloodList = playerInSpawnedBloodList;
+	}
+
+	public void addPlayerChancedDrains(List<StringInt> playerChancedDrainList)
 	{
 		this.playerChancedDrainList = playerChancedDrainList;
-		for(StringInt stringInt : playerInBloodList)
-		{
-			log.info("Stood in Blood: " + stringInt.string + ", " + stringInt.val);
-		}
 	}
 
     public void addMaidenCrab(String description)
@@ -1187,7 +1177,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		}
 	}
 
-	private BufferedImage bloodSpawn;
+	private BufferedImage spawnedBlood;
+	private BufferedImage thrownBlood;
 	private BufferedImage drainSymbol;
 
     public ChartPanel(String room, boolean isLive, AdvancedRaidTrackerConfig config, ClientThread clientThread, ConfigManager configManager, ItemManager itemManager, SpriteManager spriteManager)
@@ -1213,7 +1204,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         windowWidth = boxWidth+10;
         windowHeight = 600;
 		drainSymbol = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/drain.png");
-		bloodSpawn = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/bloodspawn.png");
+		spawnedBlood = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/spawnedblood.png");
+		thrownBlood = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/thrownblood.png");
 
 		if(!isLive)
         {
@@ -2134,7 +2126,11 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	private void drawBloodSymbols(Graphics2D g)
 	{
-		for (StringInt si : playerInBloodList)
+		RenderingHints qualityHints = new RenderingHints(
+			RenderingHints.KEY_ANTIALIASING,
+			RenderingHints.VALUE_ANTIALIAS_OFF);
+		g.setRenderingHints(qualityHints);
+		for (StringInt si : playerInThrownBloodList)
 		{
 			if (shouldTickBeDrawn(si.val))
 			{
@@ -2145,7 +2141,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 					int yOffset = ((playerOffset + 1) * scale) + getYOffset(si.val);
 					if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
 					{
-						BufferedImage scaledBloodSymbol = getScaledImage(bloodSpawn, scale/2, scale/2);
+						BufferedImage scaledBloodSymbol = getScaledImage(thrownBlood, scale/2, scale/2);
 						if (scaledBloodSymbol != null)
 						{
 							g.drawImage(scaledBloodSymbol, xOffset, yOffset + (scale / 2), null);
@@ -2154,6 +2150,30 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 				}
 			}
 		}
+		for (StringInt si : playerInSpawnedBloodList)
+		{
+			if (shouldTickBeDrawn(si.val))
+			{
+				int xOffset = getXOffset(si.val);
+				Integer playerOffset = playerOffsets.get(si.string);
+				if (playerOffset != null)
+				{
+					int yOffset = ((playerOffset + 1) * scale) + getYOffset(si.val);
+					if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
+					{
+						BufferedImage scaledBloodSymbol = getScaledImage(spawnedBlood, scale/2, scale/2);
+						if (scaledBloodSymbol != null)
+						{
+							g.drawImage(scaledBloodSymbol, xOffset, yOffset + (scale / 2), null);
+						}
+					}
+				}
+			}
+		}
+		qualityHints = new RenderingHints(
+			RenderingHints.KEY_ANTIALIASING,
+			RenderingHints.VALUE_ANTIALIAS_ON);
+		g.setRenderingHints(qualityHints);
 	}
 
 

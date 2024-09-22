@@ -16,7 +16,6 @@ import java.awt.event.ComponentListener;
 import static java.awt.event.KeyEvent.KEY_RELEASED;
 import static java.awt.event.KeyEvent.VK_LEFT;
 import static java.awt.event.KeyEvent.VK_RIGHT;
-import javax.swing.event.ChangeListener;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -209,8 +208,9 @@ public class ChartFrame extends BaseFrame
             chartPanel.setRoomSpecificText(roomData.getRoomSpecificText(room));
             chartPanel.addAutos(roomData.getRoomAutos(room));
             chartPanel.addMaidenCrabs(chartData.maidenCrabs);
-			chartPanel.addPlayerChancedDrain(chartData.playerChancedDrain);
-			chartPanel.addPlayerStoodInBlood(chartData.playerStoodInBlood);
+			chartPanel.addPlayerChancedDrains(chartData.playerChancedDrain);
+			chartPanel.addPlayerStoodInThrownBloods(chartData.playerStoodInThrownBlood);
+			chartPanel.addPlayerStoodInSpawnedBloods(chartData.playerStoodInSpawnedBlood);
             if (room.equals(RaidRoom.VERZIK))
             {
                 chartPanel.addDawnSpecs(chartData.dawnSpecs);

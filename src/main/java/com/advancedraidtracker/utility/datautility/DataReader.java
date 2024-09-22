@@ -195,13 +195,13 @@ public class DataReader //todo move any methods that read files to here. I belie
 					case "411":
 						if(!line[7].isEmpty())
 						{
-							chartData.addMaidenStoodInBlood(line[4], Integer.parseInt(line[7]));
+							chartData.addMaidenStoodInSpawnedBlood(line[4], Integer.parseInt(line[7]));
 						}
 						break;
 					case "412":
 						if(!line[6].isEmpty())
 						{
-							chartData.addMaidenStoodInBlood(line[4], Integer.parseInt(line[6]));
+							chartData.addMaidenStoodInThrownBlood(line[4], Integer.parseInt(line[6]));
 						}
 						break;
 					case "530":

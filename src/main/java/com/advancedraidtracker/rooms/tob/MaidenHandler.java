@@ -386,9 +386,11 @@ public class MaidenHandler extends TOBRoomHandler
             {
                 if (p.bloodTicksAlive == -1)
                 {
+					plugin.liveFrame.addStoodInSpawnedBlood(getName(), p.playerName, (client.getTickCount()-roomStartTick));
                     clog.addLine(PLAYER_STOOD_IN_SPAWNED_BLOOD, p.playerName, String.valueOf(bloodDamage), String.valueOf((client.getTickCount()-roomStartTick))); //player, dmg, room tick
                 } else
                 {
+					plugin.liveFrame.addStoodInThrownBlood(getName(), p.playerName, (client.getTickCount()-roomStartTick));
                     clog.addLine(PLAYER_STOOD_IN_THROWN_BLOOD, p.playerName, String.valueOf(bloodDamage), String.valueOf(p.bloodTicksAlive), String.valueOf(client.getTickCount()-roomStartTick)); //player, dmg, blood tick, room tick
                 }
                 bloodHeals++;
@@ -630,6 +632,7 @@ public class MaidenHandler extends TOBRoomHandler
                         plugin.sendChatMessage(drained.getName() + " was targeted by Maiden with melee as their highest bonus.");
                     }
                     clog.addLine(MAIDEN_PLAYER_DRAINED, drained.getName(), String.valueOf((client.getTickCount() - roomStartTick)));
+					plugin.liveFrame.addDrain(getName(), drained.getName(), (client.getTickCount()-roomStartTick));
                 }
             }
             didAuto = false;
