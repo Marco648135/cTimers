@@ -1,5 +1,6 @@
 package com.advancedraidtracker.ui.dpsanalysis;
 
+import lombok.Setter;
 import lombok.Value;
 
 @Value

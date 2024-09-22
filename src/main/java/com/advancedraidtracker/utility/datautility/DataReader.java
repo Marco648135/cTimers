@@ -222,7 +222,7 @@ public class DataReader //todo move any methods that read files to here. I belie
         try (Stream<Path> subLogFiles = Files.walk(Paths.get(PLUGIN_DIRECTORY)))
         {
             return subLogFiles
-                    .filter(file -> !file.toAbsolutePath().startsWith(Paths.get(PLUGIN_DIRECTORY, "misc-dir").toString())
+                    .filter(file -> (!(file.toAbsolutePath().startsWith(Paths.get(PLUGIN_DIRECTORY, "misc-dir").toString()) || file.toAbsolutePath().startsWith(Paths.get(PLUGIN_DIRECTORY, "dpsutility").toString())))
                             && !Files.isDirectory(file)
                             && !parsedFiles.contains(file.getFileName().toString()))
                     .map(file ->

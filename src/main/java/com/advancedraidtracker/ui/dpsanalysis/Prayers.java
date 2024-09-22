@@ -1,8 +1,6 @@
 package com.advancedraidtracker.ui.dpsanalysis;
 
-import java.awt.image.BufferedImage;
 import net.runelite.api.SpriteID;
-import net.runelite.client.game.SpriteManager;
 
 public enum Prayers
 {
@@ -42,12 +40,12 @@ public enum Prayers
 	public final int def;    // Defence boost (%)
 	public final int str;    // Strength boost (%)
 	public final int att;    // Attack boost (%)
-	public final int ran;    // Ranged attack boost (%)
+	public final int ranA;    // Ranged attack boost (%)
 	public final int ranD;   // Ranged strength boost (%)
 	public final int mag;    // Magic attack and defence boost (%)
 	public final int magD;   // Magic damage boost (%)
 
-	Prayers(String name, int disabledID, int enabledID, int def, int str, int att, int ran, int ranD, int mag, int magD)
+	Prayers(String name, int disabledID, int enabledID, int def, int str, int att, int ranA, int ranD, int mag, int magD)
 	{
 		this.name = name;
 		this.disabledID = disabledID;
@@ -55,7 +53,7 @@ public enum Prayers
 		this.def = def;
 		this.str = str;
 		this.att = att;
-		this.ran = ran;
+		this.ranA = ranA;
 		this.ranD = ranD;
 		this.mag = mag;
 		this.magD = magD;

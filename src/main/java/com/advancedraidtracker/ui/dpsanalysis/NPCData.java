@@ -1,6 +1,8 @@
 package com.advancedraidtracker.ui.dpsanalysis;
 
+import java.awt.image.BufferedImage;
 import java.util.List;
+import lombok.Setter;
 import lombok.Value;
 
 @Value

@@ -2688,7 +2688,6 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         g.setColor(oldColor);
         g.dispose();
         repaint();
-		log.info("reached end!");
     }
 
     private void drawAlignmentMarkers(Graphics2D g)
