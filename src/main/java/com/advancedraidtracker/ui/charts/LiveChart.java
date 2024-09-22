@@ -302,6 +302,11 @@ public class LiveChart extends BaseFrame
 		getPanel(room).addPlayerChancedDrain(player,tick);
 	}
 
+	public void addPlayerHanded(String room, String player, int tick)
+	{
+		getPanel(room).addPlayerHanded(player, tick);
+	}
+
 	public void addStoodInThrownBlood(String room, String player, int tick)
 	{
 		getPanel(room).addPlayerStoodInThrownBlood(player,tick);

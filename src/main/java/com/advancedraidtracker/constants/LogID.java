@@ -371,7 +371,8 @@ public enum LogID
     ADD_NPC_MAPPING(587, false, ANY_TOB,
             new ParseInstruction(MANUAL_PARSE),
             "Update NPC Mappings", "NPC Index", "Description", "Room"),
-
+	BLOAT_PLAYER_HANDED(987, false, BLOAT, new ParseInstruction(MANUAL_PARSE),
+		"Bloat Player Handed", "Player", "Room Tick"),
     UNKNOWN(-1, false, ANY_TOB,
             new ParseInstruction(MANUAL_PARSE),
             "Unknown"),

@@ -6,6 +6,7 @@ import com.advancedraidtracker.constants.RaidRoom;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
+import net.runelite.api.WorldView;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
 import com.advancedraidtracker.utility.Point;
@@ -202,6 +203,25 @@ public class BloatHandler extends TOBRoomHandler
             }
         }
     }
+
+	public void updateGraphicsObjectCreated(GraphicsObjectCreated event)
+	{
+		if(event.getGraphicsObject().getId() == 1576)
+		{
+			WorldPoint wp = WorldPoint.fromLocal(client, event.getGraphicsObject().getLocation());
+			for(Player p : client.getWorldView(-1).players())
+			{
+				WorldPoint pwp = p.getWorldLocation();
+				if(wp.getRegionX() == pwp.getRegionX() && wp.getRegionY() == pwp.getRegionY())
+				{
+					int currentTick = (client.getTickCount()-roomStartTick);
+					plugin.sendChatMessage(p.getName() + " got handed on room tick " + currentTick + " (" + RoomUtil.time(currentTick) + " )");
+					clog.addLine(BLOAT_PLAYER_HANDED, p.getName() + currentTick);
+					plugin.liveFrame.addPlayerHanded(getName(), p.getName(), currentTick);
+				}
+			}
+		}
+	}
 
     public void updateNpcSpawned(NpcSpawned event)
     {

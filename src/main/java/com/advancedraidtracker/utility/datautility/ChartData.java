@@ -28,6 +28,7 @@ public class ChartData
 	public final List<StringInt> playerStoodInThrownBlood = new ArrayList<>();
 	public final List<StringInt> playerStoodInSpawnedBlood = new ArrayList<>();
 	public final List<StringInt> playerChancedDrain = new ArrayList<>();
+	public final List<StringInt> playerHanded = new ArrayList<>();
     public List<DawnSpec> dawnSpecs = new ArrayList<>();
 
 
@@ -170,6 +171,11 @@ public class ChartData
     {
         maidenCrabs.add(crab);
     }
+
+	public void addPlayerHanded(String player, int tick)
+	{
+		playerHanded.add(new StringInt(player, tick));
+	}
 
 	public void addMaidenStoodInThrownBlood(String player, int tick)
 	{

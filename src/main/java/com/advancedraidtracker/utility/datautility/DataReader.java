@@ -207,6 +207,9 @@ public class DataReader //todo move any methods that read files to here. I belie
 					case "530":
 						chartData.addPlayerChancedDrain(line[4], Integer.parseInt(line[5]));
 						break;
+					case "987":
+						chartData.addPlayerHanded(line[4], Integer.parseInt(line[5]));
+						break;
                 }
             }
             chartData.addDawnSpecs(dawnSpecs);

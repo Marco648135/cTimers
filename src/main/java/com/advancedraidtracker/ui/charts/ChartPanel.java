@@ -816,6 +816,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	private List<StringInt> playerInThrownBloodList = new ArrayList<>();
 	private List<StringInt> playerInSpawnedBloodList = new ArrayList<>();
 	private List<StringInt> playerChancedDrainList = new ArrayList<>();
+	private List<StringInt> playersHandedList = new ArrayList<>();
 
 
 	public void addPlayerStoodInSpawnedBlood(String player, int tick)
@@ -833,9 +834,19 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		playerChancedDrainList.add(new StringInt(player,tick));
 	}
 
+	public void addPlayerHanded(String player, int tick)
+	{
+		playersHandedList.add(new StringInt(player, tick));
+	}
+
 	public void addPlayerStoodInThrownBloods(List<StringInt> playerInThrownBloodList)
 	{
 		this.playerInThrownBloodList = playerInThrownBloodList;
+	}
+
+	public void addPlayersHanded(List<StringInt> playersHandedList)
+	{
+		this.playersHandedList = playersHandedList;
 	}
 
 	public void addPlayerStoodInSpawnedBloods(List<StringInt> playerInSpawnedBloodList)
@@ -1180,6 +1191,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	private BufferedImage spawnedBlood;
 	private BufferedImage thrownBlood;
 	private BufferedImage drainSymbol;
+	private BufferedImage hand;
 
     public ChartPanel(String room, boolean isLive, AdvancedRaidTrackerConfig config, ClientThread clientThread, ConfigManager configManager, ItemManager itemManager, SpriteManager spriteManager)
     {
@@ -1206,6 +1218,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		drainSymbol = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/drain.png");
 		spawnedBlood = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/spawnedblood.png");
 		thrownBlood = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/thrownblood.png");
+		hand = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/hand.png");
 
 		if(!isLive)
         {
@@ -2124,6 +2137,30 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		}
 	}
 
+	private void drawHandSymbols(Graphics2D g)
+	{
+		for (StringInt si : playersHandedList)
+		{
+			if (shouldTickBeDrawn(si.val))
+			{
+				int xOffset = getXOffset(si.val);
+				Integer playerOffset = playerOffsets.get(si.string);
+				if (playerOffset != null)
+				{
+					int yOffset = ((playerOffset + 1) * scale) + getYOffset(si.val);
+					if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
+					{
+						BufferedImage handSymbol = getScaledImage(hand, scale/2, scale/2);
+						if (handSymbol != null)
+						{
+							g.drawImage(handSymbol, xOffset, yOffset + (scale / 2), null);
+						}
+					}
+				}
+			}
+		}
+	}
+
 	private void drawBloodSymbols(Graphics2D g)
 	{
 		RenderingHints qualityHints = new RenderingHints(
@@ -2777,6 +2814,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         drawPrimaryBoxes(g);
 		drawDrainSymbols(g);
 		drawBloodSymbols(g);
+		drawHandSymbols(g);
         drawAutos(g);
         drawPotentialAutos(g);
         drawMarkerLines(g);
