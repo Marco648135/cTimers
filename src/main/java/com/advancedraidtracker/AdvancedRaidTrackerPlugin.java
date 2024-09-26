@@ -13,6 +13,9 @@ import com.advancedraidtracker.ui.charts.LiveChart;
 import com.advancedraidtracker.ui.RaidTrackerSidePanel;
 import com.advancedraidtracker.ui.charts.chartelements.OutlineBox;
 import com.advancedraidtracker.utility.*;
+import static com.advancedraidtracker.utility.DataType.ATTACK;
+import static com.advancedraidtracker.utility.DataType.RING;
+import static com.advancedraidtracker.utility.DataType.STRENGTH;
 import com.advancedraidtracker.utility.datautility.DataReader;
 import com.advancedraidtracker.utility.datautility.DataWriter;
 import com.advancedraidtracker.utility.thrallvengtracking.*;
@@ -196,10 +199,15 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     private List<WorldPoint> chinSpawned = new ArrayList<>();
 
     public LiveChart liveFrame;
+	private int ringData;
+	private int strLevelData;
+	private int attLevelData;
+	private List<Integer> prayerData;
 
     @Override
     protected void shutDown()
     {
+		wsClient.unregisterMessage(PlayerDataChanged.class);
         partyIntact = false;
         if(currentRoom != null)
         {
@@ -286,6 +294,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         tekton = new TektonHandler(client, clog, config, this);
 
         infernoHandler = new InfernoHandler(client, clog, config, this);
+
+		wsClient.registerMessage(PlayerDataChanged.class);
 
         inTheatre = false;
         wasInTheatre = false;
@@ -1066,6 +1076,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
             currentRoom.updateGameTick(event);
             if (currentRoom.isActive())
             {
+				checkChangedPartyData();
 				SwingUtilities.invokeLater(() ->
 				{
 					liveFrame.incrementTick(currentRoom.getName());
@@ -1074,7 +1085,12 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                 liveFrame.getPanel(currentRoom.getName()).addRoomHP(client.getTickCount() - currentRoom.roomStartTick, client.getVarbitValue(HP_VARBIT));
                 clog.addLine(UPDATE_HP, String.valueOf(client.getVarbitValue(HP_VARBIT)), String.valueOf(client.getTickCount() - currentRoom.roomStartTick), currentRoom.getName());
             }
-
+			else
+			{
+				ringData = -1;
+				attLevelData = -1;
+				strLevelData = -1;
+			}
             if (client.getTickCount() == deferredTick)
             {
                 if (currentRoom instanceof NexusHandler)
@@ -1154,7 +1170,65 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         clog.writeFile();
     }
 
-    private void updateThrallVengTracker()
+	private void checkChangedPartyData()
+	{
+		checkRing();
+		checkLevels();
+		//checkPrayers();
+	}
+
+	private void checkLevels()
+	{
+		int att = client.getBoostedSkillLevel(Skill.ATTACK);
+		int str = client.getBoostedSkillLevel(Skill.STRENGTH);
+
+		if(att != attLevelData)
+		{
+			party.send(new PlayerDataChanged(client.getLocalPlayer().getName(), ATTACK, att, getRoomTick()));
+			log.info("sending changed attack: " + att);
+			attLevelData = att;
+		}
+		if(str != strLevelData)
+		{
+			party.send(new PlayerDataChanged(client.getLocalPlayer().getName(), STRENGTH, str, getRoomTick()));
+			log.info("sending changed strength: " + str);
+			strLevelData = str;
+		}
+	}
+
+	private void checkRing()
+	{
+		ItemContainer equipment = client.getItemContainer(InventoryID.EQUIPMENT);
+		int ring = -1;
+		if (equipment != null)
+		{
+			Item[] equipmentItems = equipment.getItems();
+			int ringSlotIndex = EquipmentInventorySlot.RING.getSlotIdx();
+
+			if (ringSlotIndex >= 0 && ringSlotIndex < equipmentItems.length)
+			{
+				Item ringItem = equipmentItems[ringSlotIndex];
+				if (ringItem != null && ringItem.getId() > 0)
+				{
+					ring = ringItem.getId();
+				}
+			}
+		}
+		if(ring != ringData)
+		{
+			party.send(new PlayerDataChanged(client.getLocalPlayer().getName(), RING, ring, getRoomTick()));
+			log.info("sending changed ring: " + ring);
+			ringData = ring;
+		}
+	}
+
+	@Subscribe
+	public void onPlayerDataChanged(PlayerDataChanged e)
+	{
+		log.info("Received player data changed of type: " + e.getChangeType().name + ", new value: " + e.getNewValue() + " on tick " + e.getRoomTick());
+	}
+
+	private void updateThrallVengTracker()
     {
         playersTextChanged.clear();
         localPlayers.clear();
