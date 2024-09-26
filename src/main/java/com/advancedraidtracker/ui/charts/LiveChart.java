@@ -3,7 +3,9 @@ package com.advancedraidtracker.ui.charts;
 import com.advancedraidtracker.AdvancedRaidTrackerConfig;
 import com.advancedraidtracker.constants.RaidType;
 import com.advancedraidtracker.ui.BaseFrame;
+import com.advancedraidtracker.utility.wrappers.DinhsSpec;
 import com.advancedraidtracker.utility.wrappers.PlayerDidAttack;
+import com.advancedraidtracker.utility.wrappers.StringInt;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -386,4 +388,14 @@ public class LiveChart extends BaseFrame
             infPanels.get(name).setAttackers(cleanedPlayers);
         }
     }
+
+	public void addDinhsSpec(String room, String name, int size, int i)
+	{
+		getPanel(room).addDinhsSpec(new DinhsSpec(name, size, i));
+	}
+
+	public void addBadChin(String room, String name, int i)
+	{
+		getPanel(room).addBadChin(name, i);
+	}
 }

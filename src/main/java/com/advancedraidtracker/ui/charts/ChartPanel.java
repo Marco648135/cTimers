@@ -1104,6 +1104,30 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	private static final int BUTTON_HORIZONTAL_PADDING = 10; // Padding on left and right within the button
 	private static final int BUTTON_HALF_WIDTH_PADDING = 5; // Padding within left half
 
+	private List<DinhsSpec> dinhsSpecs = new ArrayList<>();
+
+	public void addDinhsSpec(DinhsSpec dinhsSpec)
+	{
+		dinhsSpecs.add(dinhsSpec);
+	}
+
+	public void addDinhsSpecs(List<DinhsSpec> dinhsSpecs)
+	{
+		this.dinhsSpecs = dinhsSpecs;
+	}
+
+	private List<StringInt> badChins = new ArrayList<>();
+
+	public void addBadChin(String name, int i)
+	{
+		badChins.add(new StringInt(name, i));
+	}
+
+	public void addBadChins(List<StringInt> badChins)
+	{
+		this.badChins = badChins;
+	}
+
 	private class SidebarButton {
 		String id;
 		String label;
@@ -1192,6 +1216,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	private BufferedImage thrownBlood;
 	private BufferedImage drainSymbol;
 	private BufferedImage hand;
+	private BufferedImage xSymbol;
+	private BufferedImage checkSymbol;
 
     public ChartPanel(String room, boolean isLive, AdvancedRaidTrackerConfig config, ClientThread clientThread, ConfigManager configManager, ItemManager itemManager, SpriteManager spriteManager)
     {
@@ -1219,6 +1245,9 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		spawnedBlood = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/spawnedblood.png");
 		thrownBlood = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/thrownblood.png");
 		hand = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/hand.png");
+		xSymbol = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/x.png");
+		checkSymbol = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/check.png");
+
 
 		if(!isLive)
         {
@@ -1785,6 +1814,10 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
                         g.drawRect(LEFT_MARGIN - (int) (scale * 1.5), yPosition - (fontHeight / 2) - (scale / 2), (int) (scale * 1.5), scale);
                     }
                     g.setColor(config.fontColor());
+					if(lateDroppers.contains(attackerName))
+					{
+						g.setColor(Color.RED);
+					}
                     g.drawString(attackerName, textPosition, yPosition + margin);
                 }
 
@@ -1819,6 +1852,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
     }
 
+	private List<String> lateDroppers = new ArrayList<>();
+
     private void drawRoomSpecificData(Graphics2D g)
     {
         if (!specific.isEmpty() || room.equals("Nylocas")) //todo make generic
@@ -1843,6 +1878,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
                 }
             } else
             {
+				lateDroppers.clear();
                 for (Integer i : specific.keySet())
                 {
                     int xOffset = getXOffset(i);
@@ -1852,7 +1888,62 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
                     int strWidth = getStringBounds(g, specific.get(i)).width;
                     if (yOffset > scale + 5 && xOffset > LEFT_MARGIN-5)
                     {
-                        g.drawString(specific.get(i), xOffset + (scale / 2) - (strWidth / 2), yOffset - (scale / 2) + (fontHeight / 2));
+						if(room.contains("Verzik"))
+						{
+							boolean lateDrop = true;
+							int lastSpecTick = 0;
+							String lastSpecPlayer = "";
+							for(OutlineBox box : outlineBoxes)
+							{
+								if(box.playerAnimation.equals(DAWN_SPEC) || box.playerAnimation.equals(DAWN_AUTO))
+								{
+									if(box.tick > lastSpecTick && box.tick < i)
+									{
+										lastSpecTick = box.tick;
+										lastSpecPlayer = box.player;
+									}
+								}
+								if(box.tick == i-2)
+								{
+									if(box.playerAnimation.equals(DAWN_SPEC))
+									{
+										lateDrop = false;
+									}
+								}
+							}
+							if(lateDrop)
+							{
+								lateDroppers.add(lastSpecPlayer);
+							}
+							int sixth = scale/8;
+							int twoThird = scale * 3 / 4;
+							g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
+								RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+							g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
+								RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+							g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+								RenderingHints.VALUE_ANTIALIAS_ON);
+							if(lateDrop)
+							{
+								BufferedImage xSymbolScaled = getSmoothScaledIcon(xSymbol, twoThird, twoThird);
+								g.drawImage(xSymbolScaled, xOffset+sixth, yOffset - scale+sixth, null);
+								g.setColor(config.fontColor());
+								int stringHeight = getStringHeight(g);
+								g.drawString(lastSpecPlayer, xOffset + scale, yOffset-scale/2+stringHeight/2);
+							}
+							else
+							{
+								BufferedImage checkSymbolScaled = getSmoothScaledIcon(checkSymbol, twoThird, twoThird);
+								g.drawImage(checkSymbolScaled, xOffset+sixth, yOffset - scale+sixth, null);
+							}
+							g.setStroke(new BasicStroke(2));
+							g.setColor(config.primaryDark());
+							g.drawOval(xOffset+sixth, yOffset-scale+sixth, twoThird, twoThird);
+						}
+						else
+						{
+							g.drawString(specific.get(i), xOffset + (scale / 2) - (strWidth / 2), yOffset - (scale / 2) + (fontHeight / 2));
+						}
                     }
                 }
             }
@@ -2047,6 +2138,21 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
                                         g.setFont(f.deriveFont(9.0f));
                                         textOffset = (scale / 2) - (getStringWidth(g, box.additionalText) / 2);
                                         g.setColor(config.fontColor());
+										{
+											int damage = 100;
+											try
+											{
+												damage = Integer.parseInt(box.additionalText);
+											}
+											catch (Exception e)
+											{
+
+											}
+											if(damage > 135)
+											{
+												g.setColor(Color.GREEN);
+											}
+										}
                                         g.drawString(box.additionalText, xOffset + textOffset, yOffset + scale - 3);
                                         g.setFont(f);
                                     }
@@ -2816,6 +2922,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		drawDrainSymbols(g);
 		drawBloodSymbols(g);
 		drawHandSymbols(g);
+		drawBadChins(g);
+		drawDinhsSpecs(g);
         drawAutos(g);
         drawPotentialAutos(g);
         drawMarkerLines(g);
@@ -2853,7 +2961,66 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
         repaint();
     }
 
-    private void drawAlignmentMarkers(Graphics2D g)
+	private void drawBadChins(Graphics2D g)
+	{
+		if (room.equals("Maiden"))
+		{
+			for (StringInt si : badChins)
+			{
+				if (shouldTickBeDrawn(si.val))
+				{
+					int xOffset = getXOffset(si.val);
+					Integer playerOffset = playerOffsets.get(si.string);
+					if (playerOffset != null)
+					{
+						int yOffset = ((playerOffset + 1) * scale) + getYOffset(si.val);
+						if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
+						{
+							BufferedImage xSymbolScaled = getScaledImage(xSymbol, scale / 2, scale / 2);
+
+							g.setColor(config.primaryDark());
+							g.fillOval(xOffset, yOffset, scale/2, scale/2);
+							if (xSymbolScaled != null)
+							{
+								g.drawImage(xSymbolScaled, xOffset, yOffset, null);
+							}
+							g.setStroke(new BasicStroke(2));
+							g.drawOval(xOffset, yOffset, scale/2, scale/2);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private void drawDinhsSpecs(Graphics2D g)
+	{
+		for(DinhsSpec dinhsSpec : dinhsSpecs)
+		{
+			for(OutlineBox box : outlineBoxes)
+			{
+				if(dinhsSpec.getPlayer().equals(box.player) && dinhsSpec.getTick() == box.tick)
+				{
+					if (shouldTickBeDrawn(dinhsSpec.getTick()))
+					{
+						int xOffset = getXOffset(dinhsSpec.getTick());
+						Integer playerOffset = playerOffsets.get(dinhsSpec.getPlayer());
+						if (playerOffset != null)
+						{
+							int yOffset = ((playerOffset + 1) * scale) + getYOffset(dinhsSpec.getTick());
+							if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
+							{
+								g.setColor(config.fontColor());
+								g.drawString(String.valueOf(dinhsSpec.getTargets()), xOffset, yOffset+scale/2);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	private void drawAlignmentMarkers(Graphics2D g)
     {
         g.setColor(config.markerColor());
         if(currentTool == ADD_TEXT_TOOL && currentlyBeingEdited == null)

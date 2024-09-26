@@ -87,6 +87,31 @@ public class UISwingUtility //methods used to get components that override LAF
         return createTransformed(image, at);
     }
 
+	public static BufferedImage getSmoothScaledIcon(BufferedImage image, int width, int height)
+	{
+		if (image == null)
+		{
+			throw new IllegalArgumentException("The source image cannot be null.");
+		}
+		if (width <= 0 || height <= 0)
+		{
+			throw new IllegalArgumentException("Width and height must be positive values.");
+		}
+
+		BufferedImage scaledImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+
+		Graphics2D g2d = scaledImage.createGraphics();
+
+		g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+		g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+		g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+		g2d.drawImage(image, 0, 0, width, height, null);
+		g2d.dispose();
+
+		return scaledImage;
+	}
+
     public static BufferedImage getScaledImage(BufferedImage image, int width, int height)
     {
         int imageWidth = image.getWidth();

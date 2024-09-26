@@ -251,7 +251,7 @@ public enum LogID
 
     MAIDEN_DINHS_SPEC(111, true, MAIDEN,
             new ParseInstruction(MANUAL_PARSE),
-            "Dinhs Spec", "Player", "Primary Target:Primary Target HP", "Targets~HP : Separated", "Targets Below 27hp"), //Player, tick, primary target:primary target hp, targets~hp:,stats:stats
+            "Dinhs Spec", "Player", "Primary Target:Primary Target HP", "Targets~HP : Separated", "Targets Below 27hp", "Room Tick"), //Player, tick, primary target:primary target hp, targets~hp:,stats:stats
     MAIDEN_DINHS_TARGET(112, true, MAIDEN,
             new ParseInstruction(MANUAL_PARSE),
             "Dinhs Target"), //
@@ -260,7 +260,7 @@ public enum LogID
             new ParseInstruction(INCREMENT_IF_GREATER_THAN, MAIDEN_CHINS_THROWN_WRONG_DISTANCE, "Distance", 6),
             new ParseInstruction(INCREMENT_IF_LESS_THAN, MAIDEN_CHINS_THROWN_WRONG_DISTANCE, "Distance", 4),
             new ParseInstruction(INCREMENT, MAIDEN_CHINS_THROWN),
-            "Chin Thrown", "Player", "Distance"), //player, distance
+            "Chin Thrown", "Player", "Distance", "Room Tick"), //player, distance
 
     ACCURATE_MAIDEN_START(201, true, MAIDEN,
             new ParseInstruction(ACCURATE_START),

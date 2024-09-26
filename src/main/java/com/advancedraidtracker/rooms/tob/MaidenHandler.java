@@ -189,12 +189,13 @@ public class MaidenHandler extends TOBRoomHandler
                     return;
                 }
                 int distance = target.getWorldArea().distanceTo(player.getWorldLocation());
-                clog.addLine(MAIDEN_CHIN_THROWN, player.getName(), String.valueOf(distance));
+                clog.addLine(MAIDEN_CHIN_THROWN, player.getName(), String.valueOf(distance), String.valueOf(client.getTickCount()-roomStartTick));
                 if (distance < 4 || distance > 6)
                 {
                     if (config.showMistakesInChat())
                     {
-                        client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", player.getName() + " chinned from " + distance + " tiles away.", null, false);
+						plugin.liveFrame.addBadChin(getName(), player.getName(), client.getTickCount()-roomStartTick);
+						client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", player.getName() + " chinned from " + distance + " tiles away.", null, false);
                     }
                 }
             }
@@ -564,6 +565,7 @@ public class MaidenHandler extends TOBRoomHandler
                         client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", p.getName() + " only targeted " + targets.size() + " additional NPCs with dinhs spec.", null, false);
                     }
                 }
+				log.info("Targets: " + targets.size());
                 ArrayList<Integer> healths = new ArrayList<>();
                 for (NPC npc : targets)
                 {
@@ -584,8 +586,10 @@ public class MaidenHandler extends TOBRoomHandler
                     }
                     value4.append(npc.getName()).append("~").append(additionalDescription).append("~").append(hp).append(":");
                 }
+				log.info("value4: " + value4.toString());
                 String value5 = getTargetsBelow27(healths, targets, didDoubleHit);
-                clog.addLine(MAIDEN_DINHS_SPEC, p.getName(), value3, value4.toString(), value5);
+                clog.addLine(MAIDEN_DINHS_SPEC, p.getName(), value3, value4.toString(), value5, String.valueOf(client.getTickCount()-roomStartTick));
+				plugin.liveFrame.addDinhsSpec(getName(), p.getName(), targets.size(), (client.getTickCount()-roomStartTick));
             }
         }
         dinhsers.clear();

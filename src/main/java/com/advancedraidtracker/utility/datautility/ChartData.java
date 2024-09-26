@@ -4,6 +4,7 @@ import com.advancedraidtracker.constants.RaidRoom;
 import com.advancedraidtracker.utility.weapons.AnimationDecider;
 import com.advancedraidtracker.utility.weapons.PlayerAnimation;
 import com.advancedraidtracker.utility.wrappers.DawnSpec;
+import com.advancedraidtracker.utility.wrappers.DinhsSpec;
 import com.advancedraidtracker.utility.wrappers.PlayerDidAttack;
 import com.advancedraidtracker.ui.charts.chartelements.ThrallOutlineBox;
 import com.advancedraidtracker.utility.wrappers.StringInt;
@@ -27,8 +28,10 @@ public class ChartData
     public final List<String> maidenCrabs = new ArrayList<>();
 	public final List<StringInt> playerStoodInThrownBlood = new ArrayList<>();
 	public final List<StringInt> playerStoodInSpawnedBlood = new ArrayList<>();
+	public final List<DinhsSpec> dinhsSpecs = new ArrayList<>();
 	public final List<StringInt> playerChancedDrain = new ArrayList<>();
 	public final List<StringInt> playerHanded = new ArrayList<>();
+	public final List<StringInt> badChins = new ArrayList<>();
     public List<DawnSpec> dawnSpecs = new ArrayList<>();
 
 
@@ -177,6 +180,11 @@ public class ChartData
 		playerHanded.add(new StringInt(player, tick));
 	}
 
+	public void addDinhsSpec(String player, int targets, int tick)
+	{
+		dinhsSpecs.add(new DinhsSpec(player, targets, tick));
+	}
+
 	public void addMaidenStoodInThrownBlood(String player, int tick)
 	{
 		playerStoodInThrownBlood.add(new StringInt(player, tick));
@@ -235,4 +243,8 @@ public class ChartData
     }
 
 
+	public void addBadChin(String s, int i)
+	{
+		badChins.add(new StringInt(s, i));
+	}
 }
