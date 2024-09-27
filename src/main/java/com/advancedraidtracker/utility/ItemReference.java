@@ -43,7 +43,8 @@ public class ItemReference
 					"goblin paint cannon",
 					"strength",
 					"combat bracelet",
-					"rancour",
+					"rancor",
+					"anchor"
             },
             {
                     "masori",
