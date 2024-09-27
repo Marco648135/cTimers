@@ -14,6 +14,7 @@ import com.advancedraidtracker.ui.RaidTrackerSidePanel;
 import com.advancedraidtracker.ui.charts.chartelements.OutlineBox;
 import com.advancedraidtracker.utility.*;
 import static com.advancedraidtracker.utility.DataType.ATTACK;
+import static com.advancedraidtracker.utility.DataType.PRAYER;
 import static com.advancedraidtracker.utility.DataType.RING;
 import static com.advancedraidtracker.utility.DataType.STRENGTH;
 import com.advancedraidtracker.utility.datautility.DataReader;
@@ -23,9 +24,12 @@ import com.advancedraidtracker.utility.wrappers.PlayerCopy;
 import com.advancedraidtracker.utility.wrappers.PlayerDidAttack;
 import com.advancedraidtracker.utility.wrappers.QueuedPlayerAttackLessProjectiles;
 import com.advancedraidtracker.ui.charts.chartelements.ThrallOutlineBox;
+import com.google.common.collect.HashMultimap;
+import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -1072,6 +1076,28 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         updateRoom();
         if (inTheatre)
         {
+			for(String p : scythedPreviousTick)
+			{
+				if(playerDataMap.get(p) != null)
+				{
+					if (playerDataMap.get(p).getStrengthLevel() != 118)
+					{
+						sendChatMessage(p + " scythed with: " + playerDataMap.get(p).getStrengthLevel() + " strength");
+					}
+					if (!playerDataMap.get(p).getPrayers().get(Prayer.PIETY))
+					{
+						sendChatMessage(p + " scythed without piety");
+					}
+				}
+				else
+				{
+					log.info("not found");
+				}
+			}
+			scythedPreviousTick.clear();
+			scythedPreviousTick.addAll(scythedThisTick);
+			scythedThisTick.clear();
+
             wasInTheatre = true;
             currentRoom.updateGameTick(event);
             if (currentRoom.isActive())
@@ -1090,6 +1116,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 				ringData = -1;
 				attLevelData = -1;
 				strLevelData = -1;
+				prayersActivelyBeingTracked = false;
+				playerDataMap.clear();
 			}
             if (client.getTickCount() == deferredTick)
             {
@@ -1170,11 +1198,35 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         clog.writeFile();
     }
 
+	private final Map<String, PlayerData> playerDataMap = new ConcurrentHashMap<>();
+
 	private void checkChangedPartyData()
 	{
 		checkRing();
 		checkLevels();
-		//checkPrayers();
+		checkPrayers();
+	}
+
+	private void checkPrayers()
+	{
+		for (Prayer prayer : Prayer.values())
+		{
+			boolean isActive = client.isPrayerActive(prayer);
+			Boolean previousState = localPrayers.get(prayer);
+
+			if (previousState == null || previousState != isActive || !prayersActivelyBeingTracked)
+			{
+				prayersActivelyBeingTracked = true;
+				localPrayers.put(prayer, isActive);
+
+				int prayerId = prayer.ordinal(); // Unique ID for the prayer
+
+				String dataValueString = prayerId + (isActive ? "1" : "2");
+				int dataValue = Integer.parseInt(dataValueString);
+
+				party.send(new PlayerDataChanged(client.getLocalPlayer().getName(), DataType.PRAYER, dataValue, getRoomTick()));
+			}
+		}
 	}
 
 	private void checkLevels()
@@ -1185,13 +1237,13 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 		if(att != attLevelData)
 		{
 			party.send(new PlayerDataChanged(client.getLocalPlayer().getName(), ATTACK, att, getRoomTick()));
-			log.info("sending changed attack: " + att);
+			//log.info("sending changed attack: " + att);
 			attLevelData = att;
 		}
 		if(str != strLevelData)
 		{
 			party.send(new PlayerDataChanged(client.getLocalPlayer().getName(), STRENGTH, str, getRoomTick()));
-			log.info("sending changed strength: " + str);
+			//log.info("sending changed strength: " + str);
 			strLevelData = str;
 		}
 	}
@@ -1217,15 +1269,59 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 		if(ring != ringData)
 		{
 			party.send(new PlayerDataChanged(client.getLocalPlayer().getName(), RING, ring, getRoomTick()));
-			log.info("sending changed ring: " + ring);
+			//log.info("sending changed ring: " + ring);
 			ringData = ring;
 		}
 	}
 
+	Map<Prayer, Boolean> localPrayers = new HashMap<Prayer, Boolean>();
+	private boolean prayersActivelyBeingTracked = false;
+
+	private final SetMultimap<String, Prayer> playerActivePrayers = HashMultimap.create();
+
 	@Subscribe
 	public void onPlayerDataChanged(PlayerDataChanged e)
 	{
-		log.info("Received player data changed of type: " + e.getChangeType().name + ", new value: " + e.getNewValue() + " on tick " + e.getRoomTick());
+		String playerName = e.getUsername();
+		DataType dataType = e.getChangeType();
+		int dataValue = e.getNewValue();
+
+		clog.addLine(PLAYER_DATA_CHANGED, playerName, e.getChangeType().name, String.valueOf(e.getNewValue()), String.valueOf(e.getRoomTick()));
+
+		// Get or create PlayerData for the player
+		PlayerData playerData = playerDataMap.computeIfAbsent(playerName, k -> new PlayerData());
+
+		switch (dataType)
+		{
+			case PRAYER:
+				int prayerId = dataValue / 10;
+				int stateIndicator = dataValue % 10;
+				boolean isActive = stateIndicator == 1;
+				Prayer prayer = Prayer.values()[prayerId];
+
+				playerData.setPrayerState(prayer, isActive);
+
+				//log.info("Player {}: Prayer {} is now {}", playerName, prayer.name(), isActive ? "active" : "inactive");
+				break;
+
+			case RING:
+				playerData.setRingId(dataValue);
+				//log.info("Player {}: Ring ID updated to {}", playerName, dataValue);
+				break;
+
+			case ATTACK:
+				playerData.setAttackLevel(dataValue);
+				//log.info("Player {}: Attack level updated to {}", playerName, dataValue);
+				break;
+
+			case STRENGTH:
+				playerData.setStrengthLevel(dataValue);
+				//log.info("Player {}: Strength level updated to {}", playerName, dataValue);
+				break;
+
+			default:
+				break;
+		}
 	}
 
 	private void updateThrallVengTracker()
@@ -1396,6 +1492,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         deferredAnimations.clear();
     }
 
+	List<String> scythedPreviousTick = new ArrayList<>();
+	List<String> scythedThisTick = new ArrayList<>();
     private void checkAnimation(Player p)
     {
         if (inTheatre)
@@ -1405,6 +1503,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                 int id = p.getPlayerComposition().getEquipmentId(KitType.WEAPON);
                 if (p.getAnimation() == SCYTHE_ANIMATION)
                 {
+					scythedThisTick.add(p.getName());
                     if (id == UNCHARGED_SCYTHE || id == UNCHARGED_BLOOD_SCYTHE || id == UNCHARGED_HOLY_SCYTHE)
                     {
                         if (config.showMistakesInChat())
