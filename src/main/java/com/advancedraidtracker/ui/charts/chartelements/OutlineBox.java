@@ -226,7 +226,12 @@ public class OutlineBox
             Map.entry(827, SpriteID.TAB_INVENTORY),
             Map.entry(832, SpriteID.MAP_ICON_WATER_SOURCE),
 			Map.entry(-3, SpriteID.SPELL_VENGEANCE_OTHER_DISABLED),
-            Map.entry(7855, SpriteID.SPELL_FIRE_SURGE));
+            Map.entry(7855, SpriteID.SPELL_FIRE_SURGE),
+			Map.entry(8977, SpriteID.SPELL_GREATER_CORRUPTION),
+			Map.entry(8978, SpriteID.SPELL_VILE_VIGOUR),
+			Map.entry(8979, SpriteID.SPELL_SHADOW_VEIL),
+			Map.entry(18970, SpriteID.SPELL_WARD_OF_ARCEUUS),
+			Map.entry(28970, SpriteID.SPELL_MARK_OF_DARKNESS));
 
     private static final Map<Integer, Integer> graphicToSpellSpriteMap = Map.ofEntries(
             Map.entry(1873, 8973), //mage thrall
@@ -238,6 +243,12 @@ public class OutlineBox
             Map.entry(141, 722), //magic imbue
             Map.entry(1061, 6294), //humid
             Map.entry(1062, 6299), //sbs
+			Map.entry(1978, 8977),
+			Map.entry(1851, 18970),
+			Map.entry(1852, 28970),
+			Map.entry(1876, 8978),
+			Map.entry(1877, 8977),
+			Map.entry(1881, 8979),
 			Map.entry(-3, -3) //veng disabled
 
     );

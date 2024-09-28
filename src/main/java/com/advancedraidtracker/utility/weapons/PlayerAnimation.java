@@ -118,6 +118,12 @@ public enum PlayerAnimation
     UNARMED("Unarmed", "???", new Color(0, 0, 0), 4, new int[]{422, 423}, new int[]{}, new int[]{-1}, new int[]{}, 0),
 	VENG_APPLIED("Veng Applied", "VA", new Color(0, 0, 0, 0), -1, new int[]{-3}, new int[]{}, new int[]{}, new int[]{}, 0),
 	ELDER_MAUL_SPEC("Elder Maul Spec", "EM", new Color(100, 60, 60), 6, new int[]{11124},new int[]{},new int[]{ItemID.ELDER_MAUL, ItemID.ELDER_MAUL_OR}, new int[]{}, 50),
+	GREATER_CORRUPTION("Greater Corruption", "GC", new Color(70, 70, 70), -1, new int[]{8977}, new int[]{1978}, new int []{}, new int[]{}, 0),
+	SHADOW_VEIL("Shadow Veil", "SV", new Color(70, 70, 70), -1, new int[]{8979}, new int[]{1881}, new int []{}, new int[]{}, 0),
+	VILE_VIGOUR("Vile Vigour", "VV", new Color(70, 70, 70), -1, new int[]{8978}, new int[]{1876}, new int []{}, new int[]{}, 0),
+	WARD_OF_ARCEUSS("Ward of Arceeus", "WA", new Color(70, 70, 70), -1, new int[]{8970}, new int[]{1851}, new int []{}, new int[]{}, 0),
+	MARK_OF_DARKNESS("Mark of Darkness", "MD", new Color(70, 70, 70), -1, new int[]{8970}, new int[]{1852}, new int []{}, new int[]{}, 0),
+	LESSER_CORRUPTION("Lesser Corruption", "LC", new Color(70, 70, 70), -1, new int[]{8979}, new int[]{1877}, new int []{}, new int[]{}, 0),
 
 
     ;

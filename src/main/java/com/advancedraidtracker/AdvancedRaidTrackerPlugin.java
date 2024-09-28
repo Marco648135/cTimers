@@ -1204,9 +1204,12 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 
 	private void checkChangedPartyData()
 	{
-		checkRing();
-		checkLevels();
-		checkPrayers();
+		if(party != null)
+		{
+			checkRing();
+			checkLevels();
+			checkPrayers();
+		}
 	}
 
 	private void checkPrayers()
