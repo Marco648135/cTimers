@@ -1091,10 +1091,6 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 						sendChatMessage(p + " scythed without piety");
 					}
 				}
-				else
-				{
-					log.info("not found");
-				}
 			}
 			scythedPreviousTick.clear();
 			scythedPreviousTick.addAll(scythedThisTick);
@@ -1204,7 +1200,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 
 	private void checkChangedPartyData()
 	{
-		if(party != null)
+		if(party != null && party.isInParty())
 		{
 			checkRing();
 			checkLevels();

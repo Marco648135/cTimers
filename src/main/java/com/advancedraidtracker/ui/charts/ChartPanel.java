@@ -740,7 +740,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
             {
                 //based on projectile time dawn spec will always be applied between 2 and 4 ticks after the animation, and since there is only one
                 //dawnbringer its impossible for the next spec to overlap this
-                if ((dawnSpec.tick - outlineBox.tick <= 4 && dawnSpec.tick - outlineBox.tick >= 2) && outlineBox.playerAnimation.equals(PlayerAnimation.DAWN_SPEC))
+                if ((dawnSpec.tick - outlineBox.tick <= 4 && dawnSpec.tick - outlineBox.tick >= 2) && (outlineBox.playerAnimation.equals(PlayerAnimation.DAWN_SPEC) || outlineBox.playerAnimation.equals(DAWN_AUTO)))
                 {
                     outlineBox.additionalText = String.valueOf(dawnSpec.getDamage());
                 }

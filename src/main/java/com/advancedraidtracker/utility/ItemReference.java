@@ -4,7 +4,7 @@ public class ItemReference
 {
 
     public static String[][] ITEMS = {
-            {"none", "elite void", "void knight", "blood fury", "barrows gloves"},
+            {"none", "elite void", "void knight", "fury", "barrows gloves"},
             {
                     "torva",
                     "defender",
@@ -43,8 +43,9 @@ public class ItemReference
 					"goblin paint cannon",
 					"strength",
 					"combat bracelet",
-					"rancor",
-					"anchor"
+					"rancour",
+					"anchor",
+					"blood moon"
             },
             {
                     "masori",

@@ -21,7 +21,7 @@ public class TobIDs
     public final static int DAWNBRINGER_ITEM = 22516;
     public final static String VERZIK_BOUNCE_ANIMATION = "100000"; //fake number used due to poor design of how attacks are presented on the chart
 
-    public final static int DAWNBRINGER_MINIMUM_HIT = 75;
+    public final static int DAWNBRINGER_MINIMUM_HIT = 11;
 
     public final static int XARPUS_DEATH_ANIMATION_LENGTH = 3;
 
