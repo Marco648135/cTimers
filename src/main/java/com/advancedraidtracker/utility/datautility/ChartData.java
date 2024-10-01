@@ -1,6 +1,7 @@
 package com.advancedraidtracker.utility.datautility;
 
 import com.advancedraidtracker.constants.RaidRoom;
+import com.advancedraidtracker.utility.PlayerDataChanged;
 import com.advancedraidtracker.utility.weapons.AnimationDecider;
 import com.advancedraidtracker.utility.weapons.PlayerAnimation;
 import com.advancedraidtracker.utility.wrappers.DawnSpec;
@@ -33,6 +34,8 @@ public class ChartData
 	public final List<StringInt> playerHanded = new ArrayList<>();
 	public final List<StringInt> badChins = new ArrayList<>();
     public List<DawnSpec> dawnSpecs = new ArrayList<>();
+
+	public final List<PlayerDataChanged> playerDataChangeds = new ArrayList<>();
 
 
     public int getIdleTicks(String player, int scale)
@@ -246,5 +249,10 @@ public class ChartData
 	public void addBadChin(String s, int i)
 	{
 		badChins.add(new StringInt(s, i));
+	}
+
+	public void addPlayerDataChanged(PlayerDataChanged playerDataChanged)
+	{
+		playerDataChangeds.add(playerDataChanged);
 	}
 }

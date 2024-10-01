@@ -2,6 +2,8 @@ package com.advancedraidtracker.utility.datautility;
 
 import com.advancedraidtracker.constants.LogID;
 import com.advancedraidtracker.constants.RaidRoom;
+import com.advancedraidtracker.utility.DataType;
+import com.advancedraidtracker.utility.PlayerDataChanged;
 import com.advancedraidtracker.utility.datautility.datapoints.col.Colo;
 import com.advancedraidtracker.utility.datautility.datapoints.LogEntry;
 import com.advancedraidtracker.utility.datautility.datapoints.Raid;
@@ -11,6 +13,7 @@ import com.advancedraidtracker.utility.datautility.datapoints.toa.Toa;
 import com.advancedraidtracker.utility.datautility.datapoints.tob.Tob;
 import com.advancedraidtracker.utility.wrappers.DawnSpec;
 import com.advancedraidtracker.utility.wrappers.PlayerDidAttack;
+import joptsimple.internal.Strings;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.game.ItemManager;
 
@@ -237,6 +240,16 @@ public class DataReader //todo move any methods that read files to here. I belie
 								{
 									chartData.addBadChin(line[4], Integer.parseInt(line[6]));
 								}
+							}
+							break;
+						case "11000":
+							if(line.length > 7)
+							{
+								String player = line[4];
+								DataType dataType = DataType.fromName(line[5]);
+								int newValue = Integer.parseInt(line[6]);
+								int roomTick = Integer.parseInt(line[7]);
+								chartData.addPlayerDataChanged(new PlayerDataChanged(player, dataType, newValue, roomTick));
 							}
 							break;
 

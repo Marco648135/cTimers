@@ -218,6 +218,8 @@ public class ChartFrame extends BaseFrame
 			chartPanel.addPlayersHanded(chartData.playerHanded);
 			chartPanel.addDinhsSpecs(chartData.dinhsSpecs);
 			chartPanel.addBadChins(chartData.badChins);
+			chartPanel.addPlayerDatumChanged(chartData.playerDataChangeds);
+			log.info("data changed size: " + chartData.playerDataChangeds.size());
             if (room.equals(RaidRoom.VERZIK))
             {
                 chartPanel.addDawnSpecs(chartData.dawnSpecs);

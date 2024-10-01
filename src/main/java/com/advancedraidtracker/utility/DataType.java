@@ -12,4 +12,16 @@ public enum DataType
 	{
 		this.name = name;
 	}
+
+	public static DataType fromName(String s)
+	{
+		for(DataType dataType : values())
+		{
+			if(dataType.name.equals(s))
+			{
+				return dataType;
+			}
+		}
+		return null;
+	}
 }

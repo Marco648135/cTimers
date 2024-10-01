@@ -3,6 +3,7 @@ package com.advancedraidtracker.ui.charts;
 import com.advancedraidtracker.AdvancedRaidTrackerConfig;
 import com.advancedraidtracker.constants.RaidType;
 import com.advancedraidtracker.ui.BaseFrame;
+import com.advancedraidtracker.utility.PlayerDataChanged;
 import com.advancedraidtracker.utility.wrappers.DinhsSpec;
 import com.advancedraidtracker.utility.wrappers.PlayerDidAttack;
 import com.advancedraidtracker.utility.wrappers.StringInt;
@@ -293,6 +294,11 @@ public class LiveChart extends BaseFrame
     {
         getPanel(room).addLiveAttack(attack);
     }
+
+	public void addPlayerDataChanged(PlayerDataChanged playerDataChanged, String room)
+	{
+		getPanel(room).addPlayerDataChanged(playerDataChanged);
+	}
 
     public void addLine(String room, int value, String description)
     {
