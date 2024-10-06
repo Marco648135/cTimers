@@ -1850,7 +1850,21 @@ public class Raids extends BaseFrame implements UpdateableWindow
 			}
 			if (rows.size() == 1)
 			{
-				//openFileLocation(rows.get(0).getFilepath());
+				openFileLocation(rows.get(0).getFilepath());
+			}
+		});
+
+		JMenuItem viewRaidData = getThemedMenuItem("View Raid Data (Diagnostics)");
+		viewRaidData.addActionListener(e ->
+		{
+			List<Raid> rows = new ArrayList<>();
+			int[] toRemove = table.getSelectedRows();
+			for (int j : toRemove)
+			{
+				rows.add(currentData.get(Integer.parseInt(table.getModel().getValueAt(j, 0).toString())));
+			}
+			if (rows.size() == 1)
+			{
 				new LogViewerFrame(rows.get(0).getFilepath());
 			}
 		});
@@ -2100,6 +2114,7 @@ public class Raids extends BaseFrame implements UpdateableWindow
 		raidPopup.add(copySplits);
 		raidPopup.add(favoriteRaid);
 		raidPopup.add(openRaidInExplorer);
+		raidPopup.add(viewRaidData);
 		table.setComponentPopupMenu(raidPopup);
 
 		filterTableContainer.add(tableScrollView);

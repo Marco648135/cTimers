@@ -2,6 +2,8 @@ package com.advancedraidtracker.ui;
 
 import java.util.List;
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -24,6 +26,9 @@ public class LogViewerFrame extends JFrame {
 	private JPanel checkboxPanel;
 	private JLabel filteredIdsLabel;
 
+	private JCheckBox hideAllExceptCheckbox;
+	private JTextField exceptIdTextField;
+
 	// Maximum number of arguments found
 	private int maxArguments = 0;
 
@@ -34,8 +39,8 @@ public class LogViewerFrame extends JFrame {
 
 	private void initUI(Path filePath) {
 		readCSV(filePath);
-		createTable();
 		createSidePanel();
+		createTable();
 		pack();
 		setLocationRelativeTo(null);
 		setVisible(true);
@@ -136,14 +141,40 @@ public class LogViewerFrame extends JFrame {
 	}
 
 	private void updateFilteredEntries() {
-		// Apply filtering
-		filteredEntries = new ArrayList<>();
-		for (LogEntry entry : logEntries) {
-			if (!hiddenIDs.contains(entry.id)) {
-				filteredEntries.add(entry);
+		if (hideAllExceptCheckbox != null && hideAllExceptCheckbox.isSelected()) {
+			// Parse IDs from exceptIdTextField
+			String text = exceptIdTextField.getText().trim();
+			Set<Integer> exceptIds = new HashSet<>();
+			if (!text.isEmpty()) {
+				String[] tokens = text.split(",");
+				for (String token : tokens) {
+					try {
+						int id = Integer.parseInt(token.trim());
+						exceptIds.add(id);
+					} catch (NumberFormatException ex) {
+						System.err.println("Invalid ID in Except IDs: " + token.trim());
+					}
+				}
+			}
+
+			// Apply filtering: only include entries whose IDs are in exceptIds
+			filteredEntries = new ArrayList<>();
+			for (LogEntry entry : logEntries) {
+				if (exceptIds.contains(entry.id)) {
+					filteredEntries.add(entry);
+				}
+			}
+		} else {
+			// Apply filtering based on hiddenIDs
+			filteredEntries = new ArrayList<>();
+			for (LogEntry entry : logEntries) {
+				if (!hiddenIDs.contains(entry.id)) {
+					filteredEntries.add(entry);
+				}
 			}
 		}
 		refreshTable();
+		updateFilteredIdsLabel();
 	}
 
 	private void refreshTable() {
@@ -200,7 +231,7 @@ public class LogViewerFrame extends JFrame {
 		JPanel filterInputPanel = new JPanel();
 		JTextField idTextField = new JTextField(5);
 		JButton addFilterButton = new JButton("Add Filter");
-		filteredIdsLabel = new JLabel("Filtered IDs: ");
+		filteredIdsLabel = new JLabel("");
 
 		addFilterButton.addActionListener(e -> {
 			String text = idTextField.getText().trim();
@@ -223,13 +254,39 @@ public class LogViewerFrame extends JFrame {
 		JButton unhideAllButton = new JButton("Unhide All");
 		unhideAllButton.addActionListener(e -> {
 			hiddenIDs.clear();
+			hideAllExceptCheckbox.setSelected(false);
+			exceptIdTextField.setText("");
 			updateFilteredEntries();
 			updateFilteredIdsLabel();
 			updateCheckboxes();
 		});
 
+		// Hide all except panel
+		JPanel exceptFilterPanel = new JPanel();
+		hideAllExceptCheckbox = new JCheckBox("Hide all IDs except");
+		exceptIdTextField = new JTextField(10);
+		exceptFilterPanel.add(hideAllExceptCheckbox);
+		exceptFilterPanel.add(exceptIdTextField);
+
+		hideAllExceptCheckbox.addActionListener(e -> {
+			updateFilteredEntries();
+		});
+
+		exceptIdTextField.getDocument().addDocumentListener(new DocumentListener() {
+			public void changedUpdate(DocumentEvent e) {
+				updateFilteredEntries();
+			}
+			public void removeUpdate(DocumentEvent e) {
+				updateFilteredEntries();
+			}
+			public void insertUpdate(DocumentEvent e) {
+				updateFilteredEntries();
+			}
+		});
+
 		filterPanel.add(filterInputPanel);
 		filterPanel.add(unhideAllButton);
+		filterPanel.add(exceptFilterPanel);
 		filterPanel.add(filteredIdsLabel);
 
 		sidePanel.add(checkboxPanel, BorderLayout.NORTH);
@@ -249,14 +306,24 @@ public class LogViewerFrame extends JFrame {
 	}
 
 	private void updateFilteredIdsLabel() {
-		// Get the names of the hidden IDs
-		List<String> hiddenIdNames = new ArrayList<>();
-		for (int id : hiddenIDs) {
-			LogID logId = LogID.valueOf(id);
-			String name = logId.getCommonName();
-			hiddenIdNames.add(name + " (" + id + ")");
+		StringBuilder sb = new StringBuilder("<html>");
+		if (hideAllExceptCheckbox.isSelected()) {
+			sb.append("Showing only IDs: ");
+			String text = exceptIdTextField.getText().trim();
+			sb.append(text.isEmpty() ? "None" : text);
+		} else {
+			// Get the names of the hidden IDs
+			List<String> hiddenIdNames = new ArrayList<>();
+			for (int id : hiddenIDs) {
+				LogID logId = LogID.valueOf(id);
+				String name = logId.getCommonName();
+				hiddenIdNames.add(name + " (" + id + ")");
+			}
+			sb.append("Filtered IDs:<br>");
+			sb.append(String.join(", ", hiddenIdNames));
 		}
-		filteredIdsLabel.setText("<html>Filtered IDs:<br>" + String.join(", ", hiddenIdNames) + "</html>");
+		sb.append("</html>");
+		filteredIdsLabel.setText(sb.toString());
 	}
 
 	private void updateCheckboxes() {
@@ -271,7 +338,9 @@ public class LogViewerFrame extends JFrame {
 		final JPopupMenu popupMenu = new JPopupMenu();
 		JMenuItem hideIdItem = new JMenuItem("Hide this ID");
 		JMenuItem viewRawItem = new JMenuItem("View raw CSV line");
+		JMenuItem showOnlyThisIdItem = new JMenuItem("Show only this ID");
 		popupMenu.add(hideIdItem);
+		popupMenu.add(showOnlyThisIdItem);
 		popupMenu.add(viewRawItem);
 
 		table.setComponentPopupMenu(popupMenu);
@@ -284,6 +353,16 @@ public class LogViewerFrame extends JFrame {
 				updateFilteredEntries();
 				updateFilteredIdsLabel();
 				updateCheckboxes();
+			}
+		});
+
+		showOnlyThisIdItem.addActionListener(e -> {
+			int row = table.getSelectedRow();
+			if (row >= 0) {
+				LogEntry selectedEntry = filteredEntries.get(row);
+				hideAllExceptCheckbox.setSelected(true);
+				exceptIdTextField.setText(String.valueOf(selectedEntry.id));
+				updateFilteredEntries();
 			}
 		});
 
