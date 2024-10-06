@@ -1078,15 +1078,18 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         updateRoom();
         if (inTheatre)
         {
-			for(String p : scythedPreviousTick)
+			for (String p : scythedPreviousTick)
 			{
-				if(playerDataMap.get(p) != null)
+				PlayerData playerData = playerDataMap.get(p);
+				if (playerData != null)
 				{
-					if (playerDataMap.get(p).getStrengthLevel() != 118)
+					if (playerData.getStrengthLevel() != 118)
 					{
-						sendChatMessage(p + " scythed with: " + playerDataMap.get(p).getStrengthLevel() + " strength");
+						sendChatMessage(p + " scythed with: " + playerData.getStrengthLevel() + " strength");
 					}
-					if (!playerDataMap.get(p).getPrayers().get(Prayer.PIETY))
+
+					Boolean isPietyActive = playerData.getPrayers().get(Prayer.PIETY);
+					if (Boolean.FALSE.equals(isPietyActive))
 					{
 						sendChatMessage(p + " scythed without piety");
 					}
