@@ -3086,7 +3086,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 			if (shouldTickBeDrawn(box.tick) && box.playerAnimation.attackTicks > 1)
 			{
 				PlayerData playerData = playerDataManager.getPlayerData(box.player, box.tick);
-				if(playerData.getAttackLevel() != 118 || playerData.getStrengthLevel() != 118 || !playerData.getPrayers().get(Prayer.PIETY))
+				Boolean isPietyActive = playerData.getPrayers().get(Prayer.PIETY);
+				if(playerData.getAttackLevel() != 118 || playerData.getStrengthLevel() != 118 || Boolean.FALSE.equals(isPietyActive))
 				{
 					if(playerData.getStrengthLevel() != -1 && playerData.getAttackLevel() != -1)
 					{
