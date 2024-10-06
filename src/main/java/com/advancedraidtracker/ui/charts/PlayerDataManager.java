@@ -15,6 +15,11 @@ public class PlayerDataManager
 
 	private final Map<String, NavigableMap<Integer, List<PlayerDataChanged>>> changesByPlayer = new HashMap<>();
 
+	public void clear()
+	{
+		changesByPlayer.clear();
+	}
+
 	public void addPlayerDataChanged(PlayerDataChanged playerDataChanged)
 	{
 		String playerName = playerDataChanged.getUsername();
