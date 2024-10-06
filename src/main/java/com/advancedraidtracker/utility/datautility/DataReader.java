@@ -246,7 +246,7 @@ public class DataReader //todo move any methods that read files to here. I belie
 								DataType dataType = DataType.fromName(line[5]);
 								int newValue = Integer.parseInt(line[6]);
 								int roomTick = Integer.parseInt(line[7]);
-								chartData.addPlayerDataChanged(new PlayerDataChanged(player, dataType, newValue, roomTick));
+								chartData.addPlayerDataChanged(new PlayerDataChanged(player, dataType, newValue, roomTick), currentRoom);
 							}
 							break;
 

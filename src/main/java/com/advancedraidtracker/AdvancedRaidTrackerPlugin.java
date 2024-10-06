@@ -1297,7 +1297,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 		DataType dataType = e.getChangeType();
 		int dataValue = e.getNewValue();
 		liveFrame.addPlayerDataChanged(e, getRoom().name);
-		clog.addLine(PLAYER_DATA_CHANGED, playerName, e.getChangeType().name, String.valueOf(e.getNewValue()), String.valueOf(e.getRoomTick()));
+		clog.addLine(PLAYER_DATA_CHANGED, playerName, e.getChangeType().name, String.valueOf(e.getNewValue()), String.valueOf(e.getRoomTick()), getRoom().name);
 
 		// Get or create PlayerData for the player
 		PlayerData playerData = playerDataMap.computeIfAbsent(playerName, k -> new PlayerData());

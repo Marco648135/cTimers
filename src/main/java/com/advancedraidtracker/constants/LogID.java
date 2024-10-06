@@ -375,7 +375,7 @@ public enum LogID
 		"Bloat Player Handed", "Player", "Room Tick"),
 	PLAYER_DATA_CHANGED(11000, false, ALL,
 		new ParseInstruction(MANUAL_PARSE),
-			"Player Data Changed", "Username", "Type", "New Value", "Room Tick"),
+			"Player Data Changed", "Username", "Type", "New Value", "Room Tick", "Room Name"),
     UNKNOWN(-1, false, ANY_TOB,
             new ParseInstruction(MANUAL_PARSE),
             "Unknown"),

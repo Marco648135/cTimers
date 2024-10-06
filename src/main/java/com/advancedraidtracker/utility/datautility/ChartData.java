@@ -35,7 +35,7 @@ public class ChartData
 	public final List<StringInt> badChins = new ArrayList<>();
     public List<DawnSpec> dawnSpecs = new ArrayList<>();
 
-	public final List<PlayerDataChanged> playerDataChangeds = new ArrayList<>();
+	public final Map<RaidRoom, List<PlayerDataChanged>> playerDataChangeds = new HashMap<>();
 
 
     public int getIdleTicks(String player, int scale)
@@ -251,8 +251,8 @@ public class ChartData
 		badChins.add(new StringInt(s, i));
 	}
 
-	public void addPlayerDataChanged(PlayerDataChanged playerDataChanged)
+	public void addPlayerDataChanged(PlayerDataChanged playerDataChanged, RaidRoom room)
 	{
-		playerDataChangeds.add(playerDataChanged);
+		playerDataChangeds.computeIfAbsent(room, k -> new ArrayList<>()).add(playerDataChanged);
 	}
 }
