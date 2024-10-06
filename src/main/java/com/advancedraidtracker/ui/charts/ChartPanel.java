@@ -872,9 +872,12 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	public void addPlayerDatumChanged(List<PlayerDataChanged> playerDatumChanged)
 	{
-		for (PlayerDataChanged playerDataChanged : playerDatumChanged)
+		if(playerDatumChanged != null)
 		{
-			playerDataManager.addPlayerDataChanged(playerDataChanged);
+			for (PlayerDataChanged playerDataChanged : playerDatumChanged)
+			{
+				playerDataManager.addPlayerDataChanged(playerDataChanged);
+			}
 		}
 	}
 
