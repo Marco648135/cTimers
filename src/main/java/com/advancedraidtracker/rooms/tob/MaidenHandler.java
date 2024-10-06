@@ -565,7 +565,6 @@ public class MaidenHandler extends TOBRoomHandler
                         client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", p.getName() + " only targeted " + targets.size() + " additional NPCs with dinhs spec.", null, false);
                     }
                 }
-				log.info("Targets: " + targets.size());
                 ArrayList<Integer> healths = new ArrayList<>();
                 for (NPC npc : targets)
                 {
@@ -586,7 +585,6 @@ public class MaidenHandler extends TOBRoomHandler
                     }
                     value4.append(npc.getName()).append("~").append(additionalDescription).append("~").append(hp).append(":");
                 }
-				log.info("value4: " + value4.toString());
                 String value5 = getTargetsBelow27(healths, targets, didDoubleHit);
                 clog.addLine(MAIDEN_DINHS_SPEC, p.getName(), value3, value4.toString(), value5, String.valueOf(client.getTickCount()-roomStartTick));
 				plugin.liveFrame.addDinhsSpec(getName(), p.getName(), targets.size(), (client.getTickCount()-roomStartTick));

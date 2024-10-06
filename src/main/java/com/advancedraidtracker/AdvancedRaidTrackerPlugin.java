@@ -1209,8 +1209,9 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 				checkPrayers();
 			}
 		}
-		catch (Exception ignored)
+		catch (Exception e)
 		{
+			e.printStackTrace();
 		}
 	}
 

@@ -216,15 +216,12 @@ public class DataReader //todo move any methods that read files to here. I belie
 							chartData.addPlayerHanded(line[4], Integer.parseInt(line[5]));
 							break;
 						case "111":
-							log.info("dinhs spec found: " + String.join(",", line));
 							try
 							{
 								int targets = line[6].split(":").length;
-								log.info("targets: " + targets);
 								if(line.length > 8)
 								{
 									chartData.addDinhsSpec(line[4], targets, Integer.parseInt(line[8]));
-									log.info("found tick!");
 								}
 							}
 							catch (Exception e)
