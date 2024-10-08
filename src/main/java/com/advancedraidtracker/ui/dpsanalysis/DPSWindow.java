@@ -1,3 +1,5 @@
+
+
 package com.advancedraidtracker.ui.dpsanalysis;
 
 import com.advancedraidtracker.AdvancedRaidTrackerPlugin;
@@ -2045,7 +2047,7 @@ public class DPSWindow extends BaseFrame
 			effectiveStrengthLevel += 8;
 			effectiveAttackLevel += 8;
 
-			if(preset.isMeleeVoid())
+			if (preset.isMeleeVoid())
 			{
 				effectiveStrengthLevel = (int) (effectiveStrengthLevel * 1.1);
 				effectiveAttackLevel = (int) (effectiveAttackLevel * 1.1);
@@ -2071,17 +2073,17 @@ public class DPSWindow extends BaseFrame
 				strengthBonus += data.getBonuses().getStr();
 			}
 
-			maxHit = (int)((effectiveStrengthLevel * (strengthBonus + 64)+320)/640.0);
+			maxHit = (int) ((effectiveStrengthLevel * (strengthBonus + 64) + 320) / 640.0);
 			attackRoll = effectiveAttackLevel * (attackBonus + 64);
-			if(preset.isSalveE())
+			if (preset.isSalveE())
 			{
-				maxHit = (int) (maxHit*1.20);
-				attackRoll = (int) (attackRoll*1.20);
+				maxHit = (int) (maxHit * 1.20);
+				attackRoll = (int) (attackRoll * 1.20);
 			}
-			else if(preset.isSalve() || preset.isSlayer())
+			else if (preset.isSalve() || preset.isSlayer())
 			{
-				maxHit = (int) (maxHit * (7.0/6.0));
-				attackRoll = (int) (attackRoll*(7.0/6.0));
+				maxHit = (int) (maxHit * (7.0 / 6.0));
+				attackRoll = (int) (attackRoll * (7.0 / 6.0));
 			}
 		}
 		else if (isRangedStyle(selectedStyle))
@@ -2095,7 +2097,7 @@ public class DPSWindow extends BaseFrame
 				effectiveAttackLevel += 3;
 				effectiveStrengthLevel += 3;
 			}
-			else if(selectedStyle.equals("Rapid"))
+			else if (selectedStyle.equals("Rapid"))
 			{
 				attackSpeed--;
 			}
@@ -2103,15 +2105,15 @@ public class DPSWindow extends BaseFrame
 			effectiveStrengthLevel += 8;
 			effectiveAttackLevel += 8;
 
-			if(preset.isRangeEVoid())
+			if (preset.isRangeEVoid())
 			{
-				effectiveStrengthLevel = (int)(effectiveStrengthLevel*1.125);
-				effectiveAttackLevel = (int) (effectiveAttackLevel*1.1);
+				effectiveStrengthLevel = (int) (effectiveStrengthLevel * 1.125);
+				effectiveAttackLevel = (int) (effectiveAttackLevel * 1.1);
 			}
-			else if(preset.isRangeVoid())
+			else if (preset.isRangeVoid())
 			{
-				effectiveStrengthLevel = (int)(effectiveStrengthLevel*1.1);
-				effectiveAttackLevel = (int) (effectiveAttackLevel*1.1);
+				effectiveStrengthLevel = (int) (effectiveStrengthLevel * 1.1);
+				effectiveAttackLevel = (int) (effectiveAttackLevel * 1.1);
 			}
 
 			// Equipment bonuses
@@ -2122,7 +2124,7 @@ public class DPSWindow extends BaseFrame
 			{
 				attackBonus += data.getOffensive().getRanged();
 				strengthBonus += data.getBonuses().getRanged_str();
-				if(data.getName().toLowerCase().contains("quiver"))
+				if (data.getName().toLowerCase().contains("quiver"))
 				{
 					attackBonus += 10;
 					strengthBonus += 1;
@@ -2131,36 +2133,36 @@ public class DPSWindow extends BaseFrame
 
 			attackRoll = effectiveAttackLevel * (attackBonus + 64);
 
-			maxHit = (int) (.5 + effectiveStrengthLevel * (strengthBonus+64)/640.0);
+			maxHit = (int) (.5 + effectiveStrengthLevel * (strengthBonus + 64) / 640.0);
 
-			if(preset.isSalveE())
+			if (preset.isSalveE())
 			{
-				maxHit = (int) (maxHit*1.2);
+				maxHit = (int) (maxHit * 1.2);
 			}
-			else if(preset.isSalve())
+			else if (preset.isSalve())
 			{
-				maxHit = (int) (maxHit * (7.0/6.0));
+				maxHit = (int) (maxHit * (7.0 / 6.0));
 			}
-			else if(preset.isSlayer())
+			else if (preset.isSlayer())
 			{
 				maxHit = (int) (maxHit * 1.15); //todo craws/webweaver
 			}
 
-			if(preset.getEquipment().get("weapon").getName().contains("Twisted bow"))
+			if (preset.getEquipment().get("weapon").getName().contains("Twisted bow"))
 			{
 				int magicValue = Math.max(npcData.getSkills().getMagic(), npcData.getOffensive().getMagic());
 				//outside of chambers:
 				magicValue = Math.min(250, magicValue);
-				double tbowAccuracyMultiplier = 140 + (((((30*magicValue)/10.0)-10) / 100.0) - (Math.pow((3*magicValue/10.0)-100, 2)/100.0));
+				double tbowAccuracyMultiplier = 140 + (((((30 * magicValue) / 10.0) - 10) / 100.0) - (Math.pow((3 * magicValue / 10.0) - 100, 2) / 100.0));
 				tbowAccuracyMultiplier = Math.min(tbowAccuracyMultiplier, 140);
-				double tbowDamageMultiplier = 250 + (((((30*magicValue)/10.0)-14) / 100.0) - (Math.pow((3*magicValue/10.0)-140, 2)/100.0));
+				double tbowDamageMultiplier = 250 + (((((30 * magicValue) / 10.0) - 14) / 100.0) - (Math.pow((3 * magicValue / 10.0) - 140, 2) / 100.0));
 				tbowDamageMultiplier = Math.min(tbowDamageMultiplier, 250);
 
 				tbowAccuracyMultiplier /= 100;
 				tbowDamageMultiplier /= 100;
 
-				maxHit = (int) (maxHit*tbowDamageMultiplier);
-				attackRoll = (int) (attackRoll*tbowAccuracyMultiplier);
+				maxHit = (int) (maxHit * tbowDamageMultiplier);
+				attackRoll = (int) (attackRoll * tbowAccuracyMultiplier);
 			}
 
 		}
@@ -2223,7 +2225,7 @@ public class DPSWindow extends BaseFrame
 			dpa = calculateExpectedDamage(maxHit, hitChance);
 		}
 
-		double dps = dpa / (attackSpeed*.6);
+		double dps = dpa / (attackSpeed * .6);
 
 		List<String> diagnosticInfo = List.of("Max Hit: " + maxHit, "Attack Roll: " + attackRoll, "Hitchance: " + hitChance, "Defense Roll: " + defenseRoll, "DPA: " + dpa, "Weapon Speed: " + attackSpeed, "DPS: " + dps);
 
@@ -2247,19 +2249,24 @@ public class DPSWindow extends BaseFrame
 		if (offensive != null)
 		{
 			StringBuilder offensiveStats = new StringBuilder();
-			if (offensive.getStab() != 0) {
+			if (offensive.getStab() != 0)
+			{
 				offensiveStats.append("&nbsp;&nbsp;Stab Attack: ").append(offensive.getStab()).append("<br/>");
 			}
-			if (offensive.getSlash() != 0) {
+			if (offensive.getSlash() != 0)
+			{
 				offensiveStats.append("&nbsp;&nbsp;Slash Attack: ").append(offensive.getSlash()).append("<br/>");
 			}
-			if (offensive.getCrush() != 0) {
+			if (offensive.getCrush() != 0)
+			{
 				offensiveStats.append("&nbsp;&nbsp;Crush Attack: ").append(offensive.getCrush()).append("<br/>");
 			}
-			if (offensive.getMagic() != 0) {
+			if (offensive.getMagic() != 0)
+			{
 				offensiveStats.append("&nbsp;&nbsp;Magic Attack: ").append(offensive.getMagic()).append("<br/>");
 			}
-			if (offensive.getRanged() != 0) {
+			if (offensive.getRanged() != 0)
+			{
 				offensiveStats.append("&nbsp;&nbsp;Ranged Attack: ").append(offensive.getRanged()).append("<br/>");
 			}
 			if (offensiveStats.length() > 0)
@@ -2272,19 +2279,24 @@ public class DPSWindow extends BaseFrame
 		if (defensive != null)
 		{
 			StringBuilder defensiveStats = new StringBuilder();
-			if (defensive.getStab() != 0) {
+			if (defensive.getStab() != 0)
+			{
 				defensiveStats.append("&nbsp;&nbsp;Stab Defence: ").append(defensive.getStab()).append("<br/>");
 			}
-			if (defensive.getSlash() != 0) {
+			if (defensive.getSlash() != 0)
+			{
 				defensiveStats.append("&nbsp;&nbsp;Slash Defence: ").append(defensive.getSlash()).append("<br/>");
 			}
-			if (defensive.getCrush() != 0) {
+			if (defensive.getCrush() != 0)
+			{
 				defensiveStats.append("&nbsp;&nbsp;Crush Defence: ").append(defensive.getCrush()).append("<br/>");
 			}
-			if (defensive.getMagic() != 0) {
+			if (defensive.getMagic() != 0)
+			{
 				defensiveStats.append("&nbsp;&nbsp;Magic Defence: ").append(defensive.getMagic()).append("<br/>");
 			}
-			if (defensive.getRanged() != 0) {
+			if (defensive.getRanged() != 0)
+			{
 				defensiveStats.append("&nbsp;&nbsp;Ranged Defence: ").append(defensive.getRanged()).append("<br/>");
 			}
 			if (defensiveStats.length() > 0)
@@ -2297,16 +2309,20 @@ public class DPSWindow extends BaseFrame
 		if (bonuses != null)
 		{
 			StringBuilder otherBonuses = new StringBuilder();
-			if (bonuses.getStr() != 0) {
+			if (bonuses.getStr() != 0)
+			{
 				otherBonuses.append("&nbsp;&nbsp;Melee Strength: ").append(bonuses.getStr()).append("<br/>");
 			}
-			if (bonuses.getRanged_str() != 0) {
+			if (bonuses.getRanged_str() != 0)
+			{
 				otherBonuses.append("&nbsp;&nbsp;Ranged Strength: ").append(bonuses.getRanged_str()).append("<br/>");
 			}
-			if (bonuses.getMagic_str() != 0) {
+			if (bonuses.getMagic_str() != 0)
+			{
 				otherBonuses.append("&nbsp;&nbsp;Magic Damage: ").append(bonuses.getMagic_str()).append("<br/>");
 			}
-			if (bonuses.getPrayer() != 0) {
+			if (bonuses.getPrayer() != 0)
+			{
 				otherBonuses.append("&nbsp;&nbsp;Prayer Bonus: ").append(bonuses.getPrayer()).append("<br/>");
 			}
 			if (otherBonuses.length() > 0)

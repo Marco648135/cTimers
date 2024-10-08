@@ -2,6 +2,7 @@ package com.advancedraidtracker.ui.charts.chartcreator;
 
 import com.advancedraidtracker.AdvancedRaidTrackerConfig;
 import com.advancedraidtracker.ui.BaseFrame;
+import com.advancedraidtracker.ui.PresetManager;
 import com.advancedraidtracker.ui.charts.ChartActionType;
 import com.advancedraidtracker.ui.charts.ChartChangedEvent;
 import static com.advancedraidtracker.ui.charts.ChartConstants.SELECTION_TOOL;
@@ -10,10 +11,19 @@ import com.advancedraidtracker.ui.charts.ChartListener;
 import com.advancedraidtracker.ui.charts.ChartPanel;
 import com.advancedraidtracker.ui.charts.ChartSpecCalculatorPanel;
 import com.advancedraidtracker.ui.charts.chartelements.OutlineBox;
+import static com.advancedraidtracker.ui.charts.chartelements.OutlineBox.clientThread;
+import static com.advancedraidtracker.ui.charts.chartelements.OutlineBox.itemManager;
+import static com.advancedraidtracker.ui.charts.chartelements.OutlineBox.spriteManager;
+import com.advancedraidtracker.ui.dpsanalysis.EquipmentData;
+import com.advancedraidtracker.ui.dpsanalysis.Preset;
 import com.advancedraidtracker.utility.weapons.PlayerAnimation;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -33,15 +43,29 @@ import java.util.List;
 import static com.advancedraidtracker.ui.charts.ChartConstants.ADD_ATTACK_TOOL;
 import static com.advancedraidtracker.ui.charts.ChartIO.loadChartFromClipboard;
 import static com.advancedraidtracker.utility.UISwingUtility.*;
+import net.runelite.client.util.AsyncBufferedImage;
 
 @Slf4j
 public class ChartCreatorFrame extends BaseFrame implements ChartListener
 {
     private final ChartPanel chart;
 	private final JTree tree;
+	private Map<String, Preset> presets = new HashMap<>();
+	private JList<Preset> equipmentSetupsList;
+	private JScrollPane equipmentScrollPane;
+
+	private Preset selectedPrimaryPreset = null;
+	private Preset selectedSecondaryPreset = null;
+	private PlayerAnimation selectedPrimary = PlayerAnimation.NOT_SET;
+	private PlayerAnimation selectedSecondary = PlayerAnimation.NOT_SET;
 
     public ChartCreatorFrame(AdvancedRaidTrackerConfig config, ItemManager itemManager, ClientThread clientThread, ConfigManager configManager, SpriteManager spriteManager)
     {
+		equipmentSetupsList = new JList<>();
+		equipmentSetupsList.setCellRenderer(new PresetListCellRenderer(itemManager));
+		equipmentScrollPane = new JScrollPane(equipmentSetupsList);
+		equipmentScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		equipmentScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
         setTitle("Chart Creator");
         chart = new ChartPanel("Creator", false, config, clientThread, configManager, itemManager, spriteManager);
         chart.setPreferredSize(new Dimension(0, 0));
@@ -85,6 +109,41 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 		preachCalc.add(specCalculator);
 		bottomLeftcontainer.add(preachCalc);
 
+		presets = PresetManager.loadPresets();
+
+// Initialize the equipment setups list
+
+// Populate the list with presets
+		DefaultListModel<Preset> equipmentListModel = new DefaultListModel<>();
+		for (Preset preset : presets.values()) {
+			equipmentListModel.addElement(preset);
+		}
+		equipmentSetupsList.setModel(equipmentListModel);
+
+		equipmentSetupsList.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				int index = equipmentSetupsList.locationToIndex(e.getPoint());
+				if (index >= 0) {
+					Preset preset = equipmentSetupsList.getModel().getElementAt(index);
+					if (SwingUtilities.isLeftMouseButton(e)) {
+						// Associate this preset with the primary weapon
+						selectedPrimaryPreset = preset;
+						selectedPrimary = getPlayerAnimationFromPreset(preset);
+						setPrimaryTool(selectedPrimary);
+					} else if (SwingUtilities.isRightMouseButton(e)) {
+						// Associate this preset with the secondary weapon
+						selectedSecondaryPreset = preset;
+						selectedSecondary = getPlayerAnimationFromPreset(preset);
+						setSecondaryTool(selectedSecondary);
+					}
+					updateEquipmentSelection();
+				}
+			}
+		});
+
+
+
 		tree = getThemedTree("Chart Actions");
 		DefaultMutableTreeNode root = (DefaultMutableTreeNode) tree.getModel().getRoot();
 		root.add(new DefaultMutableTreeNode("Attacks"));
@@ -115,16 +174,36 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 				tools.setTool(SELECTION_TOOL);
 			}
 		});
-		JPanel treePanel = getThemedPanel();
-		treePanel.setLayout(new BorderLayout());
-		treePanel.add(tree, BorderLayout.CENTER);
-		treePanel.setPreferredSize(new Dimension(300, 0));
-		JScrollPane treeScroll = getThemedScrollPane(treePanel);
-		treeScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-		treeScroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-		treeScroll.setViewportView(tree);
-		treeScroll.setPreferredSize(new Dimension(300, 0));
-		bottomContainer.add(treeScroll);
+
+		JPanel leftPanel = getThemedPanel();
+		leftPanel.setLayout(new BorderLayout());
+		leftPanel.setPreferredSize(new Dimension(300, 0));
+
+// Create the tree container
+		JPanel treeContainer = getThemedPanel();
+		treeContainer.setLayout(new BorderLayout());
+		treeContainer.add(new JScrollPane(tree), BorderLayout.CENTER); // Make sure the tree is scrollable if needed
+
+// Create the equipment list container
+		JPanel equipmentListContainer = getTitledPanel("Equipment Setups");
+		equipmentListContainer.setLayout(new BorderLayout());
+		equipmentListContainer.add(equipmentScrollPane, BorderLayout.CENTER);
+
+// Add a '+' button under the equipment list
+		JButton addSetupButton = new JButton("+");
+		addSetupButton.addActionListener(e -> openCreateEquipmentPresetWindow());
+		equipmentListContainer.add(addSetupButton, BorderLayout.SOUTH);
+
+// Use JSplitPane to split the left panel into two areas
+		JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, treeContainer, equipmentListContainer);
+		splitPane.setResizeWeight(0.5); // This gives equal space to both panels
+		splitPane.setDividerLocation(0.5);
+		splitPane.setContinuousLayout(true); // Smooth resizing
+
+		leftPanel.add(splitPane, BorderLayout.CENTER);
+
+// Add leftPanel to the bottomContainer
+		bottomContainer.add(leftPanel);
 
         bottomContainer.add(bottomLeftcontainer);
         bottomContainer.add(tools);
@@ -237,6 +316,22 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 		this.setExtendedState(this.getExtendedState() | this.MAXIMIZED_BOTH);
     }
 
+	private void openCreateEquipmentPresetWindow() {
+
+	}
+
+	private void refreshEquipmentSetupsList() {
+		// Reload presets
+		presets = PresetManager.loadPresets();
+
+		// Update the list model
+		DefaultListModel<Preset> equipmentListModel = new DefaultListModel<>();
+		for (Preset preset : presets.values()) {
+			equipmentListModel.addElement(preset);
+		}
+		equipmentSetupsList.setModel(equipmentListModel);
+	}
+
     public void setPlayerCount(int players)
     {
         List<String> playerList = new ArrayList<>();
@@ -258,15 +353,89 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
         chart.setEndTick(tick);
     }
 
-    public void setPrimaryTool(PlayerAnimation tool)
-    {
-        chart.setPrimaryTool(tool);
-    }
+	public void setPrimaryTool(PlayerAnimation tool) {
+		chart.setPrimaryTool(tool);
+		selectedPrimary = tool;
+		updateEquipmentSelection();
+	}
 
-    public void setSecondaryTool(PlayerAnimation tool)
-    {
-        chart.setSecondaryTool(tool);
-    }
+	public void setSecondaryTool(PlayerAnimation tool) {
+		chart.setSecondaryTool(tool);
+		selectedSecondary = tool;
+		updateEquipmentSelection();
+	}
+
+	private void updateEquipmentSelection() {
+		// If the selected presets no longer match the tools, reset them
+		if (selectedPrimaryPreset != null) {
+			PlayerAnimation anim = getPlayerAnimationFromPreset(selectedPrimaryPreset);
+			if (anim != selectedPrimary) {
+				selectedPrimaryPreset = null;
+			}
+		}
+
+		if (selectedSecondaryPreset != null) {
+			PlayerAnimation anim = getPlayerAnimationFromPreset(selectedSecondaryPreset);
+			if (anim != selectedSecondary) {
+				selectedSecondaryPreset = null;
+			}
+		}
+
+		// Find matching presets if not set
+		if (selectedPrimaryPreset == null) {
+			selectedPrimaryPreset = findPresetWithWeapon(selectedPrimary);
+		}
+
+		if ((selectedSecondaryPreset == null || selectedSecondaryPreset == selectedPrimaryPreset)) {
+			selectedSecondaryPreset = findPresetWithWeapon(selectedSecondary, selectedPrimaryPreset);
+		}
+
+		// Repaint the list to reflect the selection
+		equipmentSetupsList.repaint();
+	}
+
+	private Preset findPresetWithWeapon(PlayerAnimation anim) {
+		return findPresetWithWeapon(anim, null);
+	}
+
+	private Preset findPresetWithWeapon(PlayerAnimation anim, Preset excludePreset) {
+		if (anim == null || anim.weaponIDs == null || anim.weaponIDs.length == 0) {
+			return null;
+		}
+		int[] weaponIDs = anim.weaponIDs;
+		for (Preset preset : presets.values()) {
+			if (preset == excludePreset) {
+				continue;
+			}
+			EquipmentData weapon = preset.getEquipment().get("weapon");
+			if (weapon != null) {
+				int itemId = weapon.getId();
+				for (int weaponID : weaponIDs) {
+					if (itemId == weaponID) {
+						return preset;
+					}
+				}
+			}
+		}
+		return null;
+	}
+
+	private PlayerAnimation getPlayerAnimationFromPreset(Preset preset) {
+		EquipmentData weapon = preset.getEquipment().get("weapon");
+		if (weapon != null) {
+			int weaponId = weapon.getId();
+			for (PlayerAnimation anim : PlayerAnimation.values()) {
+				if (anim.weaponIDs != null) {
+					for (int id : anim.weaponIDs) {
+						if (id == weaponId) {
+							return anim;
+						}
+					}
+				}
+			}
+		}
+		return PlayerAnimation.NOT_SET;
+	}
 
     public void setEnforceCD(boolean bool)
     {
@@ -371,4 +540,69 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 			tree.expandPath(path);
 		}
 	}
+
+	class PresetListCellRenderer extends DefaultListCellRenderer {
+		private final ItemManager itemManager;
+		private final Map<Integer, ImageIcon> iconCache = new HashMap<>();
+
+		public PresetListCellRenderer(ItemManager itemManager) {
+			this.itemManager = itemManager;
+		}
+
+		@Override
+		public Component getListCellRendererComponent(
+			JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+			Preset preset = (Preset) value;
+			JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+			label.setText(preset.getName());
+			label.setIcon(null); // Clear existing icon
+
+			// Get the weapon EquipmentData
+			EquipmentData weapon = preset.getEquipment().get("weapon");
+			if (weapon != null) {
+				int itemId = weapon.getId();
+
+				// Check if icon is cached
+				if (iconCache.containsKey(itemId)) {
+					label.setIcon(iconCache.get(itemId));
+				} else {
+					AsyncBufferedImage itemImage = itemManager.getImage(itemId);
+
+					itemImage.onLoaded(() -> {
+						Image image = itemImage.getScaledInstance(32, 32, Image.SCALE_SMOOTH);
+						ImageIcon icon = new ImageIcon(image);
+						iconCache.put(itemId, icon);
+						// Update icon on the label
+						label.setIcon(icon);
+						// Repaint list cell to show the icon
+						list.repaint(list.getCellBounds(index, index));
+					});
+				}
+			}
+
+			// Apply border outline for selection
+			label.setBorder(null); // Reset border
+			if (preset == selectedPrimaryPreset) {
+				label.setBorder(BorderFactory.createLineBorder(Color.BLUE, 2));
+			} else if (preset == selectedSecondaryPreset) {
+				label.setBorder(BorderFactory.createLineBorder(Color.ORANGE, 2));
+			} else {
+				label.setBorder(null);
+			}
+
+			// Reset background and foreground colors
+			if (isSelected) {
+				label.setBackground(list.getSelectionBackground());
+				label.setForeground(list.getSelectionForeground());
+			} else {
+				label.setBackground(list.getBackground());
+				label.setForeground(list.getForeground());
+			}
+
+			return label;
+		}
+	}
+
 }
+
+
