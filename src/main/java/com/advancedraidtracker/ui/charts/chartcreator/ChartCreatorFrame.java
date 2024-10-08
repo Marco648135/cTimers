@@ -1,6 +1,7 @@
 package com.advancedraidtracker.ui.charts.chartcreator;
 
 import com.advancedraidtracker.AdvancedRaidTrackerConfig;
+import com.advancedraidtracker.ui.AddPresetWindow;
 import com.advancedraidtracker.ui.BaseFrame;
 import com.advancedraidtracker.ui.PresetManager;
 import com.advancedraidtracker.ui.charts.ChartActionType;
@@ -61,6 +62,7 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 
     public ChartCreatorFrame(AdvancedRaidTrackerConfig config, ItemManager itemManager, ClientThread clientThread, ConfigManager configManager, SpriteManager spriteManager)
     {
+		PresetManager.loadPresets();
 		equipmentSetupsList = new JList<>();
 		equipmentSetupsList.setCellRenderer(new PresetListCellRenderer(itemManager));
 		equipmentScrollPane = new JScrollPane(equipmentSetupsList);
@@ -109,7 +111,7 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 		preachCalc.add(specCalculator);
 		bottomLeftcontainer.add(preachCalc);
 
-		presets = PresetManager.loadPresets();
+		presets = PresetManager.getPresets();
 
 // Initialize the equipment setups list
 
@@ -316,13 +318,15 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 		this.setExtendedState(this.getExtendedState() | this.MAXIMIZED_BOTH);
     }
 
-	private void openCreateEquipmentPresetWindow() {
-
+	private void openCreateEquipmentPresetWindow()
+	{
+		new AddPresetWindow();
 	}
 
 	private void refreshEquipmentSetupsList() {
 		// Reload presets
-		presets = PresetManager.loadPresets();
+		PresetManager.loadPresets();
+		presets = PresetManager.getPresets();
 
 		// Update the list model
 		DefaultListModel<Preset> equipmentListModel = new DefaultListModel<>();

@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -16,8 +17,26 @@ public class PresetManager {
 	public static final Path EQUIPMENT_PRESETS_FILE = DPS_UTILITY_FOLDER.resolve("equipment.presets");
 	private static final String initialEquipmentData = "[]";
 
-	public static Map<String, Preset> loadPresets() {
-		Map<String, Preset> presets = new HashMap<>();
+	@Getter
+	private static final Map<String, Preset> presets = new HashMap<>();
+
+	public static void add(String name, Preset preset)
+	{
+		presets.put(name, preset);
+	}
+
+	public static void remove(String name)
+	{
+		presets.remove(name);
+	}
+
+	public static void openAddPresetWindow()
+	{
+		new AddPresetWindow();
+	}
+
+	public static void loadPresets() {
+		presets.clear();
 		try {
 			// Ensure the dpsutility folder exists
 			if (!Files.exists(DPS_UTILITY_FOLDER)) {
@@ -40,6 +59,5 @@ public class PresetManager {
 			e.printStackTrace();
 			log.error("Error loading presets", e);
 		}
-		return presets;
 	}
 }
