@@ -8,6 +8,8 @@ import com.advancedraidtracker.utility.datautility.datapoints.Raid;
 import com.advancedraidtracker.utility.wrappers.RaidsArrayWrapper;
 import com.advancedraidtracker.utility.datautility.RaidsManager;
 import com.google.inject.Inject;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -190,9 +192,102 @@ public class RaidTrackerSidePanel extends PluginPanel
         loadRaidsTable.setPreferredScrollableViewportSize(loadRaidsTable.getPreferredScrollableViewportSize());
         JScrollPane scrollPane = new JScrollPane(loadRaidsTable);
         scrollPane.setPreferredSize(new Dimension(225, scrollPane.getPreferredSize().height));
-        container.add(primaryContainer);
-        container.add(scrollPane);
-        add(container);
+
+		JPanel sumPanel = new JPanel();
+		sumPanel.setLayout(new BorderLayout());
+		JLabel sumLabel = new JLabel("Total Time: 0:00.0");
+		JTextArea inputArea = new JTextArea(5, 20);
+		inputArea.setLineWrap(true);
+		inputArea.setWrapStyleWord(true);
+
+		// Add a DocumentListener to the inputArea to listen for changes and update the sum
+		inputArea.getDocument().addDocumentListener(new DocumentListener()
+		{
+			public void insertUpdate(DocumentEvent e)
+			{
+				updateSum();
+			}
+
+			public void removeUpdate(DocumentEvent e)
+			{
+				updateSum();
+			}
+
+			public void changedUpdate(DocumentEvent e)
+			{
+				updateSum();
+			}
+
+			private void updateSum()
+			{
+				String text = inputArea.getText();
+				String[] lines = text.split("\\r?\\n");
+				double totalSeconds = 0;
+				for (String line : lines)
+				{
+					double time = parseTime(line);
+					totalSeconds += time;
+				}
+				int totalMinutes = (int)(totalSeconds / 60);
+				double remainingSeconds = totalSeconds % 60;
+				String sumText = String.format("Total Time: %d:%05.2f", totalMinutes, remainingSeconds);
+				sumLabel.setText(sumText);
+			}
+
+			private double parseTime(String s)
+			{
+				s = s.trim();
+				if (s.isEmpty())
+				{
+					return 0;
+				}
+				try
+				{
+					if (s.contains(":"))
+					{
+						String[] parts = s.split(":");
+						if (parts.length == 2)
+						{
+							double minutes = 0;
+							if (!parts[0].isEmpty())
+							{
+								minutes = Double.parseDouble(parts[0]);
+							}
+							double seconds = Double.parseDouble(parts[1]);
+							return minutes * 60 + seconds;
+						}
+						else
+						{
+							return 0; // Invalid format
+						}
+					}
+					else
+					{
+						double seconds = Double.parseDouble(s);
+						return seconds;
+					}
+				}
+				catch (NumberFormatException e)
+				{
+					return 0; // Invalid number format
+				}
+			}
+		});
+
+		// Add the input area and sum label to the sumPanel
+		sumPanel.add(new JLabel("Enter Times (one per line):"), BorderLayout.NORTH);
+		sumPanel.add(new JScrollPane(inputArea), BorderLayout.CENTER);
+		sumPanel.add(sumLabel, BorderLayout.SOUTH);
+
+		// Set preferred size for the sumPanel
+		sumPanel.setPreferredSize(new Dimension(225, 150));
+
+		container.setLayout(new BorderLayout());
+		container.add(primaryContainer, BorderLayout.NORTH);
+		container.add(sumPanel, BorderLayout.CENTER);
+		container.add(scrollPane, BorderLayout.SOUTH);
+
+		add(container);
     }
 
     private DefaultTableModel getTableModel()
