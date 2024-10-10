@@ -67,6 +67,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.util.AsyncBufferedImage;
+
 @Slf4j
 public class AddPresetWindow
 {
@@ -139,7 +140,7 @@ public class AddPresetWindow
 			e.printStackTrace();
 		}
 
-		if(fromExisting.isEmpty())
+		if (fromExisting.isEmpty())
 		{
 			selectedEquipment = new HashMap<>();
 			selectedPrayers = new HashMap<>();
@@ -148,7 +149,7 @@ public class AddPresetWindow
 		else
 		{
 			Preset preset = PresetManager.getPresets().get(fromExisting);
-			if(preset == null)
+			if (preset == null)
 			{
 				selectedEquipment = new HashMap<>();
 				selectedPrayers = new HashMap<>();

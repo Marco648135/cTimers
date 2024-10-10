@@ -12,7 +12,8 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class PresetManager {
+public class PresetManager
+{
 	public static final Path DPS_UTILITY_FOLDER = Paths.get(PLUGIN_DIRECTORY, "dpsutility");
 	public static final Path EQUIPMENT_PRESETS_FILE = DPS_UTILITY_FOLDER.resolve("equipment.presets");
 	private static final String initialEquipmentData = "[]";
@@ -35,27 +36,36 @@ public class PresetManager {
 		new AddPresetWindow();
 	}
 
-	public static void loadPresets() {
+	public static void loadPresets()
+	{
 		presets.clear();
-		try {
+		try
+		{
 			// Ensure the dpsutility folder exists
-			if (!Files.exists(DPS_UTILITY_FOLDER)) {
+			if (!Files.exists(DPS_UTILITY_FOLDER))
+			{
 				Files.createDirectories(DPS_UTILITY_FOLDER);
 			}
 
 			// Load equipment presets
-			if (!Files.exists(EQUIPMENT_PRESETS_FILE)) {
+			if (!Files.exists(EQUIPMENT_PRESETS_FILE))
+			{
 				// Create the file and write initialEquipmentData
 				Files.write(EQUIPMENT_PRESETS_FILE, initialEquipmentData.getBytes(StandardCharsets.UTF_8));
 			}
 			String equipmentPresetsJson = new String(Files.readAllBytes(EQUIPMENT_PRESETS_FILE), StandardCharsets.UTF_8);
-			java.lang.reflect.Type presetListType = new TypeToken<ArrayList<Preset>>(){}.getType();
+			java.lang.reflect.Type presetListType = new TypeToken<ArrayList<Preset>>()
+			{
+			}.getType();
 			List<Preset> loadedPresets = gson.fromJson(equipmentPresetsJson, presetListType);
 
-			for (Preset preset : loadedPresets) {
+			for (Preset preset : loadedPresets)
+			{
 				presets.put(preset.getName(), preset);
 			}
-		} catch (IOException e) {
+		}
+		catch (IOException e)
+		{
 			e.printStackTrace();
 			log.error("Error loading presets", e);
 		}

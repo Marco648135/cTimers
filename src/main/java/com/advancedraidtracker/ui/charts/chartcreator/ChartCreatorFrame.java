@@ -15,7 +15,9 @@ import com.advancedraidtracker.ui.charts.chartelements.OutlineBox;
 import static com.advancedraidtracker.ui.charts.chartelements.OutlineBox.clientThread;
 import static com.advancedraidtracker.ui.charts.chartelements.OutlineBox.itemManager;
 import static com.advancedraidtracker.ui.charts.chartelements.OutlineBox.spriteManager;
+import com.advancedraidtracker.ui.dpsanalysis.DPSWindow;
 import com.advancedraidtracker.ui.dpsanalysis.EquipmentData;
+import com.advancedraidtracker.ui.dpsanalysis.NPCData;
 import com.advancedraidtracker.ui.dpsanalysis.Preset;
 import com.advancedraidtracker.utility.weapons.PlayerAnimation;
 import java.awt.event.ComponentAdapter;
@@ -49,60 +51,60 @@ import net.runelite.client.util.AsyncBufferedImage;
 @Slf4j
 public class ChartCreatorFrame extends BaseFrame implements ChartListener
 {
-    private final ChartPanel chart;
+	private final ChartPanel chart;
 	private final JTree tree;
 	private Map<String, Preset> presets = new HashMap<>();
 	private JList<Preset> equipmentSetupsList;
 	private JScrollPane equipmentScrollPane;
 
-	private Preset selectedPrimaryPreset = null;
-	private Preset selectedSecondaryPreset = null;
+	public static Preset selectedPrimaryPreset = null;
+	public static Preset selectedSecondaryPreset = null;
 	private PlayerAnimation selectedPrimary = PlayerAnimation.NOT_SET;
 	private PlayerAnimation selectedSecondary = PlayerAnimation.NOT_SET;
 
-    public ChartCreatorFrame(AdvancedRaidTrackerConfig config, ItemManager itemManager, ClientThread clientThread, ConfigManager configManager, SpriteManager spriteManager)
-    {
+	public ChartCreatorFrame(AdvancedRaidTrackerConfig config, ItemManager itemManager, ClientThread clientThread, ConfigManager configManager, SpriteManager spriteManager)
+	{
 		PresetManager.loadPresets();
 		equipmentSetupsList = new JList<>();
 		equipmentSetupsList.setCellRenderer(new PresetListCellRenderer(itemManager));
+		equipmentSetupsList.setFixedCellHeight(40);
 		equipmentScrollPane = new JScrollPane(equipmentSetupsList);
 		equipmentScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		equipmentScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        setTitle("Chart Creator");
-        chart = new ChartPanel("Creator", false, config, clientThread, configManager, itemManager, spriteManager);
-        chart.setPreferredSize(new Dimension(0, 0));
-        setPlayerCount(5);
-        setEndTick(50);
-        setStartTick(1);
-        setPrimaryTool(PlayerAnimation.SCYTHE);
-        setSecondaryTool(PlayerAnimation.NOT_SET);
-
-        ChartTopMenuPanel menu = new ChartTopMenuPanel(this, config);
-        menu.setBorder(BorderFactory.createTitledBorder("Menu"));
-        menu.setPreferredSize(new Dimension(0, 50));
+		setTitle("Chart Creator");
+		chart = new ChartPanel("Creator", false, config, clientThread, configManager, itemManager, spriteManager);
+		chart.setPreferredSize(new Dimension(0, 0));
+		setPlayerCount(5);
+		setEndTick(50);
+		setStartTick(1);
+		setPrimaryTool(PlayerAnimation.SCYTHE);
+		setSecondaryTool(PlayerAnimation.NOT_SET);
+		ChartTopMenuPanel menu = new ChartTopMenuPanel(this, config);
+		menu.setBorder(BorderFactory.createTitledBorder("Menu"));
+		menu.setPreferredSize(new Dimension(0, 50));
 		menu.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
 
-        ChartToolPanel tools = new ChartToolPanel(config, this, itemManager, clientThread, spriteManager);
-        tools.setBorder(BorderFactory.createTitledBorder("Tools"));
-        tools.setPreferredSize(new Dimension(350, 0));
+		ChartToolPanel tools = new ChartToolPanel(config, this, itemManager, clientThread, spriteManager);
+		tools.setBorder(BorderFactory.createTitledBorder("Tools"));
+		tools.setPreferredSize(new Dimension(350, 0));
 
-        JPanel container = getThemedPanel();
-        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+		JPanel container = getThemedPanel();
+		container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
 
-        JPanel bottomContainer = getThemedPanel();
-        bottomContainer.setLayout(new BoxLayout(bottomContainer, BoxLayout.X_AXIS));
+		JPanel bottomContainer = getThemedPanel();
+		bottomContainer.setLayout(new BoxLayout(bottomContainer, BoxLayout.X_AXIS));
 		bottomContainer.setFocusable(true);
 
-        JPanel bottomLeftcontainer = getThemedPanel();
-        bottomLeftcontainer.setLayout(new BoxLayout(bottomLeftcontainer, BoxLayout.Y_AXIS));
+		JPanel bottomLeftcontainer = getThemedPanel();
+		bottomLeftcontainer.setLayout(new BoxLayout(bottomLeftcontainer, BoxLayout.Y_AXIS));
 
 		JPanel chartContainer = getTitledPanel("Chart");
 		chartContainer.setLayout(new BorderLayout());
 		chartContainer.add(chart, BorderLayout.CENTER);
-        bottomLeftcontainer.add(chartContainer);
-        ChartStatusBar chartStatusBar = new ChartStatusBar("");
-        chart.setStatusBar(chartStatusBar);
-        chart.setToolSelection(ADD_ATTACK_TOOL);
+		bottomLeftcontainer.add(chartContainer);
+		ChartStatusBar chartStatusBar = new ChartStatusBar("");
+		chart.setStatusBar(chartStatusBar);
+		chart.setToolSelection(ADD_ATTACK_TOOL);
 		JPanel preachCalc = getTitledPanel("Preach/Ring Calculator");
 		preachCalc.setPreferredSize(new Dimension(0, 200));
 		ChartSpecCalculatorPanel specCalculator = new ChartSpecCalculatorPanel(config);
@@ -117,23 +119,30 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 
 // Populate the list with presets
 		DefaultListModel<Preset> equipmentListModel = new DefaultListModel<>();
-		for (Preset preset : presets.values()) {
+		for (Preset preset : presets.values())
+		{
 			equipmentListModel.addElement(preset);
 		}
 		equipmentSetupsList.setModel(equipmentListModel);
 
-		equipmentSetupsList.addMouseListener(new MouseAdapter() {
+		equipmentSetupsList.addMouseListener(new MouseAdapter()
+		{
 			@Override
-			public void mouseClicked(MouseEvent e) {
+			public void mouseClicked(MouseEvent e)
+			{
 				int index = equipmentSetupsList.locationToIndex(e.getPoint());
-				if (index >= 0) {
+				if (index >= 0)
+				{
 					Preset preset = equipmentSetupsList.getModel().getElementAt(index);
-					if (SwingUtilities.isLeftMouseButton(e)) {
+					if (SwingUtilities.isLeftMouseButton(e))
+					{
 						// Associate this preset with the primary weapon
 						selectedPrimaryPreset = preset;
 						selectedPrimary = getPlayerAnimationFromPreset(preset);
 						setPrimaryTool(selectedPrimary);
-					} else if (SwingUtilities.isRightMouseButton(e)) {
+					}
+					else if (SwingUtilities.isRightMouseButton(e))
+					{
 						// Associate this preset with the secondary weapon
 						selectedSecondaryPreset = preset;
 						selectedSecondary = getPlayerAnimationFromPreset(preset);
@@ -143,7 +152,6 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 				}
 			}
 		});
-
 
 
 		tree = getThemedTree("Chart Actions");
@@ -160,12 +168,12 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 			public void valueChanged(TreeSelectionEvent e)
 			{
 				List<OutlineBox> boxesToSelect = new ArrayList<>();
-				for(TreePath tp : tree.getSelectionModel().getSelectionPaths())
+				for (TreePath tp : tree.getSelectionModel().getSelectionPaths())
 				{
-					for(Object obj : tp.getPath())
+					for (Object obj : tp.getPath())
 					{
 						DefaultMutableTreeNode dmtn = (DefaultMutableTreeNode) obj;
-						if(dmtn.getUserObject() instanceof OutlineBox)
+						if (dmtn.getUserObject() instanceof OutlineBox)
 						{
 							boxesToSelect.add((OutlineBox) dmtn.getUserObject());
 						}
@@ -207,18 +215,18 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 // Add leftPanel to the bottomContainer
 		bottomContainer.add(leftPanel);
 
-        bottomContainer.add(bottomLeftcontainer);
-        bottomContainer.add(tools);
+		bottomContainer.add(bottomLeftcontainer);
+		bottomContainer.add(tools);
 
-        container.add(menu);
-        container.add(bottomContainer);
+		container.add(menu);
+		container.add(bottomContainer);
 		container.add(chartStatusBar);
 
-        add(container);
+		add(container);
 
-        JMenuBar menuBar = new JMenuBar();
+		JMenuBar menuBar = new JMenuBar();
 
-        JMenu fileMenu = getThemedMenu("File");
+		JMenu fileMenu = getThemedMenu("File");
 
 		JMenuItem newMenu = getThemedMenuItem("New...");
 		newMenu.setAccelerator(KeyStroke.getKeyStroke('N', Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
@@ -227,27 +235,28 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 			chart.newFile();
 		});
 
-        JMenuItem importFromClipboard = getThemedMenuItem("Import from clipboard");
+		JMenuItem importFromClipboard = getThemedMenuItem("Import from clipboard");
 
-        importFromClipboard.addActionListener(o ->
-        {
-            try
-            {
-                ChartIOData data = loadChartFromClipboard((String) Toolkit.getDefaultToolkit()
-                        .getSystemClipboard().getData(DataFlavor.stringFlavor));
-                chart.applyFromSave(data);
-            } catch (Exception e)
-            {
-                log.info("Failed to copy");
-            }
+		importFromClipboard.addActionListener(o ->
+		{
+			try
+			{
+				ChartIOData data = loadChartFromClipboard((String) Toolkit.getDefaultToolkit()
+					.getSystemClipboard().getData(DataFlavor.stringFlavor));
+				chart.applyFromSave(data);
+			}
+			catch (Exception e)
+			{
+				log.info("Failed to copy");
+			}
 
-        });
+		});
 
-        JMenuItem openMenu = getThemedMenuItem("Open...");
-        openMenu.addActionListener(o->
-        {
+		JMenuItem openMenu = getThemedMenuItem("Open...");
+		openMenu.addActionListener(o ->
+		{
 			chart.openFile();
-        });
+		});
 		openMenu.setAccelerator(KeyStroke.getKeyStroke('O', Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx()));
 
 		JMenuItem saveMenu = getThemedMenuItem("Save...");
@@ -284,8 +293,8 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 		fileMenu.add(importFromClipboard);
 		fileMenu.add(exportAttackData);
 
-        menuBar.add(fileMenu);
-        setJMenuBar(menuBar);
+		menuBar.add(fileMenu);
+		setJMenuBar(menuBar);
 
 		Timer resizeTimer = new Timer(20, e ->
 		{
@@ -303,7 +312,8 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 				if (resizeTimer.isRunning()) //redrawing on every resize event will cause severe stuttering, wait 20ms after stopped resizing
 				{
 					resizeTimer.restart();
-				} else
+				}
+				else
 				{
 					resizeTimer.start();
 				}
@@ -311,86 +321,99 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 			}
 		});
 
-        pack();
-        tools.build();
+		updateEquipmentSelection();
+
+		pack();
+		tools.build();
 		GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		this.setMaximizedBounds(env.getMaximumWindowBounds());
 		this.setExtendedState(this.getExtendedState() | this.MAXIMIZED_BOTH);
-    }
+	}
 
 	private void openCreateEquipmentPresetWindow()
 	{
 		new AddPresetWindow();
 	}
 
-	private void refreshEquipmentSetupsList() {
+	private void refreshEquipmentSetupsList()
+	{
 		// Reload presets
 		PresetManager.loadPresets();
 		presets = PresetManager.getPresets();
 
 		// Update the list model
 		DefaultListModel<Preset> equipmentListModel = new DefaultListModel<>();
-		for (Preset preset : presets.values()) {
+		for (Preset preset : presets.values())
+		{
 			equipmentListModel.addElement(preset);
 		}
 		equipmentSetupsList.setModel(equipmentListModel);
 	}
 
-    public void setPlayerCount(int players)
-    {
-        List<String> playerList = new ArrayList<>();
-        for (int i = 1; i < players + 1; i++)
-        {
-            playerList.add("Player" + i);
-        }
-        chart.setAttackers(playerList);
-        chart.redraw();
-    }
+	public void setPlayerCount(int players)
+	{
+		List<String> playerList = new ArrayList<>();
+		for (int i = 1; i < players + 1; i++)
+		{
+			playerList.add("Player" + i);
+		}
+		chart.setAttackers(playerList);
+		chart.redraw();
+	}
 
-    public void setStartTick(int tick)
-    {
-        chart.setStartTick(tick);
-    }
+	public void setStartTick(int tick)
+	{
+		chart.setStartTick(tick);
+	}
 
-    public void setEndTick(int tick)
-    {
-        chart.setEndTick(tick);
-    }
+	public void setEndTick(int tick)
+	{
+		chart.setEndTick(tick);
+	}
 
-	public void setPrimaryTool(PlayerAnimation tool) {
+	public void setPrimaryTool(PlayerAnimation tool)
+	{
 		chart.setPrimaryTool(tool);
 		selectedPrimary = tool;
 		updateEquipmentSelection();
 	}
 
-	public void setSecondaryTool(PlayerAnimation tool) {
+	public void setSecondaryTool(PlayerAnimation tool)
+	{
 		chart.setSecondaryTool(tool);
 		selectedSecondary = tool;
 		updateEquipmentSelection();
 	}
 
-	private void updateEquipmentSelection() {
+	private void updateEquipmentSelection()
+	{
 		// If the selected presets no longer match the tools, reset them
-		if (selectedPrimaryPreset != null) {
+		if (selectedPrimaryPreset != null)
+		{
 			PlayerAnimation anim = getPlayerAnimationFromPreset(selectedPrimaryPreset);
-			if (anim != selectedPrimary) {
+			if (anim != selectedPrimary)
+			{
 				selectedPrimaryPreset = null;
 			}
 		}
 
-		if (selectedSecondaryPreset != null) {
+		if (selectedSecondaryPreset != null)
+		{
 			PlayerAnimation anim = getPlayerAnimationFromPreset(selectedSecondaryPreset);
-			if (anim != selectedSecondary) {
+			if (anim != selectedSecondary)
+			{
 				selectedSecondaryPreset = null;
 			}
 		}
 
 		// Find matching presets if not set
-		if (selectedPrimaryPreset == null) {
+		if (selectedPrimaryPreset == null)
+		{
 			selectedPrimaryPreset = findPresetWithWeapon(selectedPrimary);
 		}
 
-		if ((selectedSecondaryPreset == null || selectedSecondaryPreset == selectedPrimaryPreset)) {
+		if ((selectedSecondaryPreset == null || selectedSecondaryPreset == selectedPrimaryPreset))
+		{
 			selectedSecondaryPreset = findPresetWithWeapon(selectedSecondary, selectedPrimaryPreset);
 		}
 
@@ -398,24 +421,32 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 		equipmentSetupsList.repaint();
 	}
 
-	private Preset findPresetWithWeapon(PlayerAnimation anim) {
+	private Preset findPresetWithWeapon(PlayerAnimation anim)
+	{
 		return findPresetWithWeapon(anim, null);
 	}
 
-	private Preset findPresetWithWeapon(PlayerAnimation anim, Preset excludePreset) {
-		if (anim == null || anim.weaponIDs == null || anim.weaponIDs.length == 0) {
+	private Preset findPresetWithWeapon(PlayerAnimation anim, Preset excludePreset)
+	{
+		if (anim == null || anim.weaponIDs == null || anim.weaponIDs.length == 0)
+		{
 			return null;
 		}
 		int[] weaponIDs = anim.weaponIDs;
-		for (Preset preset : presets.values()) {
-			if (preset == excludePreset) {
+		for (Preset preset : presets.values())
+		{
+			if (preset == excludePreset)
+			{
 				continue;
 			}
 			EquipmentData weapon = preset.getEquipment().get("weapon");
-			if (weapon != null) {
+			if (weapon != null)
+			{
 				int itemId = weapon.getId();
-				for (int weaponID : weaponIDs) {
-					if (itemId == weaponID) {
+				for (int weaponID : weaponIDs)
+				{
+					if (itemId == weaponID)
+					{
 						return preset;
 					}
 				}
@@ -424,14 +455,20 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 		return null;
 	}
 
-	private PlayerAnimation getPlayerAnimationFromPreset(Preset preset) {
+	private PlayerAnimation getPlayerAnimationFromPreset(Preset preset)
+	{
 		EquipmentData weapon = preset.getEquipment().get("weapon");
-		if (weapon != null) {
+		if (weapon != null)
+		{
 			int weaponId = weapon.getId();
-			for (PlayerAnimation anim : PlayerAnimation.values()) {
-				if (anim.weaponIDs != null) {
-					for (int id : anim.weaponIDs) {
-						if (id == weaponId) {
+			for (PlayerAnimation anim : PlayerAnimation.values())
+			{
+				if (anim.weaponIDs != null)
+				{
+					for (int id : anim.weaponIDs)
+					{
+						if (id == weaponId)
+						{
 							return anim;
 						}
 					}
@@ -441,39 +478,39 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 		return PlayerAnimation.NOT_SET;
 	}
 
-    public void setEnforceCD(boolean bool)
-    {
-        chart.setEnforceCD(bool);
-    }
+	public void setEnforceCD(boolean bool)
+	{
+		chart.setEnforceCD(bool);
+	}
 
-    public void setToolSelection(int tool)
-    {
-        chart.setToolSelection(tool);
-    }
+	public void setToolSelection(int tool)
+	{
+		chart.setToolSelection(tool);
+	}
 
-    public void changeLineText(String text)
-    {
-        chart.setManualLineText(text);
-    }
+	public void changeLineText(String text)
+	{
+		chart.setManualLineText(text);
+	}
 
 	@Override
 	public void onChartChanged(ChartChangedEvent event)
 	{
 		DefaultMutableTreeNode root = (DefaultMutableTreeNode) tree.getModel().getRoot();
-		for(Object object : event.chartObjects)
+		for (Object object : event.chartObjects)
 		{
-			if(event.actionType == ChartActionType.ADD_ELEMENT)
+			if (event.actionType == ChartActionType.ADD_ELEMENT)
 			{
 				DefaultMutableTreeNode node = getNodeByObject(event.objectType.name, root, true);
-				if(node != null)
+				if (node != null)
 				{
 					node.add(new DefaultMutableTreeNode(object));
 				}
 			}
-			else if(event.actionType == ChartActionType.REMOVE_ELEMENT)
+			else if (event.actionType == ChartActionType.REMOVE_ELEMENT)
 			{
 				DefaultMutableTreeNode parentNode = getNodeByObject(event.objectType.name, root, true);
-				if(parentNode != null)
+				if (parentNode != null)
 				{
 					DefaultMutableTreeNode node = getNodeByObject(object, root, false);
 					if (node != null)
@@ -496,9 +533,9 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 		for (int i = 0; i < size; i++)
 		{
 			treeNode = (DefaultMutableTreeNode) parentNode.getChildAt(i);
-			if(compareByValue)
+			if (compareByValue)
 			{
-				if(treeNode.getUserObject().equals(object))
+				if (treeNode.getUserObject().equals(object))
 				{
 					return treeNode;
 				}
@@ -538,24 +575,27 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 				expanded.add(currPath);
 			}
 		}
-		((DefaultTreeModel)tree.getModel()).reload();
+		((DefaultTreeModel) tree.getModel()).reload();
 		for (TreePath path : expanded)
 		{
 			tree.expandPath(path);
 		}
 	}
 
-	class PresetListCellRenderer extends DefaultListCellRenderer {
+	class PresetListCellRenderer extends DefaultListCellRenderer
+	{
 		private final ItemManager itemManager;
 		private final Map<Integer, ImageIcon> iconCache = new HashMap<>();
 
-		public PresetListCellRenderer(ItemManager itemManager) {
+		public PresetListCellRenderer(ItemManager itemManager)
+		{
 			this.itemManager = itemManager;
 		}
 
 		@Override
 		public Component getListCellRendererComponent(
-			JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+			JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus)
+		{
 			Preset preset = (Preset) value;
 			JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 			label.setText(preset.getName());
@@ -563,13 +603,17 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 
 			// Get the weapon EquipmentData
 			EquipmentData weapon = preset.getEquipment().get("weapon");
-			if (weapon != null) {
+			if (weapon != null)
+			{
 				int itemId = weapon.getId();
 
 				// Check if icon is cached
-				if (iconCache.containsKey(itemId)) {
+				if (iconCache.containsKey(itemId))
+				{
 					label.setIcon(iconCache.get(itemId));
-				} else {
+				}
+				else
+				{
 					AsyncBufferedImage itemImage = itemManager.getImage(itemId);
 
 					itemImage.onLoaded(() -> {
@@ -586,25 +630,38 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 
 			// Apply border outline for selection
 			label.setBorder(null); // Reset border
-			if (preset == selectedPrimaryPreset) {
-				label.setBorder(BorderFactory.createLineBorder(Color.BLUE, 2));
-			} else if (preset == selectedSecondaryPreset) {
-				label.setBorder(BorderFactory.createLineBorder(Color.ORANGE, 2));
-			} else {
+			if (preset == selectedPrimaryPreset)
+			{
+				label.setBorder(BorderFactory.createLineBorder(new Color(51, 99, 140, 180), 2));
+			}
+			else if (preset == selectedSecondaryPreset)
+			{
+				label.setBorder(BorderFactory.createLineBorder(new Color(224, 124, 79, 180), 2));
+			}
+			else
+			{
 				label.setBorder(null);
 			}
 
 			// Reset background and foreground colors
-			if (isSelected) {
+			if (isSelected)
+			{
 				label.setBackground(list.getSelectionBackground());
 				label.setForeground(list.getSelectionForeground());
-			} else {
+			}
+			else
+			{
 				label.setBackground(list.getBackground());
 				label.setForeground(list.getForeground());
 			}
 
 			return label;
 		}
+	}
+
+	public void setTarget(String target)
+	{
+		chart.setTarget(DPSWindow.getNPCFromName(target));
 	}
 
 }

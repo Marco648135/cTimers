@@ -14,7 +14,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import com.advancedraidtracker.constants.LogID; // Ensure that this import points to the correct package containing LogID
 
-public class LogViewerFrame extends JFrame {
+public class LogViewerFrame extends JFrame
+{
 
 	private List<LogEntry> logEntries = new ArrayList<>();
 	private List<LogEntry> filteredEntries = new ArrayList<>();
@@ -32,12 +33,14 @@ public class LogViewerFrame extends JFrame {
 	// Maximum number of arguments found
 	private int maxArguments = 0;
 
-	public LogViewerFrame(Path filePath) {
+	public LogViewerFrame(Path filePath)
+	{
 		super("Log Viewer");
 		initUI(filePath);
 	}
 
-	private void initUI(Path filePath) {
+	private void initUI(Path filePath)
+	{
 		readCSV(filePath);
 		createSidePanel();
 		createTable();
@@ -46,19 +49,26 @@ public class LogViewerFrame extends JFrame {
 		setVisible(true);
 	}
 
-	private void readCSV(Path filePath) {
-		try (BufferedReader br = Files.newBufferedReader(filePath)) {
+	private void readCSV(Path filePath)
+	{
+		try (BufferedReader br = Files.newBufferedReader(filePath))
+		{
 			String line;
 			int lineNumber = 0;
-			while ((line = br.readLine()) != null) {
+			while ((line = br.readLine()) != null)
+			{
 				lineNumber++;
 				String[] tokens = line.split(",", -1);
-				if (tokens.length < 4) continue; // skip invalid lines
+				if (tokens.length < 4)
+				{
+					continue; // skip invalid lines
+				}
 
 				String timestampStr = tokens[1];
 				String idStr = tokens[3];
 
-				try {
+				try
+				{
 					LocalDateTime timestamp = Instant.ofEpochMilli(Long.parseLong(timestampStr))
 						.atZone(ZoneId.systemDefault())
 						.toLocalDateTime();
@@ -72,12 +82,14 @@ public class LogViewerFrame extends JFrame {
 
 					List<String> arguments = new ArrayList<>();
 					int argStartIndex = 4; // index after the first four tokens
-					for (int i = argStartIndex; i < tokens.length; i++) {
+					for (int i = argStartIndex; i < tokens.length; i++)
+					{
 						arguments.add(tokens[i]);
 					}
 
 					// Update maximum arguments
-					if (arguments.size() > maxArguments) {
+					if (arguments.size() > maxArguments)
+					{
 						maxArguments = arguments.size();
 					}
 
@@ -92,23 +104,29 @@ public class LogViewerFrame extends JFrame {
 					);
 
 					logEntries.add(entry);
-				} catch (NumberFormatException ex) {
+				}
+				catch (NumberFormatException ex)
+				{
 					// Skip invalid lines
 					System.err.println("Invalid number on line " + lineNumber);
 				}
 			}
-		} catch (IOException e) {
+		}
+		catch (IOException e)
+		{
 			e.printStackTrace();
 		}
 	}
 
-	private void createTable() {
+	private void createTable()
+	{
 		// Columns: Line Number, Time, Log Name, Argument1, Argument2, ..., ArgumentN
 		List<String> columnNames = new ArrayList<>();
 		columnNames.add("Line");
 		columnNames.add("Time");
 		columnNames.add("Name");
-		for (int i = 1; i <= maxArguments; i++) {
+		for (int i = 1; i <= maxArguments; i++)
+		{
 			columnNames.add("Argument" + i);
 		}
 
@@ -116,11 +134,15 @@ public class LogViewerFrame extends JFrame {
 		table = new JTable(tableModel);
 
 		// Format timestamp column
-		table.getColumnModel().getColumn(1).setCellRenderer(new DefaultTableCellRenderer() {
+		table.getColumnModel().getColumn(1).setCellRenderer(new DefaultTableCellRenderer()
+		{
 			DateTimeFormatter formatter = DateTimeFormatter.ofPattern("HH:mm:ss");
+
 			@Override
-			protected void setValue(Object value) {
-				if (value instanceof LocalDateTime) {
+			protected void setValue(Object value)
+			{
+				if (value instanceof LocalDateTime)
+				{
 					value = ((LocalDateTime) value).format(formatter);
 				}
 				super.setValue(value);
@@ -140,18 +162,25 @@ public class LogViewerFrame extends JFrame {
 		addTableContextMenu();
 	}
 
-	private void updateFilteredEntries() {
-		if (hideAllExceptCheckbox != null && hideAllExceptCheckbox.isSelected()) {
+	private void updateFilteredEntries()
+	{
+		if (hideAllExceptCheckbox != null && hideAllExceptCheckbox.isSelected())
+		{
 			// Parse IDs from exceptIdTextField
 			String text = exceptIdTextField.getText().trim();
 			Set<Integer> exceptIds = new HashSet<>();
-			if (!text.isEmpty()) {
+			if (!text.isEmpty())
+			{
 				String[] tokens = text.split(",");
-				for (String token : tokens) {
-					try {
+				for (String token : tokens)
+				{
+					try
+					{
 						int id = Integer.parseInt(token.trim());
 						exceptIds.add(id);
-					} catch (NumberFormatException ex) {
+					}
+					catch (NumberFormatException ex)
+					{
 						System.err.println("Invalid ID in Except IDs: " + token.trim());
 					}
 				}
@@ -159,16 +188,22 @@ public class LogViewerFrame extends JFrame {
 
 			// Apply filtering: only include entries whose IDs are in exceptIds
 			filteredEntries = new ArrayList<>();
-			for (LogEntry entry : logEntries) {
-				if (exceptIds.contains(entry.id)) {
+			for (LogEntry entry : logEntries)
+			{
+				if (exceptIds.contains(entry.id))
+				{
 					filteredEntries.add(entry);
 				}
 			}
-		} else {
+		}
+		else
+		{
 			// Apply filtering based on hiddenIDs
 			filteredEntries = new ArrayList<>();
-			for (LogEntry entry : logEntries) {
-				if (!hiddenIDs.contains(entry.id)) {
+			for (LogEntry entry : logEntries)
+			{
+				if (!hiddenIDs.contains(entry.id))
+				{
 					filteredEntries.add(entry);
 				}
 			}
@@ -177,10 +212,12 @@ public class LogViewerFrame extends JFrame {
 		updateFilteredIdsLabel();
 	}
 
-	private void refreshTable() {
+	private void refreshTable()
+	{
 		// Clear table model
 		tableModel.setRowCount(0);
-		for (LogEntry entry : filteredEntries) {
+		for (LogEntry entry : filteredEntries)
+		{
 			List<Object> rowData = new ArrayList<>();
 			rowData.add(entry.lineNumber);
 			rowData.add(entry.timestamp);
@@ -188,18 +225,25 @@ public class LogViewerFrame extends JFrame {
 
 			List<String> argNames = entry.logId.getStringArgs();
 			List<String> arguments = entry.arguments;
-			for (int i = 0; i < maxArguments; i++) {
-				if (i < arguments.size()) {
+			for (int i = 0; i < maxArguments; i++)
+			{
+				if (i < arguments.size())
+				{
 					String argValue = arguments.get(i);
 					String cellValue;
-					if (i < argNames.size()) {
+					if (i < argNames.size())
+					{
 						String argName = argNames.get(i);
 						cellValue = argName + ": " + argValue;
-					} else {
+					}
+					else
+					{
 						cellValue = argValue;
 					}
 					rowData.add(cellValue);
-				} else {
+				}
+				else
+				{
 					rowData.add("");
 				}
 			}
@@ -208,7 +252,8 @@ public class LogViewerFrame extends JFrame {
 		}
 	}
 
-	private void createSidePanel() {
+	private void createSidePanel()
+	{
 		JPanel sidePanel = new JPanel(new BorderLayout());
 		sidePanel.setPreferredSize(new Dimension(250, getHeight()));
 
@@ -217,7 +262,8 @@ public class LogViewerFrame extends JFrame {
 
 		// IDs: 403, 404, 576, 801
 		int[] idsToHide = {403, 404, 576, 801};
-		for (int id : idsToHide) {
+		for (int id : idsToHide)
+		{
 			LogID logId = LogID.valueOf(id);
 			String name = logId.getCommonName();
 			JCheckBox checkBox = new JCheckBox("Hide " + name);
@@ -227,7 +273,7 @@ public class LogViewerFrame extends JFrame {
 		}
 
 		// Text field and button to filter IDs
-		JPanel filterPanel = new JPanel(new GridLayout(0,1));
+		JPanel filterPanel = new JPanel(new GridLayout(0, 1));
 		JPanel filterInputPanel = new JPanel();
 		JTextField idTextField = new JTextField(5);
 		JButton addFilterButton = new JButton("Add Filter");
@@ -235,13 +281,16 @@ public class LogViewerFrame extends JFrame {
 
 		addFilterButton.addActionListener(e -> {
 			String text = idTextField.getText().trim();
-			try {
+			try
+			{
 				int filterId = Integer.parseInt(text);
 				hiddenIDs.add(filterId);
 				updateFilteredEntries();
 				updateFilteredIdsLabel();
 				updateCheckboxes();
-			} catch (NumberFormatException ex) {
+			}
+			catch (NumberFormatException ex)
+			{
 				JOptionPane.showMessageDialog(this, "Invalid ID");
 			}
 		});
@@ -272,14 +321,20 @@ public class LogViewerFrame extends JFrame {
 			updateFilteredEntries();
 		});
 
-		exceptIdTextField.getDocument().addDocumentListener(new DocumentListener() {
-			public void changedUpdate(DocumentEvent e) {
+		exceptIdTextField.getDocument().addDocumentListener(new DocumentListener()
+		{
+			public void changedUpdate(DocumentEvent e)
+			{
 				updateFilteredEntries();
 			}
-			public void removeUpdate(DocumentEvent e) {
+
+			public void removeUpdate(DocumentEvent e)
+			{
 				updateFilteredEntries();
 			}
-			public void insertUpdate(DocumentEvent e) {
+
+			public void insertUpdate(DocumentEvent e)
+			{
 				updateFilteredEntries();
 			}
 		});
@@ -295,26 +350,35 @@ public class LogViewerFrame extends JFrame {
 		add(sidePanel, BorderLayout.EAST);
 	}
 
-	private void toggleHiddenID(int id, boolean hide) {
-		if (hide) {
+	private void toggleHiddenID(int id, boolean hide)
+	{
+		if (hide)
+		{
 			hiddenIDs.add(id);
-		} else {
+		}
+		else
+		{
 			hiddenIDs.remove(id);
 		}
 		updateFilteredEntries();
 		updateFilteredIdsLabel();
 	}
 
-	private void updateFilteredIdsLabel() {
+	private void updateFilteredIdsLabel()
+	{
 		StringBuilder sb = new StringBuilder("<html>");
-		if (hideAllExceptCheckbox.isSelected()) {
+		if (hideAllExceptCheckbox.isSelected())
+		{
 			sb.append("Showing only IDs: ");
 			String text = exceptIdTextField.getText().trim();
 			sb.append(text.isEmpty() ? "None" : text);
-		} else {
+		}
+		else
+		{
 			// Get the names of the hidden IDs
 			List<String> hiddenIdNames = new ArrayList<>();
-			for (int id : hiddenIDs) {
+			for (int id : hiddenIDs)
+			{
 				LogID logId = LogID.valueOf(id);
 				String name = logId.getCommonName();
 				hiddenIdNames.add(name + " (" + id + ")");
@@ -326,15 +390,18 @@ public class LogViewerFrame extends JFrame {
 		filteredIdsLabel.setText(sb.toString());
 	}
 
-	private void updateCheckboxes() {
-		for (Map.Entry<Integer, JCheckBox> entry : idCheckboxes.entrySet()) {
+	private void updateCheckboxes()
+	{
+		for (Map.Entry<Integer, JCheckBox> entry : idCheckboxes.entrySet())
+		{
 			int id = entry.getKey();
 			JCheckBox checkBox = entry.getValue();
 			checkBox.setSelected(hiddenIDs.contains(id));
 		}
 	}
 
-	private void addTableContextMenu() {
+	private void addTableContextMenu()
+	{
 		final JPopupMenu popupMenu = new JPopupMenu();
 		JMenuItem hideIdItem = new JMenuItem("Hide this ID");
 		JMenuItem viewRawItem = new JMenuItem("View raw CSV line");
@@ -347,7 +414,8 @@ public class LogViewerFrame extends JFrame {
 
 		hideIdItem.addActionListener(e -> {
 			int row = table.getSelectedRow();
-			if (row >= 0) {
+			if (row >= 0)
+			{
 				LogEntry selectedEntry = filteredEntries.get(row);
 				hiddenIDs.add(selectedEntry.id);
 				updateFilteredEntries();
@@ -358,7 +426,8 @@ public class LogViewerFrame extends JFrame {
 
 		showOnlyThisIdItem.addActionListener(e -> {
 			int row = table.getSelectedRow();
-			if (row >= 0) {
+			if (row >= 0)
+			{
 				LogEntry selectedEntry = filteredEntries.get(row);
 				hideAllExceptCheckbox.setSelected(true);
 				exceptIdTextField.setText(String.valueOf(selectedEntry.id));
@@ -368,14 +437,16 @@ public class LogViewerFrame extends JFrame {
 
 		viewRawItem.addActionListener(e -> {
 			int row = table.getSelectedRow();
-			if (row >= 0) {
+			if (row >= 0)
+			{
 				LogEntry selectedEntry = filteredEntries.get(row);
 				JOptionPane.showMessageDialog(LogViewerFrame.this, selectedEntry.rawLine, "Raw CSV Line", JOptionPane.INFORMATION_MESSAGE);
 			}
 		});
 	}
 
-	private class LogEntry {
+	private class LogEntry
+	{
 		int lineNumber;
 		LocalDateTime timestamp;
 		int id;
@@ -384,7 +455,8 @@ public class LogViewerFrame extends JFrame {
 		List<String> arguments;
 		String rawLine;
 
-		public LogEntry(int lineNumber, LocalDateTime timestamp, int id, LogID logId, String logName, List<String> arguments, String rawLine) {
+		public LogEntry(int lineNumber, LocalDateTime timestamp, int id, LogID logId, String logName, List<String> arguments, String rawLine)
+		{
 			this.lineNumber = lineNumber;
 			this.timestamp = timestamp;
 			this.id = id;

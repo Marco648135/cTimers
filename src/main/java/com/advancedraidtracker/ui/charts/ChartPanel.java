@@ -5,6 +5,7 @@ import com.advancedraidtracker.AdvancedRaidTrackerPlugin;
 import com.advancedraidtracker.constants.RaidRoom;
 import com.advancedraidtracker.constants.TobIDs;
 import static com.advancedraidtracker.constants.TobIDs.MAGE_THRALL;
+import com.advancedraidtracker.ui.PresetManager;
 import static com.advancedraidtracker.ui.charts.ChartActionType.ADD_ELEMENT;
 import static com.advancedraidtracker.ui.charts.ChartActionType.REMOVE_ELEMENT;
 import static com.advancedraidtracker.ui.charts.ChartObjectType.ATTACK;
@@ -12,6 +13,7 @@ import static com.advancedraidtracker.ui.charts.ChartObjectType.AUTO;
 import static com.advancedraidtracker.ui.charts.ChartObjectType.LINE;
 import static com.advancedraidtracker.ui.charts.ChartObjectType.TEXT;
 import static com.advancedraidtracker.ui.charts.ChartObjectType.THRALL;
+import com.advancedraidtracker.ui.charts.chartcreator.ChartCreatorFrame;
 import com.advancedraidtracker.ui.charts.chartcreator.ChartStatusBar;
 import com.advancedraidtracker.ui.charts.chartelements.ChartAuto;
 import com.advancedraidtracker.ui.charts.chartelements.ChartLine;
@@ -20,8 +22,14 @@ import com.advancedraidtracker.ui.charts.chartelements.OutlineBox;
 import static com.advancedraidtracker.ui.charts.chartelements.OutlineBox.getReplacement;
 import static com.advancedraidtracker.ui.charts.chartelements.OutlineBox.getSpellIcon;
 import com.advancedraidtracker.ui.charts.chartelements.ThrallOutlineBox;
+import com.advancedraidtracker.ui.dpsanalysis.DPSWindow;
+import com.advancedraidtracker.ui.dpsanalysis.EquipmentData;
+import com.advancedraidtracker.ui.dpsanalysis.NPCData;
+import com.advancedraidtracker.ui.dpsanalysis.Preset;
 import com.advancedraidtracker.utility.*;
 import com.advancedraidtracker.utility.Point;
+import com.advancedraidtracker.utility.probability.ProbabilityCalculator;
+import com.advancedraidtracker.utility.probability.ProbabilityUtility;
 import com.advancedraidtracker.utility.weapons.PlayerAnimation;
 import com.advancedraidtracker.utility.weapons.AnimationDecider;
 import com.advancedraidtracker.utility.wrappers.*;
@@ -30,6 +38,9 @@ import com.google.common.collect.Multimap;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.beans.PropertyChangeListener;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import javax.swing.Timer;
 import javax.swing.border.LineBorder;
@@ -81,6 +92,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	private Map<PlayerAnimation, Rectangle> actionIconPositions = new HashMap<>();
 	private PlayerAnimation hoveredAction = null;
 	Map<PlayerAnimation, BufferedImage> iconMap = new HashMap<>();
+	Map<Integer, Double> probabilityMap = new ConcurrentHashMap<>();
 
 	// Dimensions for the action icons box
 
@@ -156,6 +168,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	private PlayerAnimation selectedPrimary = PlayerAnimation.NOT_SET;
 	private PlayerAnimation selectedSecondary = PlayerAnimation.NOT_SET;
+	@Setter
+	private NPCData target;
 
 	private Rectangle sidebarToggleButtonBounds;
 	private ConfigManager configManager;
@@ -759,8 +773,13 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	{
 		synchronized (thrallOutlineBoxes)
 		{
+
 			postChartChange(new ChartChangedEvent(ADD_ELEMENT, THRALL, thrallOutlineBox));
 			thrallOutlineBoxes.add(thrallOutlineBox);
+			if (room.equals("Creator"))
+			{
+				computeProbability2();
+			}
 		}
 	}
 
@@ -872,7 +891,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	public void addPlayerDatumChanged(List<PlayerDataChanged> playerDatumChanged)
 	{
-		if(playerDatumChanged != null)
+		if (playerDatumChanged != null)
 		{
 			for (PlayerDataChanged playerDataChanged : playerDatumChanged)
 			{
@@ -1475,7 +1494,11 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		setFocusable(true);
 		requestFocus();
 		recalculateSize();
-
+		if(room.equals("Creator"))
+		{
+			NPCData npcData = DPSWindow.getNPCFromName("Verzik Vitur, Normal mode, Phase 1 (1040)");
+			setTarget(npcData); //set default
+		}
 	}
 
 	private SidebarButton getButtonById(String id)
@@ -2494,17 +2517,14 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 					if (isHoveredAndEffectEnabled("showThrallBoxes"))
 					{
-						// When hovering, display at 10% opacity
-						opacity = 25; // Approximately 10% opacity
+						opacity = 25;
 					}
 					else if (showThrallBoxes)
 					{
-						// When enabled, display at default opacity
-						opacity = 30;
+						opacity = 15;
 					}
 					else
 					{
-						// Should not draw the box
 						continue;
 					}
 
@@ -2679,6 +2699,10 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	private void drawHoverBox(Graphics2D g)
 	{
+		if(isMousePressed)
+		{
+			return;
+		}
 		synchronized (actions)
 		{
 			for (PlayerDidAttack action : actions.keySet())
@@ -3039,6 +3063,10 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		drawDawnSpecs(g);
 		drawThrallBoxes(g);
 		drawPrimaryBoxes(g);
+		if (isExtendingAttack)
+		{
+			drawPreviewBoxes(g);
+		}
 		drawDrainSymbols(g);
 		drawBloodSymbols(g);
 		drawHandSymbols(g);
@@ -3049,6 +3077,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		drawMarkerLines(g);
 		drawMaidenCrabs(g);
 		drawPotionPrayerMarkers(g);
+		drawProbabilities(g);
 
 		if (currentTool != ADD_LINE_TOOL && currentTool != ADD_TEXT_TOOL)
 		{
@@ -3082,6 +3111,115 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		repaint();
 	}
 
+	private void drawPreviewBoxes(Graphics2D g)
+	{
+		if (extensionPreviewTicks != null && !extensionPreviewTicks.isEmpty())
+		{
+			for (int tick : extensionPreviewTicks)
+			{
+				if (shouldTickBeDrawn(tick))
+				{
+					int xOffset = getXOffset(tick);
+					int yOffset = ((playerOffsets.get(extensionOriginPlayer) + 1) * scale) + getYOffset(tick);
+
+					if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
+					{
+						// 50% opacity
+						Composite originalComposite = g.getComposite();
+						g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f));
+
+						// Draw the box
+						if (config != null && config.useIconsOnChart())
+						{
+							try
+							{
+								BufferedImage icon = getIcon(extensionOriginBox.playerAnimation, extensionOriginBox.weapon);
+								if (icon != null)
+								{
+									BufferedImage scaled = getScaledImage(icon, (scale - 2), (scale - 2));
+									if (extensionOriginBox.playerAnimation.shouldFlip)
+									{
+										g.drawImage(createFlipped(scaled), xOffset + 2, yOffset + 1, null);
+									}
+									else
+									{
+										g.drawImage(scaled, xOffset + 2, yOffset + 1, null);
+									}
+								}
+							}
+							catch (Exception exception)
+							{
+								// Handle exception
+							}
+						}
+						else
+						{
+							g.setColor(extensionOriginBox.color);
+							fillBoxStyleAccordingToConfig(g, xOffset + 2, yOffset + 2, scale - 3, scale - 3, 5, 5);
+							g.setColor(extensionOriginBox.outlineColor);
+							drawBoxStyleAccordingToConfig(g, xOffset + 1, yOffset + 1, scale - 2, scale - 2, 5, 5);
+							int textOffset = (scale / 2) - (getStringWidth(g, extensionOriginBox.letter) / ((config.rightAlignTicks()) ? 4 : 2));
+							int primaryOffset = yOffset + (extensionOriginBox.additionalText.isEmpty() ? (fontHeight / 2) : 0);
+							g.drawString(extensionOriginBox.letter, xOffset + textOffset - 1, primaryOffset + (scale / 2) + 1);
+						}
+
+						// Restore original composite
+						g.setComposite(originalComposite);
+					}
+				}
+			}
+		}
+	}
+
+	private boolean isMousePressed = false;
+
+	private void drawProbabilities(Graphics2D g)
+	{
+		if (!room.equals("Creator") || target == null)
+		{
+			return;
+		}
+		for (int i = startTick; i < endTick; i++)
+		{
+			if (shouldTickBeDrawn(i))
+			{
+				Font oldFont = g.getFont();
+				int xOffset = getXOffset(i);
+				int yOffset = getYOffset(i);
+
+				g.setFont(oldFont.deriveFont(10.0f));
+				if (probabilityMap.get(i) != null)
+				{
+					double p = probabilityMap.get(i);
+					// Ensure p is within the range [0.0, 1.0]
+					p = Math.max(0.0, Math.min(1.0, p));
+
+					// Interpolate between red and green
+					int redComponent = (int) ((1 - p) * 255);
+					int greenComponent = (int) (p * 255);
+					int blueComponent = 0;
+					int alpha = (int) (0.4 * 255); // 40% opacity
+
+					Color interpolatedColor = new Color(redComponent, greenComponent, blueComponent, alpha);
+					g.setColor(interpolatedColor);
+
+					g.fillRoundRect(xOffset + 2, yOffset, scale - 4, scale / 2, 5, 5);
+
+					g.setColor(config.fontColor());
+					String probabilityString = String.format("%.1f", probabilityMap.get(i) * 100);
+
+					int fontHeight = getStringHeight(g);
+					int fontWidth = getStringWidth(g, probabilityString);
+
+					g.drawString(probabilityString, xOffset + (scale / 2) - (fontWidth / 2), yOffset + (scale / 2) - (fontHeight / 2));
+
+				}
+				g.setFont(oldFont);
+			}
+		}
+	}
+
+
 	private void drawPotionPrayerMarkers(Graphics2D g)
 	{
 		for (OutlineBox box : outlineBoxes)
@@ -3090,11 +3228,11 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 			{
 				PlayerData playerData = playerDataManager.getPlayerData(box.player, box.tick);
 				Boolean isPietyActive = playerData.getPrayers().get(Prayer.PIETY);
-				if(playerData.getAttackLevel() != 118 || playerData.getStrengthLevel() != 118 || Boolean.FALSE.equals(isPietyActive))
+				if (playerData.getAttackLevel() != 118 || playerData.getStrengthLevel() != 118 || Boolean.FALSE.equals(isPietyActive))
 				{
-					if(playerData.getStrengthLevel() != -1 && playerData.getAttackLevel() != -1)
+					if (playerData.getStrengthLevel() != -1 && playerData.getAttackLevel() != -1)
 					{
-						if(box.playerAnimation.isMelee())
+						if (box.playerAnimation.isMelee())
 						{
 							int xOffset = getXOffset(box.tick);
 							Integer playerOffset = playerOffsets.get(box.player);
@@ -3184,9 +3322,9 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	private void drawAlignmentMarkers(Graphics2D g)
 	{
-		g.setColor(config.markerColor());
-		if (currentTool == ADD_TEXT_TOOL && currentlyBeingEdited == null)
+		if (isDragging && currentTool == ADD_TEXT_TOOL && currentlyBeingEdited == null)
 		{
+			g.setColor(config.markerColor());
 			for (Line l : alignmentMarkers)
 			{
 				g.drawLine(l.getP1().getX(), l.getP1().getY(), l.getP2().getX(), l.getP2().getY());
@@ -3194,42 +3332,88 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		}
 	}
 
+
+	private int draggedTextPosX = 0;
+	private int draggedTextPosY = 0;
+	private boolean isDraggingText = false;
+
 	private void drawMappedText(Graphics2D g)
 	{
 		g.setColor(config.fontColor());
+		FontMetrics fm = g.getFontMetrics();
+
+		// Reduce line spacing between lines
+		int lineHeight = fm.getAscent() + 2; // Adjust as needed for desired spacing
+
 		for (ChartTextBox p : textBoxes)
 		{
-			if (currentlyBeingHovered != null && p.getPoint().equals(currentlyBeingHovered.getPoint()) && isDragging)
+			int xPos, yPos;
+			if (currentlyBeingHovered != null && p == currentlyBeingHovered && isDragging)
 			{
-				g.drawString(p.text, p.getPoint().getX() + alignmentOffsetX - currentScrollOffsetX, p.getPoint().getY() - alignmentOffsetY - currentScrollOffsetY);
+				xPos = draggedTextPosX - currentScrollOffsetX;
+				yPos = draggedTextPosY - currentScrollOffsetY;
 			}
 			else
 			{
-				g.drawString(p.text, p.getPoint().getX() - currentScrollOffsetX, p.getPoint().getY() - currentScrollOffsetY);
+				xPos = p.getPoint().getX() - currentScrollOffsetX;
+				yPos = p.getPoint().getY() - currentScrollOffsetY;
+			}
+
+			String[] lines = p.text.split("\n", -1);
+			int yOffset = yPos;
+
+			for (String line : lines)
+			{
+				// Draw each line
+				g.drawString(line, xPos, yOffset);
+				yOffset += lineHeight; // Advance yOffset by lineHeight
 			}
 		}
 	}
+
+
+	private Rectangle getTextBoxBounds(Graphics2D g, ChartTextBox textBox, int xOffset, int yOffset)
+	{
+		FontMetrics fm = g.getFontMetrics();
+
+		// Use the same lineHeight as in drawMappedText
+		int lineHeight = fm.getAscent() + 2;
+		String[] lines = textBox.text.split("\n", -1);
+		int totalHeight = lineHeight * lines.length;
+
+		// Compute maximum width
+		int maxWidth = 0;
+		for (String line : lines)
+		{
+			int lineWidth = fm.stringWidth(line);
+			maxWidth = Math.max(maxWidth, lineWidth);
+		}
+
+		int x = textBox.getPoint().getX() + xOffset;
+		int y = textBox.getPoint().getY() + yOffset - fm.getAscent();
+
+		return new Rectangle(x, y, maxWidth, totalHeight);
+	}
+
 
 	private void drawCurrentlyEditedTextBox(Graphics2D g)
 	{
 		if (currentlyBeingEdited != null)
 		{
 			g.setColor(new Color(40, 140, 235));
-			g.drawRect(currentlyBeingEdited.point.getX() - 5 - currentScrollOffsetX, currentlyBeingEdited.point.getY() - 20 + (getStringHeight(g) / 2) - currentScrollOffsetY, 10 + getStringWidth(g, currentlyBeingEdited.text), 20);
+			Rectangle textBounds = getTextBoxBounds(g, currentlyBeingEdited, -currentScrollOffsetX, -currentScrollOffsetY);
+			int padding = 5;
+			g.drawRect(textBounds.x - padding, textBounds.y - padding, textBounds.width + 2 * padding, textBounds.height + 2 * padding);
 		}
-		else if (currentlyBeingHovered != null)
+		else if (currentlyBeingHovered != null && !isDragging)
 		{
 			g.setColor(config.boxColor());
-			if (isDragging)
-			{
-				g.drawRect(currentlyBeingHovered.getPoint().getX() - 5 - currentScrollOffsetX, currentlyBeingHovered.getPoint().getY() - 20 + (getStringHeight(g) / 2) - currentScrollOffsetY, 10 + getStringWidth(g, currentlyBeingHovered.text), 20);
-			}
-			else
-			{
-				g.drawRect(currentlyBeingHovered.getPoint().getX() - 5 + alignmentOffsetX - currentScrollOffsetX, currentlyBeingHovered.getPoint().getY() - 20 + (getStringHeight(g) / 2) + alignmentOffsetY - currentScrollOffsetY, 10 + getStringWidth(g, currentlyBeingHovered.text), 20);
-			}
+			Rectangle textBounds = getTextBoxBounds(g, currentlyBeingHovered, -currentScrollOffsetX, -currentScrollOffsetY);
+			int padding = 5;
+			g.drawRect(textBounds.x - padding, textBounds.y - padding, textBounds.width + 2 * padding, textBounds.height + 2 * padding);
 		}
 	}
+
 
 	public void updateStatus()
 	{
@@ -3398,13 +3582,57 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	@Override
 	public void mouseClicked(MouseEvent e)
 	{
-		checkRelease(e, false);
+			checkRelease(e, false);
 	}
+
+	private boolean isExtendingAttack = false;
+	private int extensionOriginTick = -1;
+	private String extensionOriginPlayer = "";
+	private int extensionCD = 0;
+	private OutlineBox extensionOriginBox = null;
+	private List<Integer> extensionPreviewTicks = new ArrayList<>();
+	private boolean isPossibleExtension = false;
+	private OutlineBox possibleExtensionBox = null;
 
 	@Override
 	public void mousePressed(MouseEvent e)
 	{
-		if (SwingUtilities.isMiddleMouseButton(e))
+		if (currentTool == ADD_ATTACK_TOOL && (SwingUtilities.isLeftMouseButton(e) || SwingUtilities.isRightMouseButton(e)))
+		{
+			if (hoveredTick != -1 && !hoveredPlayer.isEmpty())
+			{
+				OutlineBox existingBox = null;
+				synchronized (outlineBoxes)
+				{
+					for (OutlineBox box : outlineBoxes)
+					{
+						if (box.tick == hoveredTick && box.player.equals(hoveredPlayer))
+						{
+							existingBox = box;
+							break;
+						}
+					}
+				}
+
+				if (existingBox != null)
+				{
+					// Possible start of drag operation
+					possibleExtensionBox = existingBox;
+					isPossibleExtension = true;
+					//dragButton = e.getButton();
+					isMousePressed = true; // For suppressing hover box
+					dragStartX = e.getX();
+					dragStartY = e.getY();
+				}
+				else
+				{
+					isPossibleExtension = false;
+					possibleExtensionBox = null;
+					isMousePressed = true; // For suppressing hover box
+				}
+			}
+		}
+		else if (SwingUtilities.isMiddleMouseButton(e))
 		{
 			if (!isDragging)
 			{
@@ -3417,19 +3645,61 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		}
 	}
 
+
+
+
+
 	private boolean isDragging = false;
 
 	@Override
 	public void mouseReleased(MouseEvent e)
 	{
-		if (isDragging) //prevent checkRelease from being double called by both clicked and released
+		if (isExtendingAttack)
 		{
-			checkRelease(e, true);
-			draggedTextOffsetX = 0;
-			draggedTextOffsetY = 0;
-			isDragging = false;
+			if (!extensionPreviewTicks.isEmpty())
+			{
+				// Add the OutlineBoxes at the extensionPreviewTicks
+				PlayerAnimation selectedAnimation = extensionOriginBox.playerAnimation; // Use the same animation as the origin box
+
+				if (selectedAnimation != null && selectedAnimation != PlayerAnimation.NOT_SET)
+				{
+					for (int tick : extensionPreviewTicks)
+					{
+						// Remove existing box at this tick/player
+						removeAttack(tick, extensionOriginPlayer, false);
+
+						// Create new OutlineBox based on selected animation
+						int weaponId = extensionOriginBox.weapon;
+
+						OutlineBox newBox = new OutlineBox(selectedAnimation.shorthand, selectedAnimation.color, true, extensionOriginBox.additionalText, selectedAnimation, selectedAnimation.attackTicks, tick, extensionOriginPlayer, RaidRoom.getRoom(this.room), weaponId);
+						newBox.setPreset(extensionOriginBox.getPreset());
+						newBox.setWornItems(extensionOriginBox.getWornItems());
+						newBox.setWornItemNames(extensionOriginBox.getWornItemNames());
+
+						addAttack(newBox);
+					}
+				}
+			}
+			// Reset variables
+			isExtendingAttack = false;
+			extensionPreviewTicks.clear();
+			drawGraph();
 		}
+		else
+		{
+			// Handle other mouse release actions
+			checkRelease(e, true);
+		}
+		isPossibleExtension = false;
+		possibleExtensionBox = null;
+		draggedTextOffsetX = 0;
+		draggedTextOffsetY = 0;
+		isDragging = false;
+		isMousePressed = false; // Mouse is no longer pressed
 	}
+
+
+
 
 	private final Stack<ChartAction> actionHistory = new Stack<>();
 
@@ -3440,14 +3710,25 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	private void checkRelease(MouseEvent e, boolean wasDragging)
 	{
-		// First, check if any sidebar button was clicked
+		if (wasDragging)
+		{
+			if (currentlyBeingHovered != null && isDraggingText)
+			{
+				currentlyBeingHovered.point = new Point(draggedTextPosX + alignmentOffsetX, draggedTextPosY + alignmentOffsetY);
+			}
+			alignmentOffsetX = 0;
+			alignmentOffsetY = 0;
+			isDragging = false;
+			isDraggingText = false;
+			drawGraph();
+			return;
+		}
+
 		if (sidebarToggleButtonBounds != null && sidebarToggleButtonBounds.contains(e.getPoint()))
 		{
-			// Toggle the sidebar state
 			isSidebarCollapsed = !isSidebarCollapsed;
-			// Recalculate layout and redraw the chart
 			recalculateSize();
-			return; // Exit early as we've handled the click
+			return;
 		}
 		if (SwingUtilities.isLeftMouseButton(e))
 		{
@@ -3522,7 +3803,25 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 							{
 								weapon = selectedPrimary.weaponIDs[0];
 							}
-							addAttack(new PlayerDidAttack(itemManager, hoveredPlayer, String.valueOf(selectedPrimary.animations[0]), hoveredTick, weapon, "", "", 0, 0, "", ""), selectedPrimary, true);
+							String worn = "";
+							if (ChartCreatorFrame.selectedPrimaryPreset != null)
+							{
+								Map<String, EquipmentData> equipment = ChartCreatorFrame.selectedPrimaryPreset.getEquipment();
+
+								List<String> slots = Arrays.asList("head", "cape", "neck", "weapon", "body", "shield", "legs", "hands", "feet");
+
+								List<String> ids = slots.stream()
+									.map(slot -> {
+										EquipmentData item = equipment.get(slot);
+										return (item != null) ? String.valueOf(item.getId()) : "";
+									})
+									.collect(Collectors.toList());
+
+								worn = String.join("~", ids);
+							}
+							PlayerDidAttack attack = new PlayerDidAttack(itemManager, hoveredPlayer, String.valueOf(selectedPrimary.animations[0]), hoveredTick, weapon, "", "", 0, 0, "", worn);
+							attack.setPreset(ChartCreatorFrame.selectedPrimaryPreset);
+							addAttack(attack, selectedPrimary, true);
 						}
 						else if (selectedPrimary.equals(PlayerAnimation.NOT_SET))
 						{
@@ -3627,6 +3926,10 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 									(o -> o.spawnTick == hoveredThrallBox.spawnTick && o.owner.equals(hoveredThrallBox.owner)).collect(Collectors.toList());
 								toRemove.forEach(o -> postChartChange(new ChartChangedEvent(REMOVE_ELEMENT, THRALL, o)));
 								thrallOutlineBoxes.removeAll(toRemove);
+								if (room.equals("Creator"))
+								{
+									computeProbability2();
+								}
 							}
 						}
 					}
@@ -3691,9 +3994,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	{
 		for (ChartTextBox p : textBoxes)
 		{
-			Rectangle bounds = getStringBounds((Graphics2D) img.getGraphics(), p.text);
-			bounds.x += p.getPoint().getX();
-			bounds.y += p.getPoint().getY();
+			// Use getTextBoxBounds to correctly calculate the bounds for multi-line text
+			Rectangle bounds = getTextBoxBounds((Graphics2D) img.getGraphics(), p, -currentScrollOffsetX, -currentScrollOffsetY);
 
 			Rectangle boundsExtruded = new Rectangle(bounds.x - 5, bounds.y - 5, bounds.width + 10, bounds.height + 10);
 			if (inRectangle(boundsExtruded, current.getX(), current.getY()))
@@ -3705,6 +4007,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		setIsOuterEdgeOfNearbyText(false);
 		return null;
 	}
+
 
 	List<ChartTextBox> textBoxes = new ArrayList<>();
 	public static ChartTextBox currentlyBeingEdited = null;
@@ -3768,6 +4071,10 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 			{
 				OutlineBox outlineBox = new OutlineBox(playerAnimation.shorthand, playerAnimation.color, isTarget, additionalText, playerAnimation, playerAnimation.attackTicks, attack.tick, attack.player, RaidRoom.getRoom(this.room), attack.weapon);
 				outlineBox.setWornItems(attack.wornItems);
+				if (attack.getPreset() != null)
+				{
+					outlineBox.setPreset(attack.getPreset());
+				}
 				if (attack.damage > -1)
 				{
 					outlineBox.setDamage(attack.damage);
@@ -3872,11 +4179,216 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 				playerWasOnCD.put(attack.player, i);
 			}
 		}
+		if (room.equals("Creator"))
+		{
+			computeProbability2();
+		}
 		if (!live)
 		{
 			drawGraph();
 		}
 	}
+
+
+	// Class-level cache to store ProbabilityCalculators between method calls
+
+	private static Map<String, Double> probabilityCache = new ConcurrentHashMap<>();
+
+	// ExecutorService for background computations
+	private static ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+
+	// Set to keep track of cumulative counts currently being computed
+	private static Set<String> pendingComputations = Collections.synchronizedSet(new HashSet<>());
+
+	// Map cumulative counts key to ticks that use them
+	private Map<String, List<Integer>> cumulativeCountsToTicks = new ConcurrentHashMap<>();
+
+	private int hp = Integer.MAX_VALUE;
+	public void computeProbability2()
+	{
+		// Map of tick to Map of presetName to count
+		Map<Integer, Map<String, Integer>> attacksPerTick = new HashMap<>();
+
+		// Map of tick to thrall attack count
+		Map<Integer, Integer> thrallAttacksPerTick = new HashMap<>();
+
+		// Process OutlineBoxes
+		for (OutlineBox outlineBox : outlineBoxes)
+		{
+			if (outlineBox.getPreset() != null)
+			{
+				int tick = outlineBox.getTick();
+				String presetName = outlineBox.getPreset().getName();
+
+				attacksPerTick.computeIfAbsent(tick, k -> new HashMap<>());
+				Map<String, Integer> presetCountsAtTick = attacksPerTick.get(tick);
+				presetCountsAtTick.put(presetName,
+					presetCountsAtTick.getOrDefault(presetName, 0) + 1);
+			}
+		}
+
+		// Process ThrallOutlineBoxes
+		for (ThrallOutlineBox thrallOutlineBox : thrallOutlineBoxes)
+		{
+			int summonTick = thrallOutlineBox.spawnTick;
+			// Thrall attacks start from tick after summonTick, and then every 4 ticks
+			for (int attackTick = summonTick + 1; attackTick <= endTick; attackTick += 4)
+			{
+				thrallAttacksPerTick.put(attackTick,
+					thrallAttacksPerTick.getOrDefault(attackTick, 0) + 1);
+			}
+		}
+
+		// Maps to maintain cumulative counts
+		Map<String, Integer> cumulativePresetCounts = new HashMap<>();
+		int cumulativeThrallCount = 0;
+
+		if (target != null && target.getSkills() != null)
+		{
+			int tempHP;
+			tempHP = target.getSkills().getHp();
+			int playerCount = playerOffsets.keySet().size();
+			if (playerCount == 4)
+			{
+				tempHP = tempHP * 7 / 8;
+			}
+			else if (playerCount < 4)
+			{
+				tempHP = tempHP * 3 / 4;
+			}
+			if(tempHP != hp)
+			{
+				hp = tempHP;
+				probabilityCache.clear();
+				probabilityMap.clear();
+			}
+		}
+
+		for (int tick = startTick; tick <= endTick; tick++)
+		{
+			if (attacksPerTick.containsKey(tick))
+			{
+				Map<String, Integer> attacksAtTick = attacksPerTick.get(tick);
+				for (Map.Entry<String, Integer> entry : attacksAtTick.entrySet())
+				{
+					String presetName = entry.getKey();
+					int count = entry.getValue();
+					cumulativePresetCounts.put(presetName,
+						cumulativePresetCounts.getOrDefault(presetName, 0) + count);
+				}
+			}
+
+			cumulativeThrallCount += thrallAttacksPerTick.getOrDefault(tick, 0);
+
+			// Create a unique key for the current cumulative counts
+			StringBuilder keyBuilder = new StringBuilder();
+
+			// Sort preset names to ensure consistent key generation
+			List<String> presets = new ArrayList<>(cumulativePresetCounts.keySet());
+			Collections.sort(presets);
+
+			for (String preset : presets)
+			{
+				keyBuilder.append(preset).append(":")
+					.append(cumulativePresetCounts.get(preset)).append("|");
+			}
+			keyBuilder.append("thrall:").append(cumulativeThrallCount);
+
+			String key = keyBuilder.toString();
+
+			// Map the key to this tick
+			cumulativeCountsToTicks.computeIfAbsent(key, k -> new ArrayList<>()).add(tick);
+
+			// Check if the result is already in the cache
+			Double probability = probabilityCache.get(key);
+			if (probability != null)
+			{
+				// Use cached probability
+				probabilityMap.put(tick, probability);
+			}
+			else
+			{
+				// Probability not in cache
+				// Check if computation is already pending
+				if (!pendingComputations.contains(key))
+				{
+					pendingComputations.add(key);
+					// Submit computation task
+					executorService.submit(new ProbabilityComputationTask(key, cumulativePresetCounts, cumulativeThrallCount, hp));
+				}
+				// Do not update probabilityMap yet
+			}
+		}
+
+		// Initial UI update with whatever probabilities are available
+		SwingUtilities.invokeLater(this::drawGraph);
+	}
+
+	private class ProbabilityComputationTask implements Runnable
+	{
+		private String key;
+		private Map<String, Integer> cumulativePresetCountsCopy;
+		private int cumulativeThrallCount;
+		private int hp;
+
+		public ProbabilityComputationTask(String key, Map<String, Integer> cumulativePresetCounts, int cumulativeThrallCount, int hp)
+		{
+			this.key = key;
+			// Make a copy of cumulativePresetCounts as it can change
+			this.cumulativePresetCountsCopy = new HashMap<>(cumulativePresetCounts);
+			this.cumulativeThrallCount = cumulativeThrallCount;
+			this.hp = hp;
+		}
+
+		@Override
+		public void run()
+		{
+			try
+			{
+				// Compute the probability
+				ProbabilityCalculator calculator = new ProbabilityCalculator();
+				for (String presetName : cumulativePresetCountsCopy.keySet())
+				{
+					calculator.add(ProbabilityUtility.convertPreset(
+						PresetManager.getPresets().get(presetName),
+						target,
+						cumulativePresetCountsCopy.get(presetName)));
+				}
+				// Add thrall attacks
+				calculator.add(new ProbabilityCalculator.RandomComparedRollGroup(0, 3, 0, 10, cumulativeThrallCount));
+
+				calculator.setSumToCalculate(hp, ProbabilityCalculator.ComparisonOperator.GREATER_THAN_OR_EQUAL);
+
+				Double probability = calculator.getProbability();
+
+				// Update cache
+				probabilityCache.put(key, probability);
+
+				// Remove from pendingComputations
+				pendingComputations.remove(key);
+
+				// Get the ticks associated with this key
+				List<Integer> ticks = cumulativeCountsToTicks.get(key);
+
+				if (ticks != null)
+				{
+					for (Integer tick : ticks)
+					{
+						// Update probabilityMap
+						probabilityMap.put(tick, probability);
+					}
+
+					// Trigger UI update on EDT
+					SwingUtilities.invokeLater(() -> drawGraph());
+				}
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+			}
+		}
+	}
+
 
 	private void removeAttack(OutlineBox box)
 	{
@@ -3928,6 +4440,10 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 					actions.remove(attack);
 				}
 			}
+		}
+		if (room.equals("Creator"))
+		{
+			computeProbability2();
 		}
 		drawGraph();
 	}
@@ -3996,6 +4512,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	String activeDragPlayer = "";
 	int activeDragX = 0;
 	int activeDragY = 0;
+	private static final int DRAG_THRESHOLD = 5;
 
 	@Override
 	public void mouseDragged(MouseEvent e)
@@ -4005,6 +4522,82 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		{
 			dragStartX = e.getX();
 			dragStartY = e.getY();
+		}
+
+		if (isPossibleExtension && !isExtendingAttack)
+		{
+			int dx = e.getX() - dragStartX;
+			int dy = e.getY() - dragStartY;
+			if (Math.hypot(dx, dy) >= DRAG_THRESHOLD)
+			{
+				isExtendingAttack = true;
+				extensionOriginTick = possibleExtensionBox.tick;
+				extensionOriginPlayer = possibleExtensionBox.player;
+				extensionCD = possibleExtensionBox.cd;
+				extensionOriginBox = possibleExtensionBox;
+			}
+		}
+
+		if (isExtendingAttack)
+		{
+			// Update hoveredTick and hoveredPlayer
+			setDraggedTickValues(e.getX(), e.getY());
+
+			// Check if the drag is in the same player's row and moves beyond the origin tick
+			if (extensionOriginPlayer.equals(activeDragPlayer) && activeDragTick != -1)
+			{
+				// Calculate potential ticks
+				extensionPreviewTicks.clear();
+
+				// Ensure CD is valid
+				if (extensionCD <= 0)
+				{
+					return;
+				}
+
+				int tick = extensionOriginTick + extensionCD;
+				while (tick <= endTick)
+				{
+					// Check for conflicts in the cooldown period
+					boolean conflict = false;
+					synchronized (outlineBoxes)
+					{
+						for (OutlineBox box : outlineBoxes)
+						{
+							if (box.player.equals(extensionOriginPlayer))
+							{
+								int boxStart = box.tick;
+								int boxEnd = box.tick + box.cd - 1; // -1 because cd includes the starting tick
+								int extensionStart = tick;
+								int extensionEnd = tick + extensionCD - 1;
+
+								// Check if the cooldown periods overlap
+								if (boxEnd >= extensionStart && boxStart <= extensionEnd)
+								{
+									conflict = true;
+									break;
+								}
+							}
+						}
+					}
+					if (conflict)
+					{
+						break; // Stop extending if there's a conflict
+					}
+
+					extensionPreviewTicks.add(tick);
+					tick += extensionCD;
+				}
+
+				// Update the graphics to show the preview
+				drawGraph();
+			}
+			else
+			{
+				// Drag is invalid (not the same player or activeDragTick is invalid)
+				extensionPreviewTicks.clear();
+				drawGraph();
+			}
 		}
 		if (SwingUtilities.isMiddleMouseButton(e)) //middle mouse drag shifts x and y of viewport
 		{
@@ -4043,16 +4636,19 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		}
 		else if (currentTool == ADD_TEXT_TOOL && currentlyBeingEdited == null && isOuterEdgeOfNearbyText && currentlyBeingHovered != null)
 		{
-			//Dragging while text editing is active and no textbox is being edited, and is dragging a text box
-			setAlignmentMarkers(e.getX() - draggedTextOffsetX, e.getY() - draggedTextOffsetY); //set the alignment markers
 			if (!isDragging)
 			{
 				draggedTextOffsetX = e.getX() - currentlyBeingHovered.getPoint().getX();
 				draggedTextOffsetY = e.getY() - currentlyBeingHovered.getPoint().getY();
 			}
-			currentlyBeingHovered.point = new Point(e.getX() - draggedTextOffsetX, e.getY() - draggedTextOffsetY);
 
+			draggedTextPosX = e.getX() - draggedTextOffsetX;
+			draggedTextPosY = e.getY() - draggedTextOffsetY;
+
+			setAlignmentMarkers(draggedTextPosX, draggedTextPosY);
+			isDraggingText = true;
 		}
+
 		isDragging = true;
 	}
 
@@ -4166,6 +4762,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		changesSaved = false;
 		synchronized (outlineBoxes)
 		{
+			removeAttack(box.tick, box.player, false);
+
 			outlineBoxes.add(box);
 			postChartChange(new ChartChangedEvent(ADD_ELEMENT, ATTACK, box));
 		}
@@ -4196,19 +4794,87 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	List<Line> alignmentMarkers = new ArrayList<>();
 
+	private static final int ALIGNMENT_THRESHOLD = 5;
+	private static final int SPACING_THRESHOLD = 10; // Increased tolerance for spacing alignment
+
 	private void setAlignmentMarkers(int x, int y)
 	{
 		alignmentMarkers.clear();
-		if (currentTool == ADD_TEXT_TOOL && currentlyBeingEdited == null)
+		alignmentOffsetX = 0;
+		alignmentOffsetY = 0;
+
+		if (currentTool == ADD_TEXT_TOOL && currentlyBeingEdited == null && isDragging)
 		{
+			// Collect existing spacings
+			Set<Integer> verticalSpacings = new HashSet<>();
+			for (ChartTextBox p1 : textBoxes)
+			{
+				if (p1 != currentlyBeingHovered)
+				{
+					for (ChartTextBox p2 : textBoxes)
+					{
+						if (p2 != p1 && p2 != currentlyBeingHovered)
+						{
+							int spacing = Math.abs(p2.getPoint().getY() - p1.getPoint().getY());
+							verticalSpacings.add(spacing);
+						}
+					}
+				}
+			}
+
+			// Alignment markers
 			for (ChartTextBox p : textBoxes)
 			{
-				if (Math.abs(p.getPoint().getX() - x) < 5)
+				if (p != currentlyBeingHovered)
 				{
-					alignmentOffsetX = p.getPoint().getX() - x;
-					Point p1 = (p.getPoint().getY() > y) ? new Point(p.getPoint().getX(), y + 10) : new Point(p.getPoint().getX(), p.getPoint().getY() + 10);
-					Point p2 = (p.getPoint().getY() > y) ? new Point(p.getPoint().getX(), p.getPoint().getY() - 10) : new Point(p.getPoint().getX(), y - 10);
-					alignmentMarkers.add(new Line(p1, p2));
+					int dx = Math.abs(p.getPoint().getX() - x);
+					int dy = Math.abs(p.getPoint().getY() - y);
+
+					// Alignment on X-axis (vertical line)
+					if (dx < ALIGNMENT_THRESHOLD)
+					{
+						alignmentOffsetX = p.getPoint().getX() - x;
+						Point p1 = new Point(p.getPoint().getX(), y - 1000);
+						Point p2 = new Point(p.getPoint().getX(), y + 1000);
+						alignmentMarkers.add(new Line(p1, p2));
+					}
+
+					// Alignment on Y-axis (horizontal line)
+					if (dy < ALIGNMENT_THRESHOLD)
+					{
+						alignmentOffsetY = p.getPoint().getY() - y;
+						Point p1 = new Point(x - 1000, p.getPoint().getY());
+						Point p2 = new Point(x + 1000, p.getPoint().getY());
+						alignmentMarkers.add(new Line(p1, p2));
+					}
+
+					// Vertical spacing alignment
+					int actualSpacing = p.getPoint().getY() - y;
+					for (int spacing : verticalSpacings)
+					{
+						if (Math.abs(Math.abs(actualSpacing) - spacing) < SPACING_THRESHOLD)
+						{
+							// Adjust alignmentOffsetY to match the spacing
+							alignmentOffsetY = (actualSpacing > 0) ? (p.getPoint().getY() - y - spacing) : (p.getPoint().getY() - y + spacing);
+
+							// Draw vertical line between the two boxes
+							int lineX = p.getPoint().getX() + alignmentOffsetX;
+							int lineY1 = p.getPoint().getY();
+							int lineY2 = y + alignmentOffsetY;
+
+							// Ensure lineY1 is the top point
+							if (lineY1 > lineY2)
+							{
+								int temp = lineY1;
+								lineY1 = lineY2;
+								lineY2 = temp;
+							}
+
+							Point p1 = new Point(lineX, lineY1);
+							Point p2 = new Point(lineX, lineY2);
+							alignmentMarkers.add(new Line(p1, p2));
+						}
+					}
 				}
 			}
 		}
@@ -4278,7 +4944,11 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 		// Process chart-specific hover actions
 		setTickHovered(e.getX(), e.getY());
-		setAlignmentMarkers(e.getX(), e.getY());
+
+		if (currentTool == ADD_TEXT_TOOL && isDragging)
+		{
+			setAlignmentMarkers(e.getX(), e.getY());
+		}
 
 		if (currentTool == ADD_AUTO_TOOL)
 		{
@@ -4551,7 +5221,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 							}
 							if (currentlyBeingEdited != null)
 							{
-								stoppedEditingTextBox();
+								changesSaved = false;
+								drawGraph();
 							}
 							else if (!selectedTicks.isEmpty())
 							{
@@ -4612,7 +5283,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 				case KeyEvent.KEY_TYPED:
 					if (!isCtrlPressed())
 					{
-						if ((int) e.getKeyChar() == 8) //Unicode Backspace (U+0008)
+						char c = e.getKeyChar();
+						if (c == '\b') // Backspace character
 						{
 							removeLastCharFromSelected();
 						}
@@ -4620,14 +5292,18 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 						{
 							if (currentTool == SELECTION_TOOL)
 							{
-								appendToSelected(e.getKeyChar());
+								appendToSelected(c);
 							}
 							else if (currentTool == ADD_TEXT_TOOL)
 							{
 								if (currentlyBeingEdited != null)
 								{
-									currentlyBeingEdited.text += String.valueOf(e.getKeyChar());
+									currentlyBeingEdited.text += c;
 									changesSaved = false;
+									if (c == '\n')
+									{
+										drawGraph(); // Redraw to update the bounding box immediately
+									}
 								}
 							}
 						}

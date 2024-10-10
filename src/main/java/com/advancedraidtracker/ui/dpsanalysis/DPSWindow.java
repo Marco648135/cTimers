@@ -41,11 +41,11 @@ import net.runelite.client.util.ImageUtil;
 public class DPSWindow extends BaseFrame
 {
 	private final ItemManager itemManager;
-	List<String> allNPCs = new ArrayList<>();
-	List<NPCData> allNPCData = new ArrayList<>();
-	private Map<String, List<EquipmentData>> equipmentMap = new HashMap<>();
+	public static List<String> allNPCs = new ArrayList<>();
+	static List<NPCData> allNPCData = new ArrayList<>();
+	private static Map<String, List<EquipmentData>> equipmentMap = new HashMap<>();
 
-	private final Map<String, Set<String>> trigramIndex = new HashMap<>();
+	private static final Map<String, Set<String>> trigramIndex = new HashMap<>();
 
 
 	private Map<String, List<String>> cellDiagnosticInfo = new HashMap<>();
@@ -60,7 +60,8 @@ public class DPSWindow extends BaseFrame
 	private final static String initialNPCData = "[]"; // Initial data for npc.presets
 	private final static String initialEquipmentData = "[]"; // Initial data for equipment.presets
 
-	public void loadData() throws Exception
+
+	public static void loadData() throws Exception
 	{
 		String url = "https://raw.githubusercontent.com/weirdgloop/osrs-dps-calc/main/cdn/json/monsters.json";
 		Gson reader = gson.newBuilder().create();
@@ -90,7 +91,7 @@ public class DPSWindow extends BaseFrame
 		}
 	}
 
-	private NPCData getNPCFromName(String name)
+	public static NPCData getNPCFromName(String name)
 	{
 		for (NPCData npc : allNPCData)
 		{
@@ -102,7 +103,7 @@ public class DPSWindow extends BaseFrame
 		return null;
 	}
 
-	private void buildNPCTrigramIndex()
+	private static void buildNPCTrigramIndex()
 	{
 		for (String npcName : allNPCs)
 		{
@@ -115,7 +116,7 @@ public class DPSWindow extends BaseFrame
 		}
 	}
 
-	private Set<String> getTrigrams(String text)
+	private static Set<String> getTrigrams(String text)
 	{
 		Set<String> trigrams = new HashSet<>();
 		int length = text.length();
@@ -1866,12 +1867,8 @@ public class DPSWindow extends BaseFrame
 		int maxHit = 0;
 		int attackRoll = 0;
 		String selectedStyle = preset.getSelectedStyle();
-		Map<Prayers, Boolean> prayers = preset.getPrayers();
 
-		Map<String, Integer> baseLevels = preset.getBaseLevels();
-		Map<String, String> selectedPotions = preset.getSelectedPotions();
-
-		Map<String, Integer> virtualLevels = calculateVirtualLevelsForPreset(baseLevels, selectedPotions, prayers);
+		Map<String, Integer> virtualLevels = preset.getVirtualLevels();
 
 		double attackSpeed = getAttackSpeed(preset);
 
@@ -2049,8 +2046,6 @@ public class DPSWindow extends BaseFrame
 
 			maxHit = calculateMagicMaxHit(preset); // Depends on spell selected
 
-			// Continue with hit chance calculations...
-
 		}
 
 		int defenseRoll = calculateDefenseRoll(npcData, defenseValue, selectedStyle, attackType);
@@ -2162,7 +2157,6 @@ public class DPSWindow extends BaseFrame
 	}
 
 
-
 	private Map<Integer, String> rowToPresetMap = new HashMap<>();
 
 	private void addPresetRowToTable(String presetName, DefaultTableModel tableModel)
@@ -2227,6 +2221,7 @@ public class DPSWindow extends BaseFrame
 		// Return a default value or handle error
 		return 0;
 	}
+
 	private void saveEquipmentPresets()
 	{
 		try

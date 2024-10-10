@@ -22,7 +22,7 @@ public class ProbabilityCalculator
 	}
 
 	// Class to represent a group of random rolls
-	private static class RandomRollGroup implements PMFGroup
+	public static class RandomRollGroup implements PMFGroup
 	{
 		int minValue;
 		int maxValue;
@@ -43,7 +43,7 @@ public class ProbabilityCalculator
 	}
 
 	// Class to represent a group of compared random rolls
-	private static class RandomComparedRollGroup implements PMFGroup
+	public static class RandomComparedRollGroup implements PMFGroup
 	{
 		int min1;
 		int max1;
@@ -76,7 +76,7 @@ public class ProbabilityCalculator
 		}
 	}
 
-	private static class RandomAccuracyCheckedComparedRollGroup implements PMFGroup
+	public static class RandomAccuracyCheckedComparedRollGroup implements PMFGroup
 	{
 		int minA, maxA, minB, maxB, minC, maxC, minD, maxD, count;
 
@@ -118,6 +118,7 @@ public class ProbabilityCalculator
 
 			// Compute P(min(C,D) = w)
 			Map<Integer, Double> minCDPMF = computeMinUniformPMF(minC, maxC, minD, maxD);
+			minCDPMF = adjustPMFForMinValue(minCDPMF, 1);
 
 			// Outcome is 0 when A ≤ B
 			pmf.put(0, pALessEqualB);
@@ -136,7 +137,7 @@ public class ProbabilityCalculator
 		}
 	}
 
-	private static class RandomAccuracyCheckedRollGroup implements PMFGroup
+	public static class RandomAccuracyCheckedRollGroup implements PMFGroup
 	{
 		int minA, maxA, minB, maxB, minC, maxC, count;
 
@@ -179,6 +180,7 @@ public class ProbabilityCalculator
 
 			// When A > B, outcome is a roll from minC to maxC
 			Map<Integer, Double> cPMF = computeUniformPMF(minC, maxC);
+			cPMF = adjustPMFForMinValue(cPMF, 1);
 
 			// Multiply probabilities by pAGreaterB
 			for (Map.Entry<Integer, Double> entry : cPMF.entrySet())
@@ -192,6 +194,30 @@ public class ProbabilityCalculator
 
 			return pmf;
 		}
+	}
+
+	// Adjust the PMF to ensure minimum value
+	private static Map<Integer, Double> adjustPMFForMinValue(Map<Integer, Double> pmf, int minValue)
+	{
+		Map<Integer, Double> adjustedPMF = new HashMap<>();
+		double probAtMinValue = 0.0;
+		for (Map.Entry<Integer, Double> entry : pmf.entrySet())
+		{
+			int value = entry.getKey();
+			double prob = entry.getValue();
+			if (value < minValue)
+			{
+				probAtMinValue += prob;
+			}
+			else
+			{
+				adjustedPMF.put(value, prob);
+			}
+		}
+		// Add the collected probability mass to minValue
+		adjustedPMF.put(minValue, adjustedPMF.getOrDefault(minValue, 0.0) + probAtMinValue);
+
+		return adjustedPMF;
 	}
 
 	// List to hold the PMF groups
@@ -209,6 +235,11 @@ public class ProbabilityCalculator
 	public void add(PMFGroup group)
 	{
 		pmfGroups.add(group);
+	}
+
+	public void add(List<PMFGroup> groups)
+	{
+		pmfGroups.addAll(groups);
 	}
 
 	private static Map<Integer, Double> computeUniformPMF(int minValue, int maxValue)
@@ -330,7 +361,8 @@ public class ProbabilityCalculator
 						{
 							int rollC = random.nextInt(rangeC) + minC;
 							int rollD = random.nextInt(rangeD) + minD;
-							groupSum += Math.min(rollC, rollD);
+							int minRoll = Math.min(rollC, rollD);
+							groupSum += Math.max(minRoll, 1);
 						}
 						else
 						{
@@ -363,7 +395,7 @@ public class ProbabilityCalculator
 						if (rollA > rollB)
 						{
 							int rollC = random.nextInt(rangeC) + minC;
-							groupSum += rollC;
+							groupSum += Math.max(rollC, 1);
 						}
 						else
 						{
@@ -380,19 +412,34 @@ public class ProbabilityCalculator
 			switch (comparisonOperator)
 			{
 				case LESS_THAN:
-					if (totalSum < targetSum) success = true;
+					if (totalSum < targetSum)
+					{
+						success = true;
+					}
 					break;
 				case LESS_THAN_OR_EQUAL:
-					if (totalSum <= targetSum) success = true;
+					if (totalSum <= targetSum)
+					{
+						success = true;
+					}
 					break;
 				case EQUAL:
-					if (totalSum == targetSum) success = true;
+					if (totalSum == targetSum)
+					{
+						success = true;
+					}
 					break;
 				case GREATER_THAN_OR_EQUAL:
-					if (totalSum >= targetSum) success = true;
+					if (totalSum >= targetSum)
+					{
+						success = true;
+					}
 					break;
 				case GREATER_THAN:
-					if (totalSum > targetSum) success = true;
+					if (totalSum > targetSum)
+					{
+						success = true;
+					}
 					break;
 			}
 
@@ -536,19 +583,34 @@ public class ProbabilityCalculator
 			switch (comparisonOperator)
 			{
 				case LESS_THAN:
-					if (sum < targetSum) include = true;
+					if (sum < targetSum)
+					{
+						include = true;
+					}
 					break;
 				case LESS_THAN_OR_EQUAL:
-					if (sum <= targetSum) include = true;
+					if (sum <= targetSum)
+					{
+						include = true;
+					}
 					break;
 				case EQUAL:
-					if (sum == targetSum) include = true;
+					if (sum == targetSum)
+					{
+						include = true;
+					}
 					break;
 				case GREATER_THAN_OR_EQUAL:
-					if (sum >= targetSum) include = true;
+					if (sum >= targetSum)
+					{
+						include = true;
+					}
 					break;
 				case GREATER_THAN:
-					if (sum > targetSum) include = true;
+					if (sum > targetSum)
+					{
+						include = true;
+					}
 					break;
 			}
 

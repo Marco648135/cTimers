@@ -22,7 +22,7 @@ public class ChartTopMenuPanel extends JPanel
 	JCheckBox weaponCD = getThemedCheckBox("Enforce Weapon CD?");
 
 	JTextField lineText = getThemedTextField();
-	JTextField targetNPCField = getThemedTextField(); // New Target NPC text field
+	JTextField targetNPCField = getThemedTextField("Verzik Vitur, Normal mode, Phase 1 (1040)"); // New Target NPC text field
 
 	// Auto-complete components
 	private DefaultListModel<String> npcListModel = new DefaultListModel<>();
@@ -49,6 +49,7 @@ public class ChartTopMenuPanel extends JPanel
 		{
 			parent.setPlayerCount(options.getSelectedIndex() + 1);
 		});
+		options.setSelectedIndex(4);
 
 		JSpinner startTick = getThemedSpinner(new SpinnerNumberModel(1, 0, 500, 1));
 
@@ -283,6 +284,7 @@ public class ChartTopMenuPanel extends JPanel
 		if (selectedValue != null)
 		{
 			targetNPCField.setText(selectedValue);
+			parentFrame.setTarget(selectedValue);
 		}
 		removeSuggestionPanel();
 	}
