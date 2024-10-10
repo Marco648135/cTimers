@@ -325,8 +325,7 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 
 		pack();
 		tools.build();
-		GraphicsEnvironment env = GraphicsEnvironment.getLocalGraphicsEnvironment();
-		this.setMaximizedBounds(env.getMaximumWindowBounds());
+
 		this.setExtendedState(this.getExtendedState() | this.MAXIMIZED_BOTH);
 	}
 
