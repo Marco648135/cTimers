@@ -45,6 +45,10 @@ public class OutlineBox
 
 	@Setter
 	@Getter
+	String tooltip;
+
+	@Setter
+	@Getter
 	String[] wornItemNames = new String[0];
 
 	@Setter

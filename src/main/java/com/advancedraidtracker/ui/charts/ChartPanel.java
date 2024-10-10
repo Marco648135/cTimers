@@ -164,7 +164,6 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	@Setter
 	private Map<Integer, Integer> roomHP = new HashMap<>();
 	Map<String, Integer> playerOffsets = new LinkedHashMap<>();
-	private final Map<PlayerDidAttack, String> actions = new HashMap<>();
 
 	private PlayerAnimation selectedPrimary = PlayerAnimation.NOT_SET;
 	private PlayerAnimation selectedSecondary = PlayerAnimation.NOT_SET;
@@ -860,7 +859,6 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		attackers.clear();
 		playerOffsets.clear();
 		crabDescriptions.clear();
-		actions.clear();
 		roomHP.clear();
 		NPCMap.clear();
 		playerInThrownBloodList.clear();
@@ -2703,18 +2701,18 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		{
 			return;
 		}
-		synchronized (actions)
+		synchronized (outlineBoxes)
 		{
-			for (PlayerDidAttack action : actions.keySet())
+			for (OutlineBox action : outlineBoxes)
 			{
 				if (action.tick == hoveredTick && action.player.equals(hoveredPlayer) && shouldTickBeDrawn(action.tick))
 				{
 					Point location = getPoint(action.tick, action.player);
-					HoverBox hoverBox = new HoverBox(actions.get(action), config);
-					if (action.getPlayerAnimation().attackTicks > 0)
+					HoverBox hoverBox = new HoverBox(action.getTooltip(), config);
+					if (action.cd > 0)
 					{
 						hoverBox.addString("");
-						for (String item : action.wornItemNames)
+						for (String item : action.getWornItemNames())
 						{
 							hoverBox.addString("." + item);
 						}
@@ -3675,6 +3673,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 						newBox.setPreset(extensionOriginBox.getPreset());
 						newBox.setWornItems(extensionOriginBox.getWornItems());
 						newBox.setWornItemNames(extensionOriginBox.getWornItemNames());
+						newBox.setTooltip(extensionOriginBox.getTooltip());
 
 						addAttack(newBox);
 					}
@@ -4045,10 +4044,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 			{
 				targetString = playerAnimation.name + ": " + attack.damage;
 			}
-			synchronized (actions)
-			{
-				actions.put(attack, targetString);
-			}
+
 			String additionalText = "";
 			if (targetString.contains("(on w"))
 			{
@@ -4071,6 +4067,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 			{
 				OutlineBox outlineBox = new OutlineBox(playerAnimation.shorthand, playerAnimation.color, isTarget, additionalText, playerAnimation, playerAnimation.attackTicks, attack.tick, attack.player, RaidRoom.getRoom(this.room), attack.weapon);
 				outlineBox.setWornItems(attack.wornItems);
+				outlineBox.setTooltip(targetString);
 				if (attack.getPreset() != null)
 				{
 					outlineBox.setPreset(attack.getPreset());
@@ -4150,15 +4147,6 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 							if (box.tick == attack.tick && Objects.equals(box.player, attack.player))
 							{
 								outlineBoxes.remove(box);
-								for (PlayerDidAttack pda : actions.keySet())
-								{
-									if (pda.tick == box.tick && pda.player.equals(box.player) && pda != attack)
-									{
-										actions.remove(pda);
-										actions.put(attack, targetString + " (Veng Applied: " + box.damage + ")");
-										break;
-									}
-								}
 								outlineBox.tertiaryID = -3;
 								outlineBox.setDamage(box.damage);
 								break;
@@ -4201,7 +4189,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	private static Set<String> pendingComputations = Collections.synchronizedSet(new HashSet<>());
 
 	// Map cumulative counts key to ticks that use them
-	private Map<String, List<Integer>> cumulativeCountsToTicks = new ConcurrentHashMap<>();
+	private final Map<String, List<Integer>> cumulativeCountsToTicks = new ConcurrentHashMap<>();
 
 	private int hp = Integer.MAX_VALUE;
 	public void computeProbability2()
@@ -4367,19 +4355,22 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 				// Remove from pendingComputations
 				pendingComputations.remove(key);
 
-				// Get the ticks associated with this key
-				List<Integer> ticks = cumulativeCountsToTicks.get(key);
-
-				if (ticks != null)
+				synchronized (cumulativeCountsToTicks)
 				{
-					for (Integer tick : ticks)
-					{
-						// Update probabilityMap
-						probabilityMap.put(tick, probability);
-					}
+					// Get the ticks associated with this key
+					List<Integer> ticks = cumulativeCountsToTicks.get(key);
 
-					// Trigger UI update on EDT
-					SwingUtilities.invokeLater(() -> drawGraph());
+					if (ticks != null)
+					{
+						for (Integer tick : ticks)
+						{
+							// Update probabilityMap
+							probabilityMap.put(tick, probability);
+						}
+
+						// Trigger UI update on EDT
+						SwingUtilities.invokeLater(() -> drawGraph());
+					}
 				}
 			}
 			catch (Exception e)
@@ -4423,21 +4414,6 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 				if (shouldRecord)
 				{
 					actionHistory.push(new ChartAction(removedBoxes, ChartActionType.REMOVE_ELEMENT));
-				}
-			}
-			synchronized (actions)
-			{
-				List<PlayerDidAttack> removedAttacks = new ArrayList<>();
-				for (PlayerDidAttack attack : actions.keySet())
-				{
-					if (attack.tick == tick && attack.player.equals(player))
-					{
-						removedAttacks.add(attack);
-					}
-				}
-				for (PlayerDidAttack attack : removedAttacks)
-				{
-					actions.remove(attack);
 				}
 			}
 		}
