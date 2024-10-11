@@ -15,6 +15,7 @@ import static com.advancedraidtracker.ui.charts.ChartObjectType.TEXT;
 import static com.advancedraidtracker.ui.charts.ChartObjectType.THRALL;
 import com.advancedraidtracker.ui.charts.chartcreator.ChartCreatorFrame;
 import com.advancedraidtracker.ui.charts.chartcreator.ChartStatusBar;
+import com.advancedraidtracker.ui.charts.chartcreator.CustomPanel;
 import com.advancedraidtracker.ui.charts.chartelements.ChartAuto;
 import com.advancedraidtracker.ui.charts.chartelements.ChartLine;
 import com.advancedraidtracker.ui.charts.chartelements.ChartTextBox;
@@ -958,48 +959,6 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		recalculateSize();
 	}
 
-	public void addAttack(PlayerDidAttack attack, PlayerAnimation playerAnimation)
-	{
-		addAttack(attack, playerAnimation, false);
-		changesSaved = false;
-	}
-
-	public void addAttack(PlayerDidAttack attack)
-	{
-		addAttack(attack, PlayerAnimation.NOT_SET);
-		changesSaved = false;
-	}
-
-	private static String getShortenedString(String targetString, int index)
-	{
-		String shortenedString = targetString.substring(index + 3);
-		shortenedString = shortenedString.substring(0, shortenedString.indexOf(" "));
-		if (targetString.contains("east small"))
-		{
-			shortenedString += "e";
-		}
-		else if (targetString.contains("south small"))
-		{
-			shortenedString += "s";
-		}
-		else if (targetString.contains("west small"))
-		{
-			shortenedString += "w";
-		}
-		else if (targetString.contains("east big"))
-		{
-			shortenedString += "E";
-		}
-		else if (targetString.contains("south big"))
-		{
-			shortenedString += "S";
-		}
-		else if (targetString.contains("west big"))
-		{
-			shortenedString += "W";
-		}
-		return shortenedString;
-	}
 
 	public void addLiveAttack(PlayerDidAttack attack)
 	{
@@ -1008,14 +967,23 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 			attack.tick += 2; //I do not understand why this must be done but the attacks are on the wrong tick otherwise
 		}
 		attack.tick += baseEndTick;
-		addAttack(new PlayerDidAttack(attack.itemManager, attack.player, attack.animation, attack.tick, attack.weapon, attack.projectile, attack.spotAnims, attack.targetedIndex, attack.targetedID, attack.targetName, attack.wornItems));
+		PlayerDidAttack shiftedAttack = new PlayerDidAttack(attack.itemManager, attack.player, attack.animation, attack.tick, attack.weapon, attack.projectile, attack.spotAnims, attack.targetedIndex, attack.targetedID, attack.targetName, attack.wornItems);
+		OutlineBox box = ChartUtility.convertToOutlineBox(shiftedAttack, NOT_SET, this.room, roomHP, NPCMap);
+		if(box != null)
+		{
+			SwingUtilities.invokeLater(() -> addAttack(box));
+		}
 	}
 
 	public void addAttacks(Collection<PlayerDidAttack> attacks)
 	{
 		for (PlayerDidAttack attack : attacks)
 		{
-			addAttack(attack);
+			OutlineBox box = ChartUtility.convertToOutlineBox(attack, NOT_SET, this.room, roomHP, NPCMap);
+			if(box != null)
+			{
+				addAttack(box);
+			}
 		}
 	}
 
@@ -3820,7 +3788,12 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 							}
 							PlayerDidAttack attack = new PlayerDidAttack(itemManager, hoveredPlayer, String.valueOf(selectedPrimary.animations[0]), hoveredTick, weapon, "", "", 0, 0, "", worn);
 							attack.setPreset(ChartCreatorFrame.selectedPrimaryPreset);
-							addAttack(attack, selectedPrimary, true);
+							OutlineBox box = ChartUtility.convertToOutlineBox(attack, selectedPrimary, this.room, roomHP, NPCMap);
+							if (box != null)
+							{
+								addAttack(box);
+							}
+
 						}
 						else if (selectedPrimary.equals(PlayerAnimation.NOT_SET))
 						{
@@ -3846,7 +3819,12 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 							{
 								weapon = selectedSecondary.weaponIDs[0];
 							}
-							addAttack(new PlayerDidAttack(itemManager, hoveredPlayer, String.valueOf(selectedPrimary.animations[0]), hoveredTick, weapon, "", "", 0, 0, "", ""), selectedSecondary, true);
+							PlayerDidAttack attack = (new PlayerDidAttack(itemManager, hoveredPlayer, String.valueOf(selectedPrimary.animations[0]), hoveredTick, weapon, "", "", 0, 0, "", ""));
+							OutlineBox box = ChartUtility.convertToOutlineBox(attack, selectedSecondary, this.room, roomHP, NPCMap);
+							if(box != null)
+							{
+								addAttack(box);
+							}
 						}
 						else if (selectedSecondary.equals(PlayerAnimation.NOT_SET))
 						{
@@ -4016,169 +3994,6 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	Map<String, Integer> playerThrallCoolDown = new HashMap<>();
 	Map<String, Integer> playerDCCoolDown = new HashMap<>();
 
-	private void addAttack(PlayerDidAttack attack, PlayerAnimation playerAnimation, boolean recordAttack)
-	{
-		changesSaved = false;
-		if (clientThread != null)
-		{
-			clientThread.invoke(attack::setWornNames);
-		}
-		if (playerAnimation.equals(PlayerAnimation.NOT_SET))
-		{
-			playerAnimation = AnimationDecider.getWeapon(attack.animation, attack.spotAnims, attack.projectile, attack.weapon);
-		}
-		if (playerAnimation != PlayerAnimation.EXCLUDED_ANIMATION && playerAnimation != PlayerAnimation.UNDECIDED)
-		{
-			boolean isTarget = RoomUtil.isPrimaryBoss(attack.targetedID) && attack.targetedID != -1;
-			String targetString = playerAnimation.name + ": ";
-			String targetName = getBossName(attack.targetedID, attack.targetedIndex, attack.tick);
-			if (targetName.equals("?"))
-			{
-				targetString += attack.targetName;
-			}
-			else
-			{
-				targetString += targetName;
-			}
-			if (playerAnimation == VENG_APPLIED)
-			{
-				targetString = playerAnimation.name + ": " + attack.damage;
-			}
-
-			String additionalText = "";
-			if (targetString.contains("(on w"))
-			{
-				additionalText = targetString.substring(targetString.indexOf("(on w") + 5);
-				additionalText = "s" + additionalText.substring(0, additionalText.indexOf(")"));
-			}
-			else if (targetString.contains("small") || targetString.contains("big"))
-			{
-				additionalText = getShortenedString(targetString, playerAnimation.name.length());
-			}
-			else if (targetString.contains("70s") || targetString.contains("50s") || targetString.contains("30s"))
-			{
-				String shortenedString = targetString.substring(playerAnimation.name.length() + 2);
-				shortenedString = shortenedString.substring(0, 2);
-				String proc = targetString.substring(targetString.indexOf("0s") - 1, targetString.indexOf("0s") + 1);
-
-				additionalText = proc + shortenedString;
-			}
-			synchronized (outlineBoxes)
-			{
-				OutlineBox outlineBox = new OutlineBox(playerAnimation.shorthand, playerAnimation.color, isTarget, additionalText, playerAnimation, playerAnimation.attackTicks, attack.tick, attack.player, RaidRoom.getRoom(this.room), attack.weapon);
-				outlineBox.setWornItems(attack.wornItems);
-				outlineBox.setTooltip(targetString);
-				if (attack.getPreset() != null)
-				{
-					outlineBox.setPreset(attack.getPreset());
-				}
-				if (attack.damage > -1)
-				{
-					outlineBox.setDamage(attack.damage);
-				}
-				if (clientThread != null)
-				{
-					clientThread.invoke(outlineBox::setWornNames);
-				}
-				String[] spotAnims = attack.spotAnims.split(":");
-				if (playerAnimation == SBS)
-				{
-					playerSBSCoolDown.put(attack.player, attack.tick + 10);
-				}
-				else if (playerAnimation == VENG_SELF)
-				{
-					playerVengCoolDown.put(attack.player, attack.tick + 15);
-				}
-				else if (playerAnimation == DEATH_CHARGE)
-				{
-					playerDCCoolDown.put(attack.player, attack.tick + 15);
-				}
-				else if (playerAnimation == THRALL_CAST)
-				{
-					playerThrallCoolDown.put(attack.player, attack.tick + 15);
-				}
-
-				if (spotAnims.length > 0)
-				{
-					if (!Objects.equals(spotAnims[0], ""))
-					{
-						int graphic = Integer.parseInt(spotAnims[0]);
-						if (graphic == 1062 && playerSBSCoolDown.getOrDefault(attack.player, 0) <= attack.tick) //sbs
-						{
-							outlineBox.secondaryID = Integer.parseInt(spotAnims[0]);
-							playerSBSCoolDown.put(attack.player, attack.tick + 10);
-						}
-						else if (graphic == 726 && playerVengCoolDown.getOrDefault(attack.player, 0) <= attack.tick)
-						{
-							outlineBox.secondaryID = Integer.parseInt(spotAnims[0]);
-							playerVengCoolDown.put(attack.player, attack.tick + 15);
-						}
-						else if (graphic == 1854 && playerDCCoolDown.getOrDefault(attack.player, 0) <= attack.tick)
-						{
-							outlineBox.secondaryID = Integer.parseInt(spotAnims[0]);
-							playerDCCoolDown.put(attack.player, attack.tick + 15);
-						}
-						else if ((graphic == 1873 || graphic == 1874 || graphic == 1875) && playerThrallCoolDown.getOrDefault(attack.player, 0) <= attack.tick)
-						{
-							outlineBox.secondaryID = Integer.parseInt(spotAnims[0]);
-							playerThrallCoolDown.put(attack.player, attack.tick + 15);
-						}
-						if (graphic != 1062)//non sbs secondary graphic -> force reset?
-						{
-							playerSBSCoolDown.put(attack.player, 0);
-						}
-						if (graphic != 1062 && graphic != 726 && graphic != 1854 && graphic != 1873 && graphic != 1874 && graphic != 1875 && !(playerAnimation == BARRAGE || playerAnimation == BLITZ))
-						{
-							outlineBox.secondaryID = Integer.parseInt(spotAnims[0]);
-						}
-					}
-				}
-				if (playerAnimation == BARRAGE || playerAnimation == BLITZ || playerAnimation == THRALL_CAST || playerAnimation == VENG_SELF
-					|| playerAnimation == AID_OTHER || playerAnimation == HUMIDIFY || playerAnimation == MAGIC_IMBUE)
-				{
-					playerSBSCoolDown.put(attack.player, 0);
-				}
-				if (playerAnimation != VENG_APPLIED)
-				{
-					for (OutlineBox box : outlineBoxes)
-					{
-						if (box.playerAnimation == VENG_APPLIED)
-						{
-							if (box.tick == attack.tick && Objects.equals(box.player, attack.player))
-							{
-								outlineBoxes.remove(box);
-								outlineBox.tertiaryID = -3;
-								outlineBox.setDamage(box.damage);
-								break;
-							}
-						}
-					}
-				}
-				outlineBoxes.add(outlineBox);
-				postChartChange(new ChartChangedEvent(ADD_ELEMENT, ATTACK, outlineBox));
-				updatePlayerAnimationsInUse();
-				if (recordAttack)
-				{
-					actionHistory.add(new ChartAction(List.of(outlineBox), ADD_ELEMENT));
-				}
-			}
-			for (int i = attack.tick; i < attack.tick + playerAnimation.attackTicks; i++)
-			{
-				playerWasOnCD.put(attack.player, i);
-			}
-		}
-		if (room.equals("Creator"))
-		{
-			computeProbability2();
-		}
-		if (!live)
-		{
-			drawGraph();
-		}
-	}
-
-
-	// Class-level cache to store ProbabilityCalculators between method calls
 
 	private static Map<String, Double> probabilityCache = new ConcurrentHashMap<>();
 
@@ -4733,21 +4548,82 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		drawGraph();
 	}
 
-	public void addAttack(OutlineBox box)
-	{
+	public void addAttack(OutlineBox box) {
 		changesSaved = false;
-		synchronized (outlineBoxes)
-		{
+		synchronized (outlineBoxes) {
+			// Remove any existing OutlineBox at the same tick and player
 			removeAttack(box.tick, box.player, false);
+
+			// Handle cooldowns
+			if (box.playerAnimation == PlayerAnimation.SBS) {
+				playerSBSCoolDown.put(box.player, box.tick + 10);
+			} else if (box.playerAnimation == PlayerAnimation.VENG_SELF) {
+				playerVengCoolDown.put(box.player, box.tick + 15);
+			} else if (box.playerAnimation == PlayerAnimation.DEATH_CHARGE) {
+				playerDCCoolDown.put(box.player, box.tick + 15);
+			} else if (box.playerAnimation == PlayerAnimation.THRALL_CAST) {
+				playerThrallCoolDown.put(box.player, box.tick + 15);
+			}
+
+			// Handle spotAnims
+			String[] spotAnims = (box.getSpotAnims() != null) ? box.getSpotAnims().split(":") : new String[0];
+
+			if (spotAnims.length > 0) {
+				if (!Objects.equals(spotAnims[0], "")) {
+					int graphic = Integer.parseInt(spotAnims[0]);
+					if (graphic == 1062 && playerSBSCoolDown.getOrDefault(box.player, 0) <= box.tick) { // sbs
+						box.secondaryID = graphic;
+						playerSBSCoolDown.put(box.player, box.tick + 10);
+					} else if (graphic == 726 && playerVengCoolDown.getOrDefault(box.player, 0) <= box.tick) { // veng
+						box.secondaryID = graphic;
+						playerVengCoolDown.put(box.player, box.tick + 15);
+					} else if (graphic == 1854 && playerDCCoolDown.getOrDefault(box.player, 0) <= box.tick) { // death charge
+						box.secondaryID = graphic;
+						playerDCCoolDown.put(box.player, box.tick + 15);
+					} else if ((graphic == 1873 || graphic == 1874 || graphic == 1875) && playerThrallCoolDown.getOrDefault(box.player, 0) <= box.tick) { // thrall
+						box.secondaryID = graphic;
+						playerThrallCoolDown.put(box.player, box.tick + 15);
+					}
+					if (graphic != 1062) { // non sbs secondary graphic -> force reset?
+						playerSBSCoolDown.put(box.player, 0);
+					}
+					if (graphic != 1062 && graphic != 726 && graphic != 1854 && !(box.playerAnimation == PlayerAnimation.BARRAGE || box.playerAnimation == PlayerAnimation.BLITZ)) {
+						box.secondaryID = graphic;
+					}
+				}
+			}
+			if (box.playerAnimation == PlayerAnimation.BARRAGE || box.playerAnimation == PlayerAnimation.BLITZ || box.playerAnimation == PlayerAnimation.THRALL_CAST || box.playerAnimation == PlayerAnimation.VENG_SELF
+				|| box.playerAnimation == PlayerAnimation.AID_OTHER || box.playerAnimation == PlayerAnimation.HUMIDIFY || box.playerAnimation == PlayerAnimation.MAGIC_IMBUE) {
+				playerSBSCoolDown.put(box.player, 0);
+			}
+
+			if (box.playerAnimation != PlayerAnimation.VENG_APPLIED) {
+				for (Iterator<OutlineBox> iterator = outlineBoxes.iterator(); iterator.hasNext();) {
+					OutlineBox existingBox = iterator.next();
+					if (existingBox.playerAnimation == PlayerAnimation.VENG_APPLIED && existingBox.tick == box.tick && existingBox.player.equals(box.player)) {
+						iterator.remove();
+						box.tertiaryID = -3;
+						box.setDamage(existingBox.damage);
+						break;
+					}
+				}
+			}
 
 			outlineBoxes.add(box);
 			postChartChange(new ChartChangedEvent(ADD_ELEMENT, ATTACK, box));
+			updatePlayerAnimationsInUse();
 		}
-		for (int i = box.tick; i < box.tick + box.cd; i++)
-		{
+		for (int i = box.tick; i < box.tick + box.cd; i++) {
 			playerWasOnCD.put(box.player, i);
 		}
+		if (room.equals("Creator")) {
+			computeProbability2();
+		}
+		if (!live) {
+			drawGraph();
+		}
 	}
+
 
 	private void setPotentialAutos()
 	{

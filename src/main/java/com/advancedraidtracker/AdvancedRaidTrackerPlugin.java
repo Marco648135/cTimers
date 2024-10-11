@@ -99,6 +99,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     @Inject
     private ItemManager itemManager;
 
+
     public AdvancedRaidTrackerPlugin()
     {
     }
@@ -1289,6 +1290,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 	private boolean prayersActivelyBeingTracked = false;
 
 	private final SetMultimap<String, Prayer> playerActivePrayers = HashMultimap.create();
+
 
 	@Subscribe
 	public void onPlayerDataChanged(PlayerDataChanged e)

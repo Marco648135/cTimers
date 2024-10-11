@@ -25,6 +25,7 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.event.TreeSelectionEvent;
@@ -61,9 +62,13 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 	public static Preset selectedSecondaryPreset = null;
 	private PlayerAnimation selectedPrimary = PlayerAnimation.NOT_SET;
 	private PlayerAnimation selectedSecondary = PlayerAnimation.NOT_SET;
+	private Map<CustomPanel, MultiSplitPane> panelParentMap = new HashMap<>();
 
 	public ChartCreatorFrame(AdvancedRaidTrackerConfig config, ItemManager itemManager, ClientThread clientThread, ConfigManager configManager, SpriteManager spriteManager)
 	{
+		OverlayPane overlayPane = new OverlayPane();
+		setGlassPane(overlayPane);
+		overlayPane.setVisible(false);
 		PresetManager.loadPresets();
 		equipmentSetupsList = new JList<>();
 		equipmentSetupsList.setCellRenderer(new PresetListCellRenderer(itemManager));
@@ -73,7 +78,7 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 		equipmentScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
 		setTitle("Chart Creator");
 		chart = new ChartPanel("Creator", false, config, clientThread, configManager, itemManager, spriteManager);
-		chart.setPreferredSize(new Dimension(0, 0));
+		//chart.setPreferredSize(new Dimension(0, 0));
 		setPlayerCount(5);
 		setEndTick(50);
 		setStartTick(1);
@@ -84,34 +89,43 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 		menu.setPreferredSize(new Dimension(0, 50));
 		menu.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
 
+		CustomPanel toolsContainer = new CustomPanel("Tools", overlayPane);
 		ChartToolPanel tools = new ChartToolPanel(config, this, itemManager, clientThread, spriteManager);
-		tools.setBorder(BorderFactory.createTitledBorder("Tools"));
-		tools.setPreferredSize(new Dimension(350, 0));
+		toolsContainer.getContentPanel().setLayout(new BorderLayout());
+		toolsContainer.getContentPanel().add(tools, BorderLayout.CENTER);
+		//tools.setBorder(BorderFactory.createTitledBorder("Tools"));
+		//tools.setPreferredSize(new Dimension(350, 0));
 
-		JPanel container = getThemedPanel();
-		container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+		// Create the main vertical split
+		MultiSplitPane mainPane = new MultiSplitPane(false); // Vertical orientation
 
-		JPanel bottomContainer = getThemedPanel();
-		bottomContainer.setLayout(new BoxLayout(bottomContainer, BoxLayout.X_AXIS));
-		bottomContainer.setFocusable(true);
+		// Create left horizontal split
+		MultiSplitPane leftPane = new MultiSplitPane(true); // Horizontal orientation
 
-		JPanel bottomLeftcontainer = getThemedPanel();
-		bottomLeftcontainer.setLayout(new BoxLayout(bottomLeftcontainer, BoxLayout.Y_AXIS));
+		MultiSplitPane centerPane = new MultiSplitPane(true);
 
-		JPanel chartContainer = getTitledPanel("Chart");
-		chartContainer.setLayout(new BorderLayout());
-		chartContainer.add(chart, BorderLayout.CENTER);
-		bottomLeftcontainer.add(chartContainer);
+		// Create right vertical split
+		MultiSplitPane rightPane = new MultiSplitPane(true); // Vertical orientation
+
+		// Add left and right panes to the mainPane
+
+// In ChartCreatorFrame constructor
+
+
+		CustomPanel chartContainer = new CustomPanel("Chart", overlayPane);
+		chartContainer.getContentPanel().setLayout(new BorderLayout());
+		chartContainer.getContentPanel().add(chart, BorderLayout.CENTER);
+
 		ChartStatusBar chartStatusBar = new ChartStatusBar("");
 		chart.setStatusBar(chartStatusBar);
 		chart.setToolSelection(ADD_ATTACK_TOOL);
-		JPanel preachCalc = getTitledPanel("Preach/Ring Calculator");
-		preachCalc.setPreferredSize(new Dimension(0, 200));
+		CustomPanel specCalculatorContainer = new CustomPanel("Preach/Ring Calculator", overlayPane);
 		ChartSpecCalculatorPanel specCalculator = new ChartSpecCalculatorPanel(config);
 		chart.addChartListener(specCalculator);
 		chart.addChartListener(this);
-		preachCalc.add(specCalculator);
-		bottomLeftcontainer.add(preachCalc);
+
+		specCalculatorContainer.getContentPanel().setLayout(new BorderLayout());
+		specCalculatorContainer.getContentPanel().add(specCalculator, BorderLayout.CENTER);
 
 		presets = PresetManager.getPresets();
 
@@ -185,10 +199,6 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 			}
 		});
 
-		JPanel leftPanel = getThemedPanel();
-		leftPanel.setLayout(new BorderLayout());
-		leftPanel.setPreferredSize(new Dimension(300, 0));
-
 // Create the tree container
 		JPanel treeContainer = getThemedPanel();
 		treeContainer.setLayout(new BorderLayout());
@@ -199,30 +209,53 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 		equipmentListContainer.setLayout(new BorderLayout());
 		equipmentListContainer.add(equipmentScrollPane, BorderLayout.CENTER);
 
-// Add a '+' button under the equipment list
+
 		JButton addSetupButton = new JButton("+");
 		addSetupButton.addActionListener(e -> openCreateEquipmentPresetWindow());
 		equipmentListContainer.add(addSetupButton, BorderLayout.SOUTH);
 
-// Use JSplitPane to split the left panel into two areas
-		JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, treeContainer, equipmentListContainer);
-		splitPane.setResizeWeight(0.5); // This gives equal space to both panels
-		splitPane.setDividerLocation(0.5);
-		splitPane.setContinuousLayout(true); // Smooth resizing
 
-		leftPanel.add(splitPane, BorderLayout.CENTER);
+		CustomPanel chartActionsContainer = new CustomPanel("Chart Actions", overlayPane);
+		chartActionsContainer.getContentPanel().setLayout(new BorderLayout());
+		chartActionsContainer.getContentPanel().add(treeContainer, BorderLayout.CENTER);
 
-// Add leftPanel to the bottomContainer
-		bottomContainer.add(leftPanel);
+		CustomPanel equipmentSetupsContainer = new CustomPanel("Equipment Setups", overlayPane);
+		equipmentSetupsContainer.getContentPanel().setLayout(new BorderLayout());
+		equipmentSetupsContainer.getContentPanel().add(equipmentListContainer, BorderLayout.CENTER);
 
-		bottomContainer.add(bottomLeftcontainer);
-		bottomContainer.add(tools);
 
-		container.add(menu);
-		container.add(bottomContainer);
-		container.add(chartStatusBar);
+		leftPane.addComponent(chartActionsContainer);
+		leftPane.addComponent(equipmentSetupsContainer);
+		panelParentMap.put(chartActionsContainer, leftPane);
+		panelParentMap.put(equipmentSetupsContainer, leftPane);
 
-		add(container);
+		specCalculatorContainer.setPreferredSize(new Dimension(0, 150));
+		chartContainer.setPreferredSize(new Dimension(0, 0));
+
+		centerPane.addComponent(chartContainer);
+		centerPane.addComponent(specCalculatorContainer);
+
+		panelParentMap.put(chartContainer, centerPane);
+		panelParentMap.put(specCalculatorContainer, centerPane);
+
+
+		rightPane.addComponent(toolsContainer); // Panel C
+		panelParentMap.put(toolsContainer, rightPane);
+
+
+		leftPane.setPreferredSize(new Dimension(200, 0));
+		centerPane.setPreferredSize(new Dimension(0, 0));
+		rightPane.setPreferredSize(new Dimension(250, 0));
+
+
+		mainPane.addComponent(leftPane);
+		mainPane.addComponent(centerPane);
+		mainPane.addComponent(rightPane);
+
+		setLayout(new BorderLayout());
+		add(menu, BorderLayout.NORTH);
+		add(mainPane, BorderLayout.CENTER);
+		add(chartStatusBar, BorderLayout.SOUTH);
 
 		JMenuBar menuBar = new JMenuBar();
 
@@ -294,6 +327,34 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 		fileMenu.add(exportAttackData);
 
 		menuBar.add(fileMenu);
+
+		JMenu viewMenu = new JMenu("View");
+
+// List of all possible panels
+		CustomPanel[] panels = { chartContainer, toolsContainer, chartActionsContainer, equipmentSetupsContainer, specCalculatorContainer}; // Add all your panels here
+
+		for (CustomPanel panel : panels) {
+			JCheckBoxMenuItem menuItem = new JCheckBoxMenuItem(panel.title, true);
+
+			menuItem.addActionListener(e -> {
+				boolean selected = menuItem.isSelected();
+				if (selected) {
+					// Show the panel
+					MultiSplitPane parentPane = panelParentMap.get(panel);
+					if (parentPane != null && !isComponentInPane(panel, parentPane)) {
+						parentPane.addComponent(panel);
+						parentPane.revalidate();
+						parentPane.repaint();
+					}
+				} else {
+					// Hide the panel
+					removePanelFromParent(panel);
+				}
+			});
+
+			viewMenu.add(menuItem);
+		}
+		menuBar.add(viewMenu);
 		setJMenuBar(menuBar);
 
 		Timer resizeTimer = new Timer(20, e ->
@@ -328,6 +389,40 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener
 
 		this.setExtendedState(this.getExtendedState() | this.MAXIMIZED_BOTH);
 	}
+
+
+
+	private boolean isComponentInPane(Component comp, MultiSplitPane pane) {
+		return Arrays.asList(pane.getComponents()).contains(comp);
+	}
+
+	private void removePanelFromParent(CustomPanel panel) {
+		Container parent = panel.getParent();
+		if (parent instanceof MultiSplitPane) {
+			MultiSplitPane splitPane = (MultiSplitPane) parent;
+			splitPane.removeComponent(panel);
+		} else if (parent instanceof JTabbedPane) {
+			JTabbedPane tabbedPane = (JTabbedPane) parent;
+			int index = tabbedPane.indexOfComponent(panel);
+			if (index != -1) {
+				tabbedPane.remove(index);
+			}
+
+			// If tabbedPane is empty after removal, remove it from its parent
+			if (tabbedPane.getTabCount() == 0) {
+				Container tabParent = tabbedPane.getParent();
+				if (tabParent instanceof MultiSplitPane) {
+					MultiSplitPane splitPane = (MultiSplitPane) tabParent;
+					splitPane.removeComponent(tabbedPane);
+				} else {
+					tabParent.remove(tabbedPane);
+					tabParent.revalidate();
+					tabParent.repaint();
+				}
+			}
+		}
+	}
+
 
 	private void openCreateEquipmentPresetWindow()
 	{

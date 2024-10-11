@@ -41,6 +41,10 @@ public class OutlineBox
 
 	@Setter
 	@Getter
+	private String spotAnims;
+
+	@Setter
+	@Getter
 	public int tertiaryID = -2;
 
 	@Setter

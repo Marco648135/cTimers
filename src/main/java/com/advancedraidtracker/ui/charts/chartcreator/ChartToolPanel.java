@@ -59,7 +59,7 @@ public class ChartToolPanel extends JPanel implements MouseListener, MouseMotion
 
     public ChartToolPanel(AdvancedRaidTrackerConfig config, ChartCreatorFrame parentFrame, ItemManager itemManager, ClientThread clientThread, SpriteManager spriteManager)
     {
-        tool = ADD_ATTACK_TOOL;
+		tool = ADD_ATTACK_TOOL;
         this.parentFrame = parentFrame;
         this.config = config;
         addMouseListener(this);
@@ -172,19 +172,23 @@ public class ChartToolPanel extends JPanel implements MouseListener, MouseMotion
 
     public void build()
     {
-        img = new BufferedImage(400, getHeight(), BufferedImage.TYPE_INT_ARGB);
+        img = new BufferedImage(400, 800, BufferedImage.TYPE_INT_ARGB);
         drawPanel();
     }
 
-    @Override
-    protected void paintComponent(Graphics g)
-    {
-        super.paintComponent(g);
-        if (img != null)
-        {
-            g.drawImage(img, 0, 0, null);
-        }
-    }
+	@Override
+	protected void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		if (img == null || img.getWidth() != getWidth() || img.getHeight() != getHeight())
+		{
+			img = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+			drawPanel();
+		}
+		if (img != null)
+		{
+			g.drawImage(img, 0, 0, null);
+		}
+	}
 
     private void drawPanel()
     {

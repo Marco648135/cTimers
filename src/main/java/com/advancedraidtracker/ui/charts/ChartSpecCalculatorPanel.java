@@ -1,6 +1,7 @@
 package com.advancedraidtracker.ui.charts;
 
 import com.advancedraidtracker.AdvancedRaidTrackerConfig;
+import com.advancedraidtracker.ui.charts.chartcreator.CustomPanel;
 import com.advancedraidtracker.ui.charts.chartelements.OutlineBox;
 import static com.advancedraidtracker.utility.UISwingUtility.getThemedLabel;
 import com.google.common.collect.ArrayListMultimap;

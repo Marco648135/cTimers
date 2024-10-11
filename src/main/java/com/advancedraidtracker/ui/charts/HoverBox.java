@@ -27,6 +27,10 @@ public class HoverBox
 
     public void addString(String s)
     {
+		if(s == null)
+		{
+			return;
+		}
         info.add(s);
         if (s.toLowerCase().startsWith(".weapon"))
         {

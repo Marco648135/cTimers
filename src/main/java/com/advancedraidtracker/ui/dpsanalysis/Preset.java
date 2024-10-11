@@ -383,7 +383,7 @@ public class Preset
 		}
 		else if (isMagicStyle(selectedStyle))
 		{
-			effectiveAttackLevel = virtualLevels.get("Magic");
+			effectiveAttackLevel = virtualLevels.getOrDefault("Magic", 99);
 
 			// Adjust for attack style
 			if (selectedStyle.equals("Standard"))

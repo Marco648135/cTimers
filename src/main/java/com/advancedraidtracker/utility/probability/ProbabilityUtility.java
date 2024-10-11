@@ -8,6 +8,8 @@ import com.advancedraidtracker.utility.probability.ProbabilityCalculator.PMFGrou
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.widgets.Widget;
+import net.runelite.client.game.SpriteManager;
 
 @Slf4j
 public class ProbabilityUtility
