@@ -5,6 +5,8 @@ import com.advancedraidtracker.ui.charts.ChartPanel;
 import com.advancedraidtracker.utility.weapons.PlayerAnimation;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.geom.AffineTransform;
+import java.awt.image.AffineTransformOp;
 import javax.swing.border.LineBorder;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.callback.ClientThread;
@@ -190,197 +192,320 @@ public class ChartToolPanel extends JPanel implements MouseListener, MouseMotion
 		}
 	}
 
-    private void drawPanel()
-    {
-        Graphics2D g = (Graphics2D) img.getGraphics();
-        g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-        g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
-        RenderingHints qualityHints = new RenderingHints(
-                RenderingHints.KEY_ANTIALIASING,
-                RenderingHints.VALUE_ANTIALIAS_ON);
-        qualityHints.put(
-                RenderingHints.KEY_RENDERING,
-                RenderingHints.VALUE_RENDER_QUALITY);
-        g.setRenderingHints(qualityHints);
+	private void drawPanel()
+	{
+		// Get panel dimensions
+		int panelWidth = getWidth();
+		int panelHeight = getHeight();
 
-        g.setColor(config.primaryDark());
-        g.fillRect(0, 0, img.getWidth(), img.getHeight());
+		// Determine layout orientation
+		boolean verticalLayout = panelHeight > panelWidth;
 
-        int toolCount;
-        int height = 550;
-        int toolHeight = config.chartScaleSize();
-        int xMargin = 5;
-        int yMargin = 15;
-        initialYMargin = 15 + (toolHeight * 2) + (toolMargin / 2);
-        toolsPerColumn = (height) / (toolHeight + toolMargin);
+		// Recreate the image with the current size
+		if(panelWidth <= 0 || panelHeight <= 0)
+		{
+			return;
+		}
+		img = new BufferedImage(panelWidth, panelHeight, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g = (Graphics2D) img.getGraphics();
 
-        //draw active outline
+		// Set rendering hints (smooth graphics)
+		g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+		g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+		RenderingHints qualityHints = new RenderingHints(
+			RenderingHints.KEY_ANTIALIASING,
+			RenderingHints.VALUE_ANTIALIAS_ON);
+		qualityHints.put(
+			RenderingHints.KEY_RENDERING,
+			RenderingHints.VALUE_RENDER_QUALITY);
+		g.setRenderingHints(qualityHints);
 
-        if (tool == ADD_ATTACK_TOOL || hoveredTool == ADD_ATTACK_TOOL)
-        {
-            if (hoveredTool == ADD_ATTACK_TOOL)
-            {
-                g.setColor(config.fontColor());
-            } else
-            {
-                g.setColor(new Color(45, 140, 235)); //todo selection color
-            }
-            g.drawRect(xMargin + 1, yMargin + 1, (toolMargin) + (toolHeight * 2) + (toolHeight * 2), toolHeight * 2);
-        }
+		// Fill background
+		g.setColor(config.primaryDark());
+		g.fillRect(0, 0, panelWidth, panelHeight);
 
-        //draw primary
+		// Initial margins and sizes
+		int initialXMargin = 5;
+		int initialYMargin = 5;
+		int toolMargin = 10;
+		int toolHeight = config.chartScaleSize();
+		int toolButtonWidth = toolHeight * 2;
+		int toolButtonHeight = toolHeight * 2;
+		int attackIconWidth = toolHeight;
+		int attackIconHeight = toolHeight;
+		int attackMargin = toolMargin / 2;
 
-        g.setColor(config.boxColor());
-        g.drawRoundRect(xMargin + 3, yMargin + 3, toolHeight * 2 - 5, toolHeight * 2 - 5, 10, 10);
-        int textOffset = (toolHeight) - (getStringWidth(g, primary.shorthand) / 2);
-        g.setColor(config.fontColor());
-        if(config.useIconsOnChart())
-        {
-            if(!primary.equals(PlayerAnimation.NOT_SET))
-            {
-				BufferedImage img = iconMap.get(primary);
-				if(img != null)
-				{
-					BufferedImage scaled = getScaledImage(iconMap.get(primary), (toolHeight * 2 - 4), (toolHeight * 2 - 4));
-					drawIcon(g, primary, xMargin, yMargin, scaled);
+		// Positions for primary and secondary selections
+		int xPosition, yPosition;
+
+		// Handle vertical and horizontal layouts separately
+		if (verticalLayout) {
+			// Vertical Layout
+
+			// Draw primary and secondary selections at the top
+			int xPrimary = initialXMargin;
+			int yPrimary = initialYMargin;
+
+			// Draw primary selection
+			drawSelectionBox(g, primary, xPrimary, yPrimary, toolButtonWidth, toolButtonHeight, ADD_ATTACK_TOOL);
+
+			// Draw secondary selection
+			int xSecondary = xPrimary + toolButtonWidth + toolMargin;
+			drawSelectionBox(g, secondary, xSecondary, yPrimary, toolButtonWidth, toolButtonHeight, ADD_ATTACK_TOOL);
+
+			// Starting position for tools
+			int yToolPosition = yPrimary + toolButtonHeight + toolMargin;
+			int numToolButtons = tools.size();
+			int availableWidth = panelWidth - 2 * initialXMargin;
+			int toolButtonWidthWithMargin = toolButtonWidth + toolMargin;
+			int numToolColumns = Math.max(1, availableWidth / toolButtonWidthWithMargin);
+			int numToolRows = (int) Math.ceil((double) numToolButtons / numToolColumns);
+
+			// Draw tool buttons
+			for (int i = 0; i < numToolButtons; i++) {
+				int col = i % numToolColumns;
+				int row = i / numToolColumns;
+				xPosition = initialXMargin + col * toolButtonWidthWithMargin;
+				yPosition = yToolPosition + row * (toolButtonHeight + toolMargin);
+
+				if (yPosition > panelHeight) {
+					break; // Outside panel, stop drawing further
 				}
-            }
-        }
-        else
-        {
-			setColorAndDrawBoxAndText(g, toolHeight, xMargin, yMargin, textOffset, primary);
-		}
-        //draw secondary
 
-        xMargin += toolMargin + toolHeight * 2;
-        g.setColor(config.boxColor());
-        g.drawRoundRect(xMargin + 3, yMargin + 3, toolHeight * 2 - 5, toolHeight * 2 - 5, 10, 10);
-        textOffset = (toolHeight) - (getStringWidth(g, secondary.shorthand) / 2);
-        g.setColor(config.fontColor());
-
-        if(config.useIconsOnChart())
-        {
-            if(!secondary.equals(PlayerAnimation.NOT_SET))
-            {
-                BufferedImage scaled = getScaledImage(iconMap.get(secondary), (toolHeight * 2 - 2), (toolHeight * 2 - 2));
-				drawIcon(g, secondary, xMargin, yMargin, scaled);
+				ChartTool chartTool = tools.get(i);
+				drawToolButton(g, chartTool, xPosition, yPosition, toolButtonWidth, toolButtonHeight);
 			}
-        }
-        else
-        {
-			setColorAndDrawBoxAndText(g, toolHeight, xMargin, yMargin, textOffset, secondary);
+
+			// Starting position for attacks/icons
+			int yAttacksStart = yToolPosition + numToolRows * (toolButtonHeight + toolMargin) + toolMargin;
+			List<PlayerAnimation> filteredValues = getFilteredPlayerAnimations();
+			int numAttackIcons = filteredValues.size();
+			int attackIconWidthWithMargin = attackIconWidth + attackMargin;
+			int numAttackColumns = Math.max(1, availableWidth / attackIconWidthWithMargin);
+			int numAttackRows = (int) Math.ceil((double) numAttackIcons / numAttackColumns);
+
+			// Draw attack icon buttons
+			for (int i = 0; i < numAttackIcons; i++) {
+				int col = i % numAttackColumns;
+				int row = i / numAttackColumns;
+				xPosition = initialXMargin + col * attackIconWidthWithMargin;
+				yPosition = yAttacksStart + row * (attackIconHeight + attackMargin);
+
+				if (yPosition > panelHeight) {
+					break; // Clipped
+				}
+
+				PlayerAnimation playerAnimation = filteredValues.get(i);
+				drawAttackIcon(g, playerAnimation, xPosition, yPosition, attackIconWidth, attackIconHeight);
+			}
+		} else {
+			// Horizontal Layout
+
+			// Draw primary and secondary selections at the left
+			int xPrimary = initialXMargin;
+			int yPrimary = initialYMargin;
+
+			// Draw primary selection
+			drawSelectionBox(g, primary, xPrimary, yPrimary, toolButtonWidth, toolButtonHeight, ADD_ATTACK_TOOL);
+
+			// Draw secondary selection
+			int ySecondary = yPrimary + toolButtonHeight + toolMargin;
+			drawSelectionBox(g, secondary, xPrimary, ySecondary, toolButtonWidth, toolButtonHeight, ADD_ATTACK_TOOL);
+
+			// Starting position for tools
+			int xToolPosition = xPrimary + toolButtonWidth + toolMargin;
+			int numToolButtons = tools.size();
+			int availableHeight = panelHeight - 2 * initialYMargin;
+			int toolButtonHeightWithMargin = toolButtonHeight + toolMargin;
+			int numToolRows = Math.max(1, availableHeight / toolButtonHeightWithMargin);
+			int numToolColumns = (int) Math.ceil((double) numToolButtons / numToolRows);
+
+			// Draw tool buttons
+			for (int i = 0; i < numToolButtons; i++) {
+				int col = i / numToolRows;
+				int row = i % numToolRows;
+				xPosition = xToolPosition + col * (toolButtonWidth + toolMargin);
+				yPosition = initialYMargin + row * toolButtonHeightWithMargin;
+
+				if (xPosition > panelWidth) {
+					break; // Outside panel, stop drawing further
+				}
+
+				ChartTool chartTool = tools.get(i);
+				drawToolButton(g, chartTool, xPosition, yPosition, toolButtonWidth, toolButtonHeight);
+			}
+
+			// Starting position for attacks/icons
+			int xAttacksStart = xToolPosition + numToolColumns * (toolButtonWidth + toolMargin) + toolMargin;
+			List<PlayerAnimation> filteredValues = getFilteredPlayerAnimations();
+			int numAttackIcons = filteredValues.size();
+			int attackIconHeightWithMargin = attackIconHeight + attackMargin;
+			int numAttackRows = Math.max(1, availableHeight / attackIconHeightWithMargin);
+			int numAttackColumns = (int) Math.ceil((double) numAttackIcons / numAttackRows);
+
+			// Draw attack icon buttons
+			for (int i = 0; i < numAttackIcons; i++) {
+				int col = i % numAttackColumns;
+				int row = i / numAttackColumns;
+				xPosition = xAttacksStart + col * (attackIconWidth + attackMargin);
+				yPosition = initialYMargin + row * attackIconHeightWithMargin;
+
+				if (xPosition > panelWidth) {
+					break; // Clipped
+				}
+
+				PlayerAnimation playerAnimation = filteredValues.get(i);
+				drawAttackIcon(g, playerAnimation, xPosition, yPosition, attackIconWidth, attackIconHeight);
+			}
 		}
 
-        int index = 2;
-        int yIndex = 0;
-        for(ChartTool chartTool : tools)
-        {
-            xMargin = 5 +(toolMargin + toolHeight * 2)*index;
-            yMargin = 15 + (toolMargin+toolHeight*2)*yIndex;
-            g.setColor(config.markerColor());
-            g.setColor(config.boxColor());
-            g.drawRoundRect(xMargin + 3, yMargin + 3, toolHeight * 2 - 5, toolHeight * 2 - 5, 10, 10);
-            textOffset = (toolHeight) - (getStringWidth(g, chartTool.getName()) / 2);
-            g.setColor(config.fontColor());
-            g.drawString(chartTool.getName(), xMargin + textOffset - 1, yMargin + (getStringHeight(g) / 2) + (toolHeight) + 1);
+		// Repaint the panel
+		repaint();
+	}
 
-            if(tool == chartTool.getTool() || hoveredTool == chartTool.getTool())
-            {
-                if(hoveredTool == chartTool.getTool())
-                {
-                    g.setColor(config.fontColor());
-                }
-                else
-                {
-                    g.setColor(new Color(45, 140, 235));
-                }
-                g.drawRect(xMargin, yMargin, 2*toolHeight, toolHeight*2);
-            }
-            index++;
-            if(index % 3 == 0)
-            {
-                index = 0;
-                yIndex++;
-            }
-        }
+// Helper methods used in drawPanel()
 
-        //draw tools
+	private void drawSelectionBox(Graphics2D g, PlayerAnimation animation, int x, int y, int width, int height, int toolType) {
+		// Draw outer rectangle to indicate active tool
+		if (tool == toolType || hoveredTool == toolType) {
+			if (hoveredTool == toolType) {
+				g.setColor(config.fontColor());
+			} else {
+				g.setColor(new Color(45, 140, 235)); // active selection color
+			}
+			g.drawRect(x + 1, y + 1, width - 2, height - 2);
+		}
 
-        int numberOfModes = 2 + tools.size();
-        int modeRows = ((numberOfModes-1)/3);
+		// Draw box border
+		g.setColor(config.boxColor());
+		g.drawRoundRect(x + 3, y + 3, width - 5, height - 5, 10, 10);
 
-        int yStart = initialYMargin + (modeRows*(toolHeight*2+toolMargin));
+		// Draw content
+		if (config.useIconsOnChart()) {
+			if (!animation.equals(PlayerAnimation.NOT_SET)) {
+				BufferedImage imgIcon = iconMap.get(animation);
+				if (imgIcon != null) {
+					BufferedImage scaled = getScaledImage(imgIcon, width - 6, height - 6);
+					drawIcon(g, animation, x, y, scaled);
+				}
+			}
+		} else {
+			g.setColor(animation.color);
+			g.fillRoundRect(x + 4, y + 4, width - 6, height - 6, 10, 10);
+			String shorthand = animation.shorthand;
+			int textOffset = (width / 2) - (getStringWidth(g, shorthand, g.getFont()) / 2);
+			g.setColor(config.fontColor());
+			g.drawString(shorthand, x + textOffset - 1, y + (getStringHeight(g.getFont()) / 2) + (height / 2) + 1);
+		}
+	}
 
-        List<PlayerAnimation> filteredValues = Arrays.stream(PlayerAnimation.values()).filter(o->!excludedAnimations.contains(o)).collect(Collectors.toList());
-        toolCount = filteredValues.size();
-        for (int i = 0; i < toolCount; i++)
-        {
-            PlayerAnimation playerAnimation = filteredValues.get(i);
-            if(excludedAnimations.contains(playerAnimation))
-            {
-                continue;
-            }
-            int positionInRow = i / toolsPerColumn;
-            int positionInColumn = i % toolsPerColumn;
-            int xOffset = initialXMargin + (positionInRow * (toolHeight + (toolMargin / 2)));
-            int yOffset = yStart + (positionInColumn * (toolHeight + (toolMargin / 2)));
+	private void drawToolButton(Graphics2D g, ChartTool chartTool, int x, int y, int width, int height) {
+		// Draw the background rectangle
+		g.setColor(config.boxColor());
+		g.drawRoundRect(x + 3, y + 3, width - 5, height - 5, 10, 10);
 
-            g.setColor(PlayerAnimation.values()[i].color);
+		// Draw tool name
+		String name = chartTool.getName();
+		int textOffset = (width / 2) - (getStringWidth(g, name, g.getFont()) / 2);
+		g.setColor(config.fontColor());
+		g.drawString(name, x + textOffset - 1, y + (getStringHeight(g.getFont()) / 2) + (height / 2) + 1);
 
-            if(config.useIconsOnChart())
-            {
-                try
-                {
-                    if(!playerAnimation.equals(PlayerAnimation.NOT_SET))
-                    {
-                        BufferedImage scaled = getScaledImage(iconMap.get(playerAnimation), (toolHeight - 2), (toolHeight - 2));
-						drawIcon(g, playerAnimation, xOffset, yOffset, scaled);
-					}
-                }
-                catch (Exception e)
-                {
+		// Draw selection or hover outline
+		if (tool == chartTool.getTool() || hoveredTool == chartTool.getTool()) {
+			if (hoveredTool == chartTool.getTool()) {
+				g.setColor(config.fontColor());
+			} else {
+				g.setColor(new Color(45, 140, 235));
+			}
+			g.drawRect(x, y, width, height);
+		}
+	}
 
-                }
-            }
-            else
-            {
-                g.fillRoundRect(xOffset + 2, yOffset + 2, toolHeight - 3, toolHeight - 3, 5, 5);
+	private void drawAttackIcon(Graphics2D g, PlayerAnimation playerAnimation, int x, int y, int width, int height) {
+		// Draw the icon or shorthand
+		if (config.useIconsOnChart()) {
+			if (!playerAnimation.equals(PlayerAnimation.NOT_SET)) {
+				BufferedImage imgIcon = iconMap.get(playerAnimation);
+				if (imgIcon != null) {
+					BufferedImage scaled = getScaledImage(imgIcon, width - 2, height - 2);
+					drawIcon(g, playerAnimation, x, y, scaled);
+				}
+			}
+		} else {
+			g.setColor(playerAnimation.color);
+			g.fillRoundRect(x + 2, y + 2, width - 3, height - 3, 5, 5);
+			String shorthand = playerAnimation.shorthand;
+			int textOffset = (width / 2) - (getStringWidth(g, shorthand, g.getFont()) / 2);
+			g.setColor(config.fontColor());
+			g.drawString(shorthand, x + textOffset - 1, y + (getStringHeight(g.getFont()) / 2) + (height / 2) + 1);
+		}
 
-                g.setColor(config.fontColor());
-                String letter = playerAnimation.shorthand;
-                textOffset = (toolHeight / 2) - (getStringWidth(g, letter) / 2);
-                g.drawString(letter, xOffset + textOffset - 1, yOffset + (getStringHeight(g) / 2) + (toolHeight / 2) + 1);
-            }
+		// Draw hover outline
+		if (hoveredAttack.equals(playerAnimation)) {
+			g.setColor(config.fontColor());
+			g.drawRoundRect(x + 1, y + 1, width - 2, height - 2, 5, 5);
+		}
+	}
 
-            //draw hovered tool outline box
-            if (!(playerAnimation.equals(PlayerAnimation.EXCLUDED_ANIMATION)) && playerAnimation.equals(hoveredAttack))
-            {
-                g.setColor(config.fontColor());
-                g.drawRoundRect(xOffset + 1, yOffset + 1, toolHeight - 2, toolHeight - 2, 5, 5);
-            }
+	private void drawIcon(Graphics2D g, PlayerAnimation playerAnimation, int x, int y, BufferedImage scaled) {
+		if (playerAnimation.shouldFlip) {
+			g.drawImage(createFlipped(createDropShadow(scaled)), x + 3, y + 3, null);
+			g.drawImage(createFlipped(scaled), x + 2, y + 1, null);
+		} else {
+			g.drawImage(createDropShadow(scaled), x + 3, y + 3, null);
+			g.drawImage(scaled, x + 2, y + 1, null);
+		}
+	}
 
-        }
-        repaint();
-    }
+// Utility methods
+
+	private int getStringWidth(Graphics2D g, String text, Font font) {
+		FontMetrics metrics = g.getFontMetrics(font);
+		return metrics.stringWidth(text);
+	}
+
+	private int getStringHeight(Font font) {
+		FontMetrics metrics = getFontMetrics(font);
+		return metrics.getHeight();
+	}
+
+	private BufferedImage getScaledImage(BufferedImage srcImg, int w, int h) {
+		Image tmp = srcImg.getScaledInstance(w, h, Image.SCALE_SMOOTH);
+		BufferedImage resized = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2d = resized.createGraphics();
+		g2d.drawImage(tmp, 0, 0, null);
+		g2d.dispose();
+		return resized;
+	}
+
+	private BufferedImage createFlipped(BufferedImage image) {
+		AffineTransform at = AffineTransform.getScaleInstance(-1, 1);
+		at.translate(-image.getWidth(), 0);
+		AffineTransformOp op = new AffineTransformOp(at, AffineTransformOp.TYPE_NEAREST_NEIGHBOR);
+		return op.filter(image, null);
+	}
+
+	private BufferedImage createDropShadow(BufferedImage image) {
+		// Implement drop shadow effect as per your requirements
+		// Placeholder implementation
+		BufferedImage shadow = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB);
+		Graphics2D g2d = shadow.createGraphics();
+		g2d.drawImage(image, 0, 0, null);
+		g2d.dispose();
+		return shadow;
+	}
+
+	private List<PlayerAnimation> getFilteredPlayerAnimations() {
+		return Arrays.stream(PlayerAnimation.values())
+			.filter(o -> !excludedAnimations.contains(o))
+			.collect(Collectors.toList());
+	}
 
 	private void setColorAndDrawBoxAndText(Graphics2D g, int toolHeight, int xMargin, int yMargin, int textOffset, PlayerAnimation primary)
 	{
 		g.setColor(primary.color);
 		g.fillRoundRect(xMargin + 4, yMargin + 4, toolHeight * 2 - 6, toolHeight * 2 - 6, 10, 10);
-		g.drawString(primary.shorthand, xMargin + textOffset - 1, yMargin + (getStringHeight(g) / 2) + (toolHeight) + 1);
-	}
-
-	private void drawIcon(Graphics2D g, PlayerAnimation playerAnimation, int xOffset, int yOffset, BufferedImage scaled)
-	{
-		if (playerAnimation.shouldFlip)
-		{
-			g.drawImage(createFlipped(createDropShadow(scaled)), xOffset + 3, yOffset + 3, null);
-			g.drawImage(createFlipped(scaled), xOffset + 2, yOffset + 1, null);
-		} else
-		{
-			g.drawImage(createDropShadow(scaled), xOffset + 3, yOffset + 3, null);
-			g.drawImage(scaled, xOffset + 2, yOffset + 1, null);
-		}
+		g.drawString(primary.shorthand, xMargin + textOffset - 1, yMargin + (getStringHeight(g.getFont()) / 2) + (toolHeight) + 1);
 	}
 
 	private void setHoveredTool(int x, int y)

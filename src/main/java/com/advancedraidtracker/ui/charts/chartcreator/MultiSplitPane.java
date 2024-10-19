@@ -2,28 +2,43 @@ package com.advancedraidtracker.ui.charts.chartcreator;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class MultiSplitPane extends JPanel
 {
 	private static final int DIVIDER_SIZE = 2;
+	@Getter
 	private final boolean verticalOrientation;
 	private final List<Component> components = new ArrayList<>();
+	private final boolean isFlexible;
+	@Setter
+	@Getter
+	private boolean isPrimaryContainer = false;
 
 	public MultiSplitPane(boolean verticalOrientation)
 	{
+		this(verticalOrientation, false);
+	}
+
+	public MultiSplitPane(boolean verticalOrientation, boolean isFlexible)
+	{
 		this.verticalOrientation = verticalOrientation;
-		setLayout(null); // We'll manage layout manually
+		this.isFlexible = isFlexible;
+		setLayout(null);
 	}
 
 	public void addComponent(Component comp)
 	{
 		if (!components.isEmpty())
 		{
-			// Add a divider before adding the new component
 			Divider divider = new Divider(verticalOrientation, this);
 			components.add(divider);
 			add(divider);
@@ -34,47 +49,113 @@ public class MultiSplitPane extends JPanel
 		repaint();
 	}
 
+	public void addComponentAt(int index, Component comp)
+	{
+		if (!components.isEmpty() && index > 0)
+		{
+			Divider divider = new Divider(verticalOrientation, this);
+			components.add(index, divider);
+			add(divider);
+		}
+		components.add(index, comp);
+		add(comp);
+		revalidate();
+		repaint();
+	}
+
+	public void splitPane(Component newComponent, boolean verticalSplit, boolean insertBefore)
+	{
+		if (this.verticalOrientation == verticalSplit)
+		{
+			// We can simply add the new component to this pane
+			if (insertBefore)
+			{
+				addComponentAt(0, newComponent);
+			}
+			else
+			{
+				addComponent(newComponent);
+			}
+		}
+		else
+		{
+			// Need to wrap existing components into a new pane with the desired orientation
+			MultiSplitPane newSplitPane = new MultiSplitPane(verticalSplit, true);
+			List<Component> existingComponents = new ArrayList<>(components);
+
+			components.clear();
+			removeAll();
+
+			if (insertBefore)
+			{
+				newSplitPane.addComponent(newComponent);
+				for (Component comp : existingComponents)
+				{
+					newSplitPane.addComponent(comp);
+				}
+			}
+			else
+			{
+				for (Component comp : existingComponents)
+				{
+					newSplitPane.addComponent(comp);
+				}
+				newSplitPane.addComponent(newComponent);
+			}
+			components.add(newSplitPane);
+			add(newSplitPane);
+		}
+		revalidate();
+		repaint();
+	}
+
+
 	public void removeComponent(Component comp)
 	{
 		int index = components.indexOf(comp);
 		if (index == -1)
 		{
-			return; // Component not found
+			return;
 		}
 
-		// Find adjacent dividers before removing the component
-		Component previousComponent = index > 0 ? components.get(index - 1) : null;
-		Component nextComponent = index + 1 < components.size() ? components.get(index + 1) : null;
-
-		// Remove the component
 		remove(comp);
 		components.remove(index);
 
-		// Remove adjacent dividers if necessary
-		if (previousComponent instanceof Divider)
+		if (!components.isEmpty())
 		{
-			remove(previousComponent);
-			components.remove(index - 1);
-			index--; // Adjust index because we've removed an element before it
-		}
-		else if (nextComponent instanceof Divider)
-		{
-			remove(nextComponent);
-			components.remove(index); // Index is the same because we already removed the component at index
-		}
-
-		// Remove remaining dividers if only one component is left
-		if (components.size() == 1)
-		{
-			for (int i = components.size() - 1; i >= 0; i--)
+			if (index > 0 && components.get(index - 1) instanceof Divider)
 			{
-				if (components.get(i) instanceof Divider)
-				{
-					remove(components.get(i));
-					components.remove(i);
-				}
+				remove(components.get(index - 1));
+				components.remove(index - 1);
+				index--;
+			}
+			if (index < components.size() && components.get(index) instanceof Divider)
+			{
+				remove(components.get(index));
+				components.remove(index);
 			}
 		}
+
+
+		if (components.isEmpty())
+		{
+			Container parent = getParent();
+			if (parent instanceof MultiSplitPane)
+			{
+				MultiSplitPane parentSplitPane = (MultiSplitPane) parent;
+				parentSplitPane.removeComponent(this);
+			}
+			else if (parent != null)
+			{
+				parent.remove(this);
+				JPanel placeholder = new JPanel();
+				placeholder.setBackground(Color.GRAY);
+				parent.add(placeholder);
+				parent.revalidate();
+				parent.repaint();
+			}
+		}
+
 
 		revalidate();
 		repaint();
@@ -99,7 +180,7 @@ public class MultiSplitPane extends JPanel
 
 			if (newHeight1 < 50 || newHeight2 < 50)
 			{
-				return; // Minimum size
+				return;
 			}
 
 			comp1.setPreferredSize(new Dimension(comp1.getWidth(), newHeight1));
@@ -112,7 +193,7 @@ public class MultiSplitPane extends JPanel
 
 			if (newWidth1 < 50 || newWidth2 < 50)
 			{
-				return; // Minimum size
+				return;
 			}
 
 			comp1.setPreferredSize(new Dimension(newWidth1, comp1.getHeight()));
@@ -127,18 +208,54 @@ public class MultiSplitPane extends JPanel
 		int index = components.indexOf(existingComponent);
 		if (index == -1)
 		{
-			return; // Component not found
+			return;
 		}
 
-		// Create a new MultiSplitPane with the desired orientation
 		MultiSplitPane newSplitPane = new MultiSplitPane(verticalSplit);
 
-		// Remove the existing component and replace it with the new split pane
+		Dimension existingPreferredSize = existingComponent.getPreferredSize();
+		newSplitPane.setPreferredSize(Objects.requireNonNullElseGet(existingPreferredSize, () -> new Dimension(0, 0)));
+
 		remove(existingComponent);
 		components.set(index, newSplitPane);
 		add(newSplitPane);
 
-		// Add the components to the new split pane
+		Container newComponentParent = newComponent.getParent();
+		if (newComponentParent != null && newComponentParent != newSplitPane)
+		{
+			if (newComponentParent instanceof MultiSplitPane)
+			{
+				((MultiSplitPane) newComponentParent).removeComponent(newComponent);
+			}
+			else
+			{
+				newComponentParent.remove(newComponent);
+			}
+		}
+
+		if (existingPreferredSize != null)
+		{
+			if (verticalSplit)
+			{
+				int totalHeight = existingPreferredSize.height;
+				int halfHeight = totalHeight / 2;
+				existingComponent.setPreferredSize(new Dimension(existingPreferredSize.width, halfHeight));
+				newComponent.setPreferredSize(new Dimension(existingPreferredSize.width, halfHeight));
+			}
+			else
+			{
+				int totalWidth = existingPreferredSize.width;
+				int halfWidth = totalWidth / 2;
+				existingComponent.setPreferredSize(new Dimension(halfWidth, existingPreferredSize.height));
+				newComponent.setPreferredSize(new Dimension(halfWidth, existingPreferredSize.height));
+			}
+		}
+		else
+		{
+			existingComponent.setPreferredSize(new Dimension(0, 0));
+			newComponent.setPreferredSize(new Dimension(0, 0));
+		}
+
 		if (insertBefore)
 		{
 			newSplitPane.addComponent(newComponent);
@@ -152,37 +269,6 @@ public class MultiSplitPane extends JPanel
 
 		revalidate();
 		repaint();
-	}
-
-	public void mergeIntoTabbedPane(Component comp1, Component comp2)
-	{
-		int index = components.indexOf(comp1);
-		if (index == -1)
-		{
-			return; // Component not found
-		}
-
-		// Create a new JTabbedPane
-		JTabbedPane tabbedPane = new JTabbedPane();
-		tabbedPane.addTab(getTitle(comp1), comp1);
-		tabbedPane.addTab(getTitle(comp2), comp2);
-
-		// Remove the existing component and replace it with the tabbed pane
-		remove(comp1);
-		components.set(index, tabbedPane);
-		add(tabbedPane);
-
-		revalidate();
-		repaint();
-	}
-
-	private String getTitle(Component comp)
-	{
-		if (comp instanceof CustomPanel)
-		{
-			return ((CustomPanel) comp).title;
-		}
-		return comp.getName() != null ? comp.getName() : "Tab";
 	}
 
 
@@ -202,7 +288,6 @@ public class MultiSplitPane extends JPanel
 			return;
 		}
 
-		// Existing layout logic for multiple components
 		int totalSize = verticalOrientation ? getHeight() : getWidth();
 		int position = 0;
 
@@ -210,10 +295,8 @@ public class MultiSplitPane extends JPanel
 		int totalPreferredSize = 0;
 		int numFlexibleComponents = 0;
 
-		// Map to hold calculated sizes without modifying preferred sizes
 		Map<Component, Integer> componentSizes = new HashMap<>();
 
-		// Compute total divider size and total preferred size
 		for (Component comp : components)
 		{
 			if (comp instanceof Divider)
@@ -222,20 +305,42 @@ public class MultiSplitPane extends JPanel
 			}
 			else
 			{
-				Dimension prefSize = comp.getPreferredSize();
-				if (prefSize == null)
+				boolean isFlexibleComponent = false;
+
+				// Treat JTabbedPane and flexible MultiSplitPane as flexible components
+				if (comp instanceof JTabbedPane)
 				{
-					prefSize = new Dimension(0, 0);
+					isFlexibleComponent = true;
 				}
-				int size = verticalOrientation ? prefSize.height : prefSize.width;
-				if (size > 0)
+				else if (comp instanceof MultiSplitPane)
 				{
-					totalPreferredSize += size;
-					componentSizes.put(comp, size);
+					if (((MultiSplitPane) comp).isFlexible)
+					{
+						isFlexibleComponent = true;
+					}
+				}
+
+				if (isFlexibleComponent)
+				{
+					numFlexibleComponents++;
 				}
 				else
 				{
-					numFlexibleComponents++;
+					Dimension prefSize = comp.getPreferredSize();
+					if (prefSize == null)
+					{
+						prefSize = new Dimension(0, 0);
+					}
+					int size = verticalOrientation ? prefSize.height : prefSize.width;
+					if (size > 0)
+					{
+						totalPreferredSize += size;
+						componentSizes.put(comp, size);
+					}
+					else
+					{
+						numFlexibleComponents++;
+					}
 				}
 			}
 		}
@@ -248,7 +353,6 @@ public class MultiSplitPane extends JPanel
 		{
 			double scale = (double) availableSize / totalPreferredSize;
 
-			// Scale down the sizes without modifying preferred sizes
 			totalPreferredSize = 0;
 			for (Map.Entry<Component, Integer> entry : componentSizes.entrySet())
 			{
@@ -257,11 +361,9 @@ public class MultiSplitPane extends JPanel
 				totalPreferredSize += size;
 			}
 
-			// Recalculate flexibleSpace after scaling
 			flexibleSpace = availableSize - totalPreferredSize;
 		}
 
-		// Now, allocate flexible space to flexible components
 		int flexibleComponentSize = numFlexibleComponents > 0 ? flexibleSpace / numFlexibleComponents : 0;
 
 		for (Component comp : components)
@@ -271,58 +373,29 @@ public class MultiSplitPane extends JPanel
 				if (verticalOrientation)
 				{
 					comp.setBounds(0, position, getWidth(), DIVIDER_SIZE);
-					position += DIVIDER_SIZE;
 				}
 				else
 				{
 					comp.setBounds(position, 0, DIVIDER_SIZE, getHeight());
-					position += DIVIDER_SIZE;
 				}
+				position += DIVIDER_SIZE;
 			}
 			else
 			{
 				int compSize;
-				if (componentSizes.containsKey(comp))
-				{
-					compSize = componentSizes.get(comp);
-				}
-				else
-				{
-					compSize = flexibleComponentSize;
-				}
+				compSize = componentSizes.getOrDefault(comp, flexibleComponentSize);
 
 				if (verticalOrientation)
 				{
 					comp.setBounds(0, position, getWidth(), compSize);
-					position += compSize;
 				}
 				else
 				{
 					comp.setBounds(position, 0, compSize, getHeight());
-					position += compSize;
 				}
+				position += compSize;
 			}
 		}
 	}
 
-
-	public void addComponent(Component comp, boolean insertDividerBefore, boolean verticalSplit)
-	{
-		if (insertDividerBefore)
-		{
-			Divider divider = new Divider(verticalSplit, this);
-			components.add(divider);
-			add(divider);
-		}
-		components.add(comp);
-		add(comp);
-		revalidate();
-		repaint();
-	}
-
-
-	public boolean isVerticalOrientation()
-	{
-		return verticalOrientation;
-	}
 }
