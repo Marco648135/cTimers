@@ -43,7 +43,7 @@ public class RoomUtil
 
 	public static String toCleanName(String str)
 	{
-		return CharMatcher.ascii().retainFrom(str.replaceAll("[ -]", " ")).trim();
+		return CharMatcher.ascii().retainFrom(str.replaceAll("[ ]", " ")).trim();
 	}
 
     public static String varbitHPtoReadable(int varbitHP)
