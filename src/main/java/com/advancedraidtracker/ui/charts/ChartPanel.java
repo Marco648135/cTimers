@@ -2577,7 +2577,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 			}
 			int xOffset = getXOffset(hoveredTick);
 			int yOffset = ((playerOffsets.get(hoveredPlayer) + 1) * scale) + getYOffset(hoveredTick);
-			if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
+			if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5 && shouldTickBeDrawn(hoveredTick))
 			{
 				g.drawRect(xOffset, yOffset, scale, scale);
 			}
