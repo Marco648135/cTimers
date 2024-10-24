@@ -24,11 +24,13 @@ import com.advancedraidtracker.utility.datautility.datapoints.col.Colo;
 import com.advancedraidtracker.utility.datautility.datapoints.inf.Inf;
 import com.advancedraidtracker.utility.datautility.datapoints.toa.Toa;
 import com.advancedraidtracker.utility.datautility.datapoints.tob.Tob;
+import com.advancedraidtracker.utility.wrappers.PlayerDidAttack;
 import com.advancedraidtracker.utility.wrappers.StringInt;
 import com.google.common.collect.Multimap;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.stream.IntStream;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ItemID;
 import net.runelite.client.callback.ClientThread;
@@ -78,6 +80,9 @@ public class Raids extends BaseFrame implements UpdateableWindow
 	private final List<Map<String, List<String>>> aliases;
 
 	private JTextArea aliasText;
+	public String filteredPlayer = "";
+	public String filteredAnimation = "";
+	public String filteredRoom = "";
 
 	JTextField dateTextField;
 	JCheckBox filterSpectateOnly;
@@ -436,6 +441,32 @@ public class Raids extends BaseFrame implements UpdateableWindow
 					shouldDataBeIncluded = false;
 				}
 			}
+			if(!filteredPlayer.isEmpty() && !filteredAnimation.isEmpty() && !filteredRoom.isEmpty())
+			{
+				int animation;
+				try
+				{
+					animation = Integer.parseInt(filteredAnimation);
+					ChartData chartData = DataReader.getChartData(data.getFilepath(), itemManager);
+					Collection<PlayerDidAttack> attacks = chartData.getAttacks(RaidRoom.getRoom(filteredRoom));
+					shouldDataBeIncluded = false;
+					for(PlayerDidAttack attack : attacks)
+					{
+						if(attack.player.equalsIgnoreCase(filteredPlayer))
+						{
+							if(IntStream.of((attack.getPlayerAnimation().animations)).anyMatch(x -> x == animation))
+							{
+								shouldDataBeIncluded = true;
+							}
+						}
+					}
+				}
+				catch (Exception ignored)
+				{
+
+				}
+			}
+
 			if (shouldDataBeIncluded && filterCheckBoxScale.isSelected())
 			{
 				shouldDataBeIncluded = filterComboBoxScale.getSelectedIndex() + 1 == data.getScale();
@@ -1186,7 +1217,7 @@ public class Raids extends BaseFrame implements UpdateableWindow
 		{
 			if (lastColumnClicked.equals("Custom"))
 			{
-				if (RoomUtil.isTime(customColumnComboBox.getSelectedItem().toString()))
+				if (isTime(customColumnComboBox.getSelectedItem().toString()))
 				{
 					if (raid.getTimeAccurate(DataPoint.getValue(customColumnComboBox.getSelectedItem().toString())))
 					{
@@ -1433,7 +1464,7 @@ public class Raids extends BaseFrame implements UpdateableWindow
 		filterInRaidOnly = getActionListenCheckBox("In Raid", al -> quickFilterStateChanged());
 		filterCompletionOnly = getActionListenCheckBox("Completed", al -> quickFilterStateChanged());
 		filterWipeResetOnly = getActionListenCheckBox("Wipe/Reset", al -> quickFilterStateChanged());
-		filterComboBoxScale = UISwingUtility.getActionListenCheckBox(new String[]{"Solo", "Duo", "Trio", "4-Man", "5-Man", "6-Man", "7-Man", "8-Man"}, al -> quickFilterStateChanged());
+		filterComboBoxScale = getActionListenCheckBox(new String[]{"Solo", "Duo", "Trio", "4-Man", "5-Man", "6-Man", "7-Man", "8-Man"}, al -> quickFilterStateChanged());
 		filterCheckBoxScale = getActionListenCheckBox("Scale", al -> quickFilterStateChanged());
 		filterTodayOnly = getActionListenCheckBox("Today", al -> quickFilterStateChanged());
 		filterPartyOnly = getActionListenCheckBox("In Party", al -> quickFilterStateChanged());
@@ -2121,6 +2152,74 @@ public class Raids extends BaseFrame implements UpdateableWindow
 
 
 		rightBottomContainer.add(filterTableContainer);
+		rightBottomContainer.setLayout(new BoxLayout(rightBottomContainer, BoxLayout.Y_AXIS));
+
+		// Create the panel for the text fields and buttons
+		JPanel filterControlsPanel = getThemedPanel();
+		filterControlsPanel.setLayout(new BoxLayout(filterControlsPanel, BoxLayout.Y_AXIS));
+
+// First line: Labeled text fields
+		JPanel fieldsPanel = getThemedPanel();
+		fieldsPanel.setLayout(new BoxLayout(fieldsPanel, BoxLayout.X_AXIS));
+
+// Create labeled text fields
+		JLabel playerLabel = getThemedLabel("Player:");
+		JTextField playerTextField = getThemedTextField();
+		playerTextField.setMaximumSize(new Dimension(100, 25));
+
+		JLabel animationLabel = getThemedLabel("Animation:");
+		JTextField animationTextField = getThemedTextField();
+		animationTextField.setMaximumSize(new Dimension(100, 25));
+
+		JLabel roomLabel = getThemedLabel("Room:");
+		JTextField roomTextField = getThemedTextField();
+		roomTextField.setMaximumSize(new Dimension(100, 25));
+
+// Add components to fieldsPanel with spacing
+		fieldsPanel.add(Box.createRigidArea(new Dimension(5, 0)));
+		fieldsPanel.add(playerLabel);
+		fieldsPanel.add(playerTextField);
+		fieldsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+
+		fieldsPanel.add(animationLabel);
+		fieldsPanel.add(animationTextField);
+		fieldsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+
+		fieldsPanel.add(roomLabel);
+		fieldsPanel.add(roomTextField);
+		fieldsPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+
+// Second line: Apply and Clear buttons
+		JPanel buttonsPanel = getThemedPanel();
+		buttonsPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+
+// Create the apply button
+		JButton applyButton = getThemedButton("Apply");
+		applyButton.addActionListener(e -> {
+			filteredPlayer = playerTextField.getText();
+			filteredAnimation = animationTextField.getText();
+			filteredRoom = roomTextField.getText();
+			updateTable();
+		});
+
+		JButton clearButton = getThemedButton("Clear");
+		clearButton.addActionListener(e -> {
+			playerTextField.setText("");
+			animationTextField.setText("");
+			roomTextField.setText("");
+			filteredPlayer = "";
+			filteredAnimation = "";
+			filteredRoom = "";
+			updateTable();
+		});
+
+		buttonsPanel.add(applyButton);
+		buttonsPanel.add(clearButton);
+
+		filterControlsPanel.add(fieldsPanel);
+		filterControlsPanel.add(buttonsPanel);
+
+		rightBottomContainer.add(filterControlsPanel);
 
 		JButton saveFiltersButton = getThemedButton("Save");
 		saveFiltersButton.addActionListener(

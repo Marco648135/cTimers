@@ -1,5 +1,8 @@
 package com.advancedraidtracker.ui.charts.chartcreator;
 
+import static com.advancedraidtracker.ui.RaidTrackerSidePanel.config;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -14,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MultiSplitPane extends JPanel
 {
-	private static final int DIVIDER_SIZE = 2;
+	private static final int DIVIDER_SIZE = 1;
 	@Getter
 	private final boolean verticalOrientation;
 	private final List<Component> components = new ArrayList<>();
@@ -37,30 +40,74 @@ public class MultiSplitPane extends JPanel
 
 	public void addComponent(Component comp)
 	{
-		if (!components.isEmpty())
+		BorderPanel panel = new BorderPanel(comp, config.primaryMiddle(), config.markerColor(), 1);
+		panel.setPreferredSize(comp.getPreferredSize());
+		/*if (!components.isEmpty())
 		{
 			Divider divider = new Divider(verticalOrientation, this);
 			components.add(divider);
 			add(divider);
-		}
-		components.add(comp);
-		add(comp);
+		}*/
+		components.add(panel);
+		add(panel);
+
+		panel.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				setSelectedComponent(panel);
+			}
+		});
 		revalidate();
 		repaint();
 	}
 
 	public void addComponentAt(int index, Component comp)
 	{
-		if (!components.isEmpty() && index > 0)
+		BorderPanel panel = new BorderPanel(comp, config.primaryMiddle(), config.markerColor(), 1);
+		panel.setPreferredSize(comp.getPreferredSize());
+		/*if (!components.isEmpty() && index > 0)
 		{
 			Divider divider = new Divider(verticalOrientation, this);
 			components.add(index, divider);
 			add(divider);
-		}
-		components.add(index, comp);
-		add(comp);
+		}*/
+		components.add(index, panel);
+		add(panel);
+
+		panel.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				setSelectedComponent(panel);
+			}
+		});
 		revalidate();
 		repaint();
+	}
+	private Component selectedComponent;
+
+	public void setSelectedComponent(Component comp)
+	{
+		if (selectedComponent == comp)
+		{
+			return;
+		}
+		if (selectedComponent != null)
+		{
+			PanelBorder border = (PanelBorder) ((JComponent) selectedComponent).getBorder();
+			if (border != null) {
+				border.setSelected(false);
+				selectedComponent.repaint();
+			}
+		}
+		selectedComponent = comp;
+		// Set selected
+		if (selectedComponent != null) {
+			PanelBorder border = (PanelBorder) ((JComponent) selectedComponent).getBorder();
+			if (border != null) {
+				border.setSelected(true);
+				selectedComponent.repaint();
+			}
+		}
 	}
 
 	public void splitPane(Component newComponent, boolean verticalSplit, boolean insertBefore)
@@ -271,6 +318,91 @@ public class MultiSplitPane extends JPanel
 		repaint();
 	}
 
+	public void resizeComponentHorizontally(BorderPanel panel, int dx, boolean isEastEdge) {
+		int index = components.indexOf(panel);
+		if (index == -1) return;
+
+		if (verticalOrientation) {
+			// In vertical orientation, horizontal resizing may not be needed
+			return;
+		}
+
+		// Adjust widths of this panel and adjacent panel
+		if (isEastEdge) {
+			// Resize panel and next panel
+			if (index + 1 < components.size()) {
+				Component nextComp = components.get(index + 1);
+				int newWidth = panel.getWidth() + dx;
+				int nextWidth = nextComp.getWidth() - dx;
+
+				if (newWidth > 50 && nextWidth > 50) {
+					panel.setPreferredSize(new Dimension(newWidth, panel.getHeight()));
+					nextComp.setPreferredSize(new Dimension(nextWidth, nextComp.getHeight()));
+					revalidate();
+				}
+			}
+		} else {
+			// Resize previous panel and this panel
+			if (index - 1 >= 0) {
+				Component prevComp = components.get(index - 1);
+				int newWidth = panel.getWidth() - dx;
+				int prevWidth = prevComp.getWidth() + dx;
+
+				if (newWidth > 50 && prevWidth > 50) {
+					panel.setPreferredSize(new Dimension(newWidth, panel.getHeight()));
+					prevComp.setPreferredSize(new Dimension(prevWidth, prevComp.getHeight()));
+					revalidate();
+				}
+			}
+		}
+	}
+
+	public void resizeComponentVertically(BorderPanel panel, int dy, boolean isSouthEdge) {
+		int index = components.indexOf(panel);
+		if (index == -1) return;
+
+		if (!verticalOrientation) {
+			// In horizontal orientation, vertical resizing may not be needed
+			return;
+		}
+
+		// Adjust heights of this panel and adjacent panel
+		if (isSouthEdge) {
+			// Resize panel and next panel
+			if (index + 1 < components.size()) {
+				Component nextComp = components.get(index + 1);
+				int newHeight = panel.getHeight() + dy;
+				int nextHeight = nextComp.getHeight() - dy;
+
+				if (newHeight > 50 && nextHeight > 50) {
+					panel.setPreferredSize(new Dimension(panel.getWidth(), newHeight));
+					nextComp.setPreferredSize(new Dimension(nextComp.getWidth(), nextHeight));
+					revalidate();
+				}
+			}
+		} else {
+			// Resize previous panel and this panel
+			if (index - 1 >= 0) {
+				Component prevComp = components.get(index - 1);
+				int newHeight = panel.getHeight() - dy;
+				int prevHeight = prevComp.getHeight() + dy;
+
+				if (newHeight > 50 && prevHeight > 50) {
+					panel.setPreferredSize(new Dimension(panel.getWidth(), newHeight));
+					prevComp.setPreferredSize(new Dimension(prevComp.getWidth(), prevHeight));
+					revalidate();
+				}
+			}
+		}
+	}
+
+	public void deselectOtherPanels(BorderPanel selectedPanel) {
+		for (Component comp : components) {
+			if (comp instanceof BorderPanel && comp != selectedPanel) {
+				((BorderPanel) comp).setSelected(false);
+			}
+		}
+	}
 
 	@Override
 	public void doLayout()

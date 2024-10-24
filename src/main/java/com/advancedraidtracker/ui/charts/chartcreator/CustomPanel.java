@@ -37,6 +37,8 @@ public class CustomPanel extends JPanel
 				super.installDefaults();
 				underlineColor = config.boxColor();
 				inactiveUnderlineColor = config.boxColor();
+				setBackground(config.primaryDark());
+				selectedBackground = config.primaryDark();
 				cardTabSelectionHeight = 2;
 				tabSelectionHeight = 2;
 			}

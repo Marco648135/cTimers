@@ -10,7 +10,7 @@ public class Divider extends JPanel
 
 	public Divider(boolean verticalOrientation, MultiSplitPane parentPane)
 	{
-		setBackground(new Color(45, 140, 235, 100));
+		setBackground(new Color(45, 140, 235, 255));
 		setCursor(verticalOrientation ? Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
 
 		if (verticalOrientation)
