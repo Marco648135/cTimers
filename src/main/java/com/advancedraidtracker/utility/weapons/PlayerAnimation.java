@@ -118,7 +118,7 @@ public enum PlayerAnimation
 	UNARMED("Unarmed", "???", new Color(0, 0, 0), 4, new int[]{422, 423}, new int[]{}, new int[]{-1}, new int[]{}, 0, Style.MELEE),
 	VENG_APPLIED("Veng Applied", "VA", new Color(0, 0, 0, 0), -1, new int[]{-3}, new int[]{}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
 	ELDER_MAUL_SPEC("Elder Maul Spec", "EM", new Color(100, 60, 60), 6, new int[]{11124}, new int[]{}, new int[]{ItemID.ELDER_MAUL, ItemID.ELDER_MAUL_OR}, new int[]{}, 50, Style.MELEE),
-	GREATER_CORRUPTION("Greater Corruption", "GC", new Color(70, 70, 70), -1, new int[]{8977}, new int[]{1978}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
+	GREATER_CORRUPTION("Greater Corruption", "GC", new Color(70, 70, 70), -1, new int[]{8977}, new int[]{}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
 	SHADOW_VEIL("Shadow Veil", "SV", new Color(70, 70, 70), -1, new int[]{8979}, new int[]{1881}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
 	VILE_VIGOUR("Vile Vigour", "VV", new Color(70, 70, 70), -1, new int[]{8978}, new int[]{1876}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
 	WARD_OF_ARCEUSS("Ward of Arceuus", "WA", new Color(70, 70, 70), -1, new int[]{8970}, new int[]{1851}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
