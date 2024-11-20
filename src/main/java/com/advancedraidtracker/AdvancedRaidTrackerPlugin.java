@@ -1361,6 +1361,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
             playerAttackQueuedItem.tick--;
             if (playerAttackQueuedItem.tick == 0)
             {
+				log.info("queued item tick is 0");
                 for (Projectile projectile : client.getProjectiles())
                 {
                     int offset = 41; //zcb
@@ -1370,7 +1371,10 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                     }
                     if (projectile.getStartCycle() == client.getGameCycle() + offset)
                     {
+						log.info("offset matches start");
                         WorldPoint position = WorldPoint.fromLocal(client, new LocalPoint(projectile.getX1(), projectile.getY1()));
+						log.info("projectile location: " + position.getRegionX() + ", " + position.getRegionY());
+						log.info("player location: " + playerAttackQueuedItem.player.getWorldLocation().getRegionX() + ", " + playerAttackQueuedItem.player.getWorldLocation().getRegionY());
                         if (position.distanceTo(playerAttackQueuedItem.player.getWorldLocation()) == 0)
                         {
                             if (projectile.getId() == DAWNBRINGER_AUTO_PROJECTILE || projectile.getId() == DAWNBRINGER_SPEC_PROJECTILE)
@@ -1578,6 +1582,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                         //so this filters powered staves unless it's dawnbringer
                         WorldPoint worldPoint = p.getWorldLocation();
                         playersAttacked.add(new QueuedPlayerAttackLessProjectiles(p, worldPoint, 1, animations.toString(), p.getPlayerComposition().getEquipmentId(KitType.WEAPON), String.valueOf(p.getAnimation())));
+						log.info("Queuing potential ZCB: " + p.getName() + " on tick " + client.getTickCount() + " with animation: " + p.getAnimation() + " and weapon: " + p.getPlayerComposition().getEquipmentId(KitType.WEAPON));
                     } else
                     {
                         int interactedIndex = -1;

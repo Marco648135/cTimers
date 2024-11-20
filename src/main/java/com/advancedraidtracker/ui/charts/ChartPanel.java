@@ -3157,6 +3157,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 				if (probabilityMap.get(i) != null)
 				{
 					double p = probabilityMap.get(i);
+					log.info("Tick: " + i + ", " + probabilityMap.get(i));
 					// Ensure p is within the range [0.0, 1.0]
 					p = Math.max(0.0, Math.min(1.0, p));
 

@@ -46,7 +46,7 @@ public class BorderPanel extends JPanel {
 
 		addMouseListener(mouseAdapter);
 		addMouseMotionListener(mouseAdapter);
-		addMouseAdapterRecursively(content, mouseAdapter);
+		//addMouseAdapterRecursively(content, mouseAdapter);
 	}
 
 	private void resizeHorizontally(int dx, boolean isEastEdge) {
