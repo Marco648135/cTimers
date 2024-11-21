@@ -1998,7 +1998,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 										lastSpecPlayer = box.player;
 									}
 								}
-								if (box.tick == i - 2)
+								if (box.tick == i - 2 || box.tick == i-1)
 								{
 									if (box.playerAnimation.equals(DAWN_SPEC))
 									{
