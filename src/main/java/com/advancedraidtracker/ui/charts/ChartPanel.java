@@ -860,6 +860,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		attackers.clear();
 		playerOffsets.clear();
 		crabDescriptions.clear();
+		dinhsSpecs.clear();
 		roomHP.clear();
 		NPCMap.clear();
 		playerInThrownBloodList.clear();
