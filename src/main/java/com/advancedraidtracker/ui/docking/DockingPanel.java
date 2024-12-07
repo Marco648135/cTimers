@@ -37,6 +37,11 @@ public class DockingPanel extends JPanel implements CustomLayerListener
 
 	private String backupLayoutFilePath;
 
+	public CustomPanel getSelectedPanel()
+	{
+		return selectedPanel;
+	}
+
 	public DockingPanel(String layoutFilePath)
 	{
 		this.layoutFilePath = layoutFilePath;

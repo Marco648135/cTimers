@@ -80,6 +80,7 @@ public class IconGridPanel extends JPanel
 		}
 	}
 
+
 	public IconGridPanel(ItemManager itemManager, SetupsWindow setupsWindow)
 	{
 		this.itemManager = itemManager;
@@ -317,6 +318,34 @@ public class IconGridPanel extends JPanel
 		selectedIndex = index;
 		setupsWindow.setSelectedItem(items.get(selectedIndex).id);
 		repaint();
+	}
+
+	public void mouseWheelIncremented(int rotation)
+	{
+		if(rotation > 0)
+		{
+			if(selectedIndex >= items.size()-2) //+ is -1
+			{
+				selectedIndex = 0;
+			}
+			else
+			{
+				selectedIndex++;
+			}
+			setupsWindow.setSelectedItem(items.get(selectedIndex).id);
+		}
+		else if(rotation < 0)
+		{
+			if(selectedIndex <= 0)
+			{
+				selectedIndex = items.size()-1;
+			}
+			else
+			{
+				selectedIndex--;
+			}
+			setupsWindow.setSelectedItem(items.get(selectedIndex).id);
+		}
 	}
 
 	protected void handlePopupTrigger(MouseEvent e)

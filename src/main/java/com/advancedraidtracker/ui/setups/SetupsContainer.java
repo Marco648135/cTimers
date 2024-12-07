@@ -319,8 +319,22 @@ class PixelBox extends JButton
 						parentGridPanel.handleMouseDragged(e);
 						SetupsWindow.getInstance().updateDragImagePosition(e.getXOnScreen(), e.getYOnScreen());
 
-						Point translatedPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), parentGridPanel);
-						PixelBox targetBox = parentGridPanel.getPixelBoxAt(translatedPoint);
+						Component rootComponent = setupsWindow.getSetupsContainer();
+
+						Point rootPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), rootComponent);
+
+						Component targetComponent = SwingUtilities.getDeepestComponentAt(rootComponent, rootPoint.x, rootPoint.y);
+
+						PixelBox targetBox = null;
+						while (targetComponent != null && !(targetComponent instanceof PixelBox))
+						{
+							targetComponent = targetComponent.getParent();
+						}
+						if (targetComponent instanceof PixelBox)
+						{
+							targetBox = (PixelBox) targetComponent;
+						}
+
 						SetupsWindow.getInstance().setTargetBox(targetBox);
 					}
 				}
@@ -501,6 +515,18 @@ class PixelBox extends JButton
 		}
 	}
 
+	public void updatePreview()
+	{
+		if(isPreviewing)
+		{
+			int selectedItemId = setupsWindow.getSelectedItem();
+			if (selectedItemId != -1)
+			{
+				showPreview(selectedItemId);
+			}
+		}
+	}
+
 	public void showPreview(int itemId)
 	{
 		AsyncBufferedImage itemImage = itemManager.getImage(itemId);
@@ -537,6 +563,7 @@ class PixelBox extends JButton
 		{
 			setId(selectedItemId);
 		}
+		isPreviewing = false;
 	}
 
 	private void clearItem()
@@ -706,8 +733,18 @@ class GridPanel extends JPanel
 
 	public void handleMouseReleased(MouseEvent e)
 	{
-		Point gridPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), this);
-		PixelBox targetBox = getPixelBoxAt(gridPoint);
+		Component rootComponent = setupsWindow.getSetupsContainer();
+		Point rootPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), rootComponent);
+		Component targetComponent = SwingUtilities.getDeepestComponentAt(rootComponent, rootPoint.x, rootPoint.y);
+		PixelBox targetBox = null;
+		while (targetComponent != null && !(targetComponent instanceof PixelBox))
+		{
+			targetComponent = targetComponent.getParent();
+		}
+		if (targetComponent != null)
+		{
+			targetBox = (PixelBox) targetComponent;
+		}
 
 		boolean rmb = SwingUtilities.isRightMouseButton(e);
 
@@ -717,7 +754,7 @@ class GridPanel extends JPanel
 		}
 		else if (DragState.dragSourceBox.getId() != -1 && !rmb)
 		{
-			if (targetBox != null && isValidDrop(targetBox))
+			if (targetBox != null)
 			{
 				performItemMove(targetBox);
 			}
@@ -835,9 +872,11 @@ class GridPanel extends JPanel
 			sourceBox.setId(-1);
 			targetBox.setId(DragState.dragItemId);
 		}
-		else
+		else //swap
 		{
-			revertDrag();
+			int targetBoxID = targetBox.getId();
+			targetBox.setId(DragState.dragItemId);
+			sourceBox.setId(targetBoxID);
 		}
 	}
 
@@ -1095,7 +1134,6 @@ class SetupPanel extends JPanel
 	{
 		List<Integer> itemList = new ArrayList<>();
 		itemList.addAll(inventoryGrid.getItems());
-		itemList.addAll(runepouchGrid.getItems());
 		itemList.addAll(equipmentGrid.getItems());
 		return itemList;
 	}
@@ -2031,6 +2069,26 @@ public class SetupsContainer extends JPanel
 			item.addActionListener(e -> action.perform(sp));
 			parentMenu.add(item);
 			index++;
+		}
+	}
+
+	public void updatePixelBoxes()
+	{
+		updatePixelBoxesInComponent(this);
+	}
+
+	private void updatePixelBoxesInComponent(Component comp)
+	{
+		if (comp instanceof PixelBox)
+		{
+			((PixelBox) comp).updatePreview();
+		}
+		else if (comp instanceof Container)
+		{
+			for (Component child : ((Container) comp).getComponents())
+			{
+				updatePixelBoxesInComponent(child);
+			}
 		}
 	}
 

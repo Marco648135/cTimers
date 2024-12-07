@@ -133,6 +133,7 @@ public class CustomPanel extends JPanel
 		return (JPanel) tabbedPane.getComponentAt(0);
 	}
 
+
 	public void addCustomPanelAsTab(CustomPanel newPanel)
 	{
 		int newIndex = tabbedPane.getTabCount();
