@@ -15,6 +15,7 @@ import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FontMetrics;
@@ -64,6 +65,7 @@ import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.RepaintManager;
 import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
@@ -2150,57 +2152,84 @@ public class SetupsContainer extends JPanel
 
 	private void copySetupContainerImageToClipboard()
 	{
-		for (SetupPanel sp : getSetupPanels())
-		{
-			for (PixelBox[] row : sp.inventoryGrid.boxes)
-			{
-				for (PixelBox pb : row)
-				{
-					if (pb != null)
-					{
-						pb.setSkipPaintComponent(true);
-					}
-				}
-			}
-			for (PixelBox[] row : sp.runepouchGrid.boxes)
-			{
-				for (PixelBox pb : row)
-				{
-					if (pb != null)
-					{
-						pb.setSkipPaintComponent(true);
-					}
-				}
-			}
-			for (int r = 0; r < 5; r++)
-			{
-				for (int c = 0; c < 3; c++)
-				{
-					if (r == 0 && c == 0)
-					{
-						continue;
-					}
-					if (r == 3 && c == 0)
-					{
-						continue;
-					}
-					if (r == 3 && c == 2)
-					{
-						continue;
-					}
-					if (sp.equipmentGrid.boxes[r][c] != null)
-					{
-						sp.equipmentGrid.boxes[r][c].setSkipPaintComponent(true);
-					}
-				}
-			}
-		}
+		RepaintManager originalRepaintManager = RepaintManager.currentManager(this);
 
-		BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_ARGB);
+		RepaintManager.setCurrentManager(new RepaintManager()
+		{
+			@Override
+			public void addInvalidComponent(JComponent invalidComponent)
+			{
+			}
+			@Override
+			public void addDirtyRegion(JComponent c, int x, int y, int w, int h)
+			{
+			}
+			@Override
+			public Image getOffscreenBuffer(Component c, int proposedWidth, int proposedHeight)
+			{
+				return null;
+			}
+			@Override
+			public Image getVolatileOffscreenBuffer(Component c, int proposedWidth, int proposedHeight)
+			{
+				return null;
+			}
+		});
+
+		Dimension originalSize = getSize();
+
+		int desiredHeight = 740;
+		int numberOfSetups = getSetupPanels().size();
+		int desiredWidth = 228 * numberOfSetups;
+
+		setPreferredSize(new Dimension(desiredWidth, desiredHeight));
+		setMinimumSize(new Dimension(desiredWidth, desiredHeight));
+		setMaximumSize(new Dimension(desiredWidth, desiredHeight));
+		setSize(new Dimension(desiredWidth, desiredHeight));
+
+		resizeSetups();
+
+		setSkipPaintOverrideOnPixelBoxes(true);
+
+		recursiveDoLayout(this);
+
+		BufferedImage image = new BufferedImage(desiredWidth, desiredHeight, BufferedImage.TYPE_INT_ARGB);
 		Graphics2D g2d = image.createGraphics();
 		paint(g2d);
 		g2d.dispose();
 
+		setPreferredSize(originalSize);
+		setMinimumSize(originalSize);
+		setMaximumSize(originalSize);
+		setSize(originalSize);
+
+		resizeSetups();
+
+		setSkipPaintOverrideOnPixelBoxes(false);
+
+		recursiveDoLayout(this);
+
+		RepaintManager.setCurrentManager(originalRepaintManager);
+
+		Transferable t = new TransferableImage(image);
+		Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
+		cb.setContents(t, null);
+	}
+
+	private void recursiveDoLayout(Component c)
+	{
+		c.doLayout();
+		if (c instanceof Container)
+		{
+			for (Component child : ((Container) c).getComponents())
+			{
+				recursiveDoLayout(child);
+			}
+		}
+	}
+
+	private void setSkipPaintOverrideOnPixelBoxes(boolean skip)
+	{
 		for (SetupPanel sp : getSetupPanels())
 		{
 			for (PixelBox[] row : sp.inventoryGrid.boxes)
@@ -2209,7 +2238,7 @@ public class SetupsContainer extends JPanel
 				{
 					if (pb != null)
 					{
-						pb.setSkipPaintComponent(false);
+						pb.setSkipPaintComponent(skip);
 					}
 				}
 			}
@@ -2219,7 +2248,7 @@ public class SetupsContainer extends JPanel
 				{
 					if (pb != null)
 					{
-						pb.setSkipPaintComponent(false);
+						pb.setSkipPaintComponent(skip);
 					}
 				}
 			}
@@ -2227,27 +2256,18 @@ public class SetupsContainer extends JPanel
 			{
 				for (int c = 0; c < 3; c++)
 				{
-					if (r == 0 && c == 0)
+					if (r == 0 && c == 0) continue;
+					if (r == 3 && c == 0) continue;
+					if (r == 3 && c == 2) continue;
+					PixelBox pb = sp.equipmentGrid.boxes[r][c];
+					if (pb != null)
 					{
-						continue;
-					}
-					if (r == 3 && c == 0)
-					{
-						continue;
-					}
-					if (r == 3 && c == 2)
-					{
-						continue;
-					}
-					if (sp.equipmentGrid.boxes[r][c] != null)
-					{
-						sp.equipmentGrid.boxes[r][c].setSkipPaintComponent(false);
+						pb.setSkipPaintComponent(skip);
 					}
 				}
 			}
 		}
-		Transferable t = new TransferableImage(image);
-		Clipboard cb = Toolkit.getDefaultToolkit().getSystemClipboard();
-		cb.setContents(t, null);
 	}
+
+
 }
