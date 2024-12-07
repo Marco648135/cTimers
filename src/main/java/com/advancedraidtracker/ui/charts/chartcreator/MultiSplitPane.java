@@ -42,21 +42,8 @@ public class MultiSplitPane extends JPanel
 	{
 		BorderPanel panel = new BorderPanel(comp, config.primaryMiddle(), config.markerColor(), 1);
 		panel.setPreferredSize(comp.getPreferredSize());
-		/*if (!components.isEmpty())
-		{
-			Divider divider = new Divider(verticalOrientation, this);
-			components.add(divider);
-			add(divider);
-		}*/
 		components.add(panel);
 		add(panel);
-
-		panel.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				setSelectedComponent(panel);
-			}
-		});
 		revalidate();
 		repaint();
 	}
@@ -65,50 +52,14 @@ public class MultiSplitPane extends JPanel
 	{
 		BorderPanel panel = new BorderPanel(comp, config.primaryMiddle(), config.markerColor(), 1);
 		panel.setPreferredSize(comp.getPreferredSize());
-		/*if (!components.isEmpty() && index > 0)
-		{
-			Divider divider = new Divider(verticalOrientation, this);
-			components.add(index, divider);
-			add(divider);
-		}*/
 		components.add(index, panel);
 		add(panel);
 
-		panel.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				setSelectedComponent(panel);
-			}
-		});
 		revalidate();
 		repaint();
 	}
 	private Component selectedComponent;
 
-	public void setSelectedComponent(Component comp)
-	{
-		if (selectedComponent == comp)
-		{
-			return;
-		}
-		if (selectedComponent != null)
-		{
-			PanelBorder border = (PanelBorder) ((JComponent) selectedComponent).getBorder();
-			if (border != null) {
-				border.setSelected(false);
-				selectedComponent.repaint();
-			}
-		}
-		selectedComponent = comp;
-		// Set selected
-		if (selectedComponent != null) {
-			PanelBorder border = (PanelBorder) ((JComponent) selectedComponent).getBorder();
-			if (border != null) {
-				border.setSelected(true);
-				selectedComponent.repaint();
-			}
-		}
-	}
 
 	public void splitPane(Component newComponent, boolean verticalSplit, boolean insertBefore)
 	{
@@ -195,14 +146,10 @@ public class MultiSplitPane extends JPanel
 			else if (parent != null)
 			{
 				parent.remove(this);
-				JPanel placeholder = new JPanel();
-				placeholder.setBackground(Color.GRAY);
-				parent.add(placeholder);
 				parent.revalidate();
 				parent.repaint();
 			}
 		}
-
 
 		revalidate();
 		repaint();
@@ -396,13 +343,7 @@ public class MultiSplitPane extends JPanel
 		}
 	}
 
-	public void deselectOtherPanels(BorderPanel selectedPanel) {
-		for (Component comp : components) {
-			if (comp instanceof BorderPanel && comp != selectedPanel) {
-				((BorderPanel) comp).setSelected(false);
-			}
-		}
-	}
+
 
 	@Override
 	public void doLayout()
@@ -412,8 +353,24 @@ public class MultiSplitPane extends JPanel
 
 	private void layoutComponents()
 	{
+		log.info("Calculating Layout, Orientation: " + ((verticalOrientation) ? "Vertical" : "Horizontal") + ", components: " + components.size());
+		for(Component component : components)
+		{
+			if(component instanceof BorderPanel)
+			{
+				BorderPanel borderPanel = (BorderPanel) component;
+				String name = borderPanel.getComponent().getClass().getSimpleName();
+				if(borderPanel.getComponent() instanceof CustomPanel)
+				{
+					CustomPanel customPanel = (CustomPanel) borderPanel.getComponent();
+					name += " - " + customPanel.getTitle();
+				}
+				log.info(name);
+			}
+		}
 		if (components.size() == 1 && !(components.get(0) instanceof Divider))
 		{
+			log.info("Filling entire space");
 			// Only one component, fill the entire space
 			Component comp = components.get(0);
 			comp.setBounds(0, 0, getWidth(), getHeight());

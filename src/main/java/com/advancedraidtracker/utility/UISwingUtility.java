@@ -1,7 +1,10 @@
 package com.advancedraidtracker.utility;
 
 import com.advancedraidtracker.AdvancedRaidTrackerConfig;
+import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.TreeUI;
+import javax.swing.plaf.metal.MetalBorders;
+import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -631,7 +634,7 @@ public class UISwingUtility //methods used to get components that override LAF
             }
         });
         textArea.setBorder(BorderFactory.createLineBorder(config.primaryLight()));
-        textArea.setBackground(config.primaryMiddle());
+        textArea.setBackground(config.primaryDark());
         textArea.setForeground(config.fontColor());
         textArea.setOpaque(true);
         return textArea;
@@ -720,6 +723,37 @@ public class UISwingUtility //methods used to get components that override LAF
         item.setOpaque(true);
         return item;
     }
+
+	public static JSeparator getThemedSeperator()
+	{
+		JSeparator separator = new JSeparator()
+		{
+			@Override
+			protected void paintComponent(Graphics g) {
+				// Call the superclass method if you want to keep default behavior
+				// super.paintComponent(g);
+
+				// Cast to Graphics2D for better control
+				Graphics2D g2 = (Graphics2D) g.create();
+
+				// Enable anti-aliasing for smoother lines
+				g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+				// Set the desired color
+				g2.setColor(config.primaryMiddle());
+
+				// Determine the position to draw the line (centered)
+				int y = getHeight() / 2;
+
+				// Draw the line across the entire width
+				g2.drawLine(0, y, getWidth(), y);
+
+				// Dispose the graphics context to free resources
+				g2.dispose();
+			}
+		};
+		return separator;
+	}
 
     public static JPopupMenu getThemedPopupMenu()
     {

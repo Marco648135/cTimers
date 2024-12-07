@@ -47,7 +47,8 @@ import static com.advancedraidtracker.utility.UISwingUtility.*;
 import net.runelite.client.util.AsyncBufferedImage;
 
 @Slf4j
-public class ChartCreatorFrame extends BaseFrame implements ChartListener {
+public class ChartCreatorFrame extends BaseFrame implements ChartListener, CustomLayerListener {
+	private CustomPanel getSelectedPanel;
 	private final ChartPanel chart;
 	private final JTree tree;
 	private Map<String, Preset> presets = new HashMap<>();
@@ -70,6 +71,11 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener {
 
 		// Wrap mainPane in a JLayer
 		JLayer<JComponent> layer = new JLayer<>(mainPane, layerUI);
+
+		layer.setLayerEventMask(AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK);
+		layerUI.setCustomLayerListener(this);
+		layerUI.setMainPane(mainPane);
+
 
 		PresetManager.loadPresets();
 		equipmentSetupsList = new JList<>();
@@ -347,9 +353,38 @@ public class ChartCreatorFrame extends BaseFrame implements ChartListener {
 		this.setExtendedState(this.getExtendedState() | this.MAXIMIZED_BOTH);
 	}
 
+	@Override
+	public void onCustomPanelClicked(CustomPanel panel) {
+		if (selectedPanel != null && selectedPanel != panel) {
+			selectedPanel.setDeselected();
+		}
+		selectedPanel = panel;
+		selectedPanel.setSelected();
+	}
+
 	public MultiSplitPane getMainPane() {
 		return mainPane;
 	}
+
+	private CustomPanel getCustomPanelFromComponent(Component comp) {
+		while (comp != null) {
+			if (comp instanceof CustomPanel) {
+				return (CustomPanel) comp;
+			}
+			comp = comp.getParent();
+		}
+		return null;
+	}
+	private CustomPanel selectedPanel;
+
+	private void selectCustomPanel(CustomPanel panel) {
+		if (selectedPanel != null && selectedPanel != panel) {
+			selectedPanel.setDeselected();
+		}
+		selectedPanel = panel;
+		selectedPanel.setSelected();
+	}
+
 
 	public void setMainPane(MultiSplitPane newMainPane) {
 		// Remove the old mainPane from the content pane

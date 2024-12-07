@@ -4,21 +4,24 @@ import java.awt.*;
 import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BorderPanel extends JPanel {
-	private boolean isSelected;
 	private PanelBorder panelBorder;
 	private boolean isResizing = false;
 	private int resizeEdge = Cursor.DEFAULT_CURSOR;
 	private Point lastPoint;
+	@Getter
+	private final Component component;
 
 	private static final int EDGE_MARGIN = 5; // Sensitivity margin
 
 	public BorderPanel(Component content, Color borderColor, Color highlightColor, int borderWidth) {
 		super(new BorderLayout());
 		this.panelBorder = new PanelBorder(borderColor, highlightColor, borderWidth);
+		this.component = content;
 		setBorder(panelBorder);
 		add(content, BorderLayout.CENTER);
 
@@ -46,7 +49,6 @@ public class BorderPanel extends JPanel {
 
 		addMouseListener(mouseAdapter);
 		addMouseMotionListener(mouseAdapter);
-		//addMouseAdapterRecursively(content, mouseAdapter);
 	}
 
 	private void resizeHorizontally(int dx, boolean isEastEdge) {
@@ -93,23 +95,6 @@ public class BorderPanel extends JPanel {
 	}
 
 
-
-	private void deselectOthers() {
-		Container parent = getParent();
-		if (parent instanceof MultiSplitPane) {
-			((MultiSplitPane) parent).deselectOtherPanels(this);
-		}
-	}
-
-	public void setSelected(boolean selected) {
-		if (this.isSelected != selected) {
-			this.isSelected = selected;
-			panelBorder.setSelected(selected);
-			log.info("setting selected: " + selected);
-			repaint();
-		}
-	}
-
 	private void handleMouseMoved(MouseEvent e) {
 		Point p = SwingUtilities.convertMouseEvent(e.getComponent(), e, this).getPoint();
 		int cursorType = getCursorType(p);
@@ -117,15 +102,10 @@ public class BorderPanel extends JPanel {
 	}
 
 	private void handleMousePressed(MouseEvent e) {
-		log.info("mouse pressed! ");
-		System.out.println("mouse pressed! ");
 		Point p = SwingUtilities.convertMouseEvent(e.getComponent(), e, this).getPoint();
 		int cursorType = getCursorType(p);
 		if (cursorType == Cursor.DEFAULT_CURSOR)
 		{
-			// Handle selection
-			setSelected(true);
-			deselectOthers();
 		} else
 		{
 			// Handle resizing
@@ -153,16 +133,6 @@ public class BorderPanel extends JPanel {
 	private void handleMouseReleased(MouseEvent e) {
 		isResizing = false;
 		resizeEdge = Cursor.DEFAULT_CURSOR;
-	}
-
-	private void addMouseAdapterRecursively(Component component, MouseAdapter adapter) {
-		component.addMouseListener(adapter);
-		component.addMouseMotionListener(adapter);
-		if (component instanceof Container) {
-			for (Component child : ((Container) component).getComponents()) {
-				addMouseAdapterRecursively(child, adapter);
-			}
-		}
 	}
 }
 

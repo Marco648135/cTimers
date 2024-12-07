@@ -10,23 +10,23 @@ import java.util.Map;
 
 public class ZebakParser extends RoomParser
 {
-    public ZebakParser(Raid data)
-    {
-        super(data);
-    }
+	public ZebakParser(Raid data)
+	{
+		super(data);
+	}
 
-    @Override
-    public int getFirstPossibleNonIdleTick()
-    {
-        return 3;
-    }
+	@Override
+	public int getFirstPossibleNonIdleTick()
+	{
+		return 3;
+	}
 
-    @Override
-    public Map<Integer, String> getLines()
-    {
-        addLinesFromCollection(data.getList(DataPoint.ZEBAK_BOULDER_ATTACKS), "Jug");
-        addLinesFromCollection(data.getList(DataPoint.ZEBAK_WATERFALL_ATTACKS), "Tsunami");
-        lines.put(data.get(DataPoint.ZEBAK_ENRAGED_SPLIT), "Enraged");
-        return lines;
-    }
+	@Override
+	public Map<Integer, String> getLines()
+	{
+		addLinesFromCollection(data.getList(DataPoint.ZEBAK_BOULDER_ATTACKS), "Jug");
+		addLinesFromCollection(data.getList(DataPoint.ZEBAK_WATERFALL_ATTACKS), "Tsunami");
+		lines.put(data.get(DataPoint.ZEBAK_ENRAGED_SPLIT), "Enraged");
+		return lines;
+	}
 }

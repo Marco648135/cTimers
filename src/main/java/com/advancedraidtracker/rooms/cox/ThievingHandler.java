@@ -7,8 +7,8 @@ import net.runelite.api.Client;
 
 public class ThievingHandler extends CoxRoomHandler
 {
-    public ThievingHandler(Client client, DataWriter clog, AdvancedRaidTrackerConfig config, AdvancedRaidTrackerPlugin plugin)
-    {
-        super(client, clog, config, plugin);
-    }
+	public ThievingHandler(Client client, DataWriter clog, AdvancedRaidTrackerConfig config, AdvancedRaidTrackerPlugin plugin)
+	{
+		super(client, clog, config, plugin);
+	}
 }

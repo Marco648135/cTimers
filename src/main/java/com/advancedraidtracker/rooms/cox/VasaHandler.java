@@ -7,8 +7,8 @@ import net.runelite.api.Client;
 
 public class VasaHandler extends CoxRoomHandler
 {
-    public VasaHandler(Client client, DataWriter clog, AdvancedRaidTrackerConfig config, AdvancedRaidTrackerPlugin plugin)
-    {
-        super(client, clog, config, plugin);
-    }
+	public VasaHandler(Client client, DataWriter clog, AdvancedRaidTrackerConfig config, AdvancedRaidTrackerPlugin plugin)
+	{
+		super(client, clog, config, plugin);
+	}
 }

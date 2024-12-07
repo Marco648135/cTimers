@@ -14,6 +14,8 @@ public class CustomPanel extends JPanel
 {
 
 	private final JTabbedPane tabbedPane;
+	@Getter
+	private String title;
 
 
 	public void addTab(String title, Component component)
@@ -26,6 +28,7 @@ public class CustomPanel extends JPanel
 
 	public CustomPanel(String title)
 	{
+		this.title = title;
 		setLayout(new BorderLayout());
 		tabbedPane = new JTabbedPane();
 		tabbedPane.setUI(new FlatTabbedPaneUI()
@@ -63,6 +66,7 @@ public class CustomPanel extends JPanel
 		setCustomTabComponent(tabbedPane, 0);
 		add(tabbedPane, BorderLayout.CENTER);
 		new TabDragSource(tabbedPane);
+		setDeselected();
 	}
 
 	public JPanel getContentPanel()
@@ -170,6 +174,20 @@ public class CustomPanel extends JPanel
 		public void dragDropEnd(DragSourceDropEvent dsde)
 		{
 		}
+	}
+
+	public void setSelected()
+	{
+		setBorder(BorderFactory.createLineBorder(new Color(45, 140, 235)));
+		revalidate();
+		repaint();
+	}
+
+	public void setDeselected()
+	{
+		setBorder(BorderFactory.createLineBorder(new Color(0, 0, 0, 0)));
+		revalidate();
+		repaint();
 	}
 
 }

@@ -5,9 +5,19 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.plaf.LayerUI;
+import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
-
+@Slf4j
 public class CustomLayerUI extends LayerUI<JComponent> {
+	private CustomLayerListener listener;
+	@Setter
+	private JPanel mainPane;
+
+	public void setCustomLayerListener(CustomLayerListener listener)
+	{
+		this.listener = listener;
+	}
 	private boolean isOverlayVisible = false;
 	private Shape[] overlayShapes;
 	private int highlightedIndex = -1;
@@ -90,10 +100,40 @@ public class CustomLayerUI extends LayerUI<JComponent> {
 	protected void processMouseEvent(MouseEvent e, JLayer<? extends JComponent> l) {
 		if (isOverlayVisible) {
 			updateOverlayMousePosition(e.getPoint());
-			e.consume(); // Consume the event to prevent underlying components from receiving it during overlay
+			e.consume();
 		} else {
-			super.processMouseEvent(e, l);
+			if (e.getID() == MouseEvent.MOUSE_CLICKED) {
+				Point p = e.getPoint();
+				Point pointInView = SwingUtilities.convertPoint(e.getComponent(), p, l);
+				Component comp = SwingUtilities.getDeepestComponentAt(l, pointInView.x, pointInView.y);
+				if (comp != null) {
+					CustomPanel customPanel = findCustomPanel(comp);
+					if (customPanel != null && listener != null) {
+						listener.onCustomPanelClicked(customPanel);
+					}
+				}
+			}
 		}
+	}
+
+	private CustomPanel findCustomPanel(Component comp) {
+		while (comp != null) {
+			if (comp instanceof CustomPanel) {
+				return (CustomPanel) comp;
+			}
+			comp = comp.getParent();
+		}
+		return null;
+	}
+
+	private CustomPanel getCustomPanelFromComponent(Component comp) {
+		while (comp != null) {
+			if (comp instanceof CustomPanel) {
+				return (CustomPanel) comp;
+			}
+			comp = comp.getParent();
+		}
+		return null;
 	}
 
 	@Override

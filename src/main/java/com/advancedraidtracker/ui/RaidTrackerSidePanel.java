@@ -3,6 +3,7 @@ package com.advancedraidtracker.ui;
 import com.advancedraidtracker.*;
 import com.advancedraidtracker.ui.charts.chartcreator.ChartCreatorFrame;
 import com.advancedraidtracker.ui.dpsanalysis.DPSWindow;
+import com.advancedraidtracker.ui.setups.SetupsWindow;
 import com.advancedraidtracker.utility.UISwingUtility;
 import com.advancedraidtracker.utility.datautility.datapoints.Raid;
 import com.advancedraidtracker.utility.wrappers.RaidsArrayWrapper;
@@ -11,6 +12,7 @@ import com.google.inject.Inject;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Client;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.game.ItemManager;
@@ -44,17 +46,19 @@ public class RaidTrackerSidePanel extends PluginPanel
 	private static ItemManager itemManager;
 	private final ConfigManager configManager;
 	private final ClientThread clientThread;
+	private final Client client;
 	private final SpriteManager spriteManager;
 
 	private final JLabel pleaseWait;
 
 	@Inject
-	RaidTrackerSidePanel(AdvancedRaidTrackerPlugin plugin, AdvancedRaidTrackerConfig config, ItemManager itemManager, ClientThread clientThread, ConfigManager configManager, SpriteManager spriteManager)
+	RaidTrackerSidePanel(AdvancedRaidTrackerPlugin plugin, AdvancedRaidTrackerConfig config, ItemManager itemManager, ClientThread clientThread, ConfigManager configManager, SpriteManager spriteManager, Client client)
 	{
 		UISwingUtility.setConfig(config);
 		this.clientThread = clientThread;
 		this.configManager = configManager;
 		this.spriteManager = spriteManager;
+		this.client = client;
 		pleaseWait = new JLabel("Parsing Files...", SwingConstants.CENTER);
 		add(pleaseWait);
 		new Thread(() ->
@@ -151,6 +155,13 @@ public class RaidTrackerSidePanel extends PluginPanel
 			chartCreator.open();
 		});
 
+		JButton setupCreatorButton = new JButton("Create a Setup");
+		setupCreatorButton.addActionListener(al ->
+		{
+			SetupsWindow setupCreator = new SetupsWindow(itemManager, clientThread, client);
+			setupCreator.open();
+		});
+
 		JButton copyLastSplitsButton = new JButton("Copy Last Splits");
 		copyLastSplitsButton.addActionListener(al ->
 		{
@@ -182,6 +193,7 @@ public class RaidTrackerSidePanel extends PluginPanel
 		primaryContainer.add(tableRaidsButton);
 		primaryContainer.add(livePanelButton);
 		primaryContainer.add(chartCreatorButton);
+		primaryContainer.add(setupCreatorButton);
 		primaryContainer.add(copyLastSplitsButton);
 		primaryContainer.add(viewDPSComparisons);
 
