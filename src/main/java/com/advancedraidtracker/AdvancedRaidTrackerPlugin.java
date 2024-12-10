@@ -7,15 +7,15 @@ import com.advancedraidtracker.rooms.cox.*;
 import com.advancedraidtracker.rooms.inf.InfernoHandler;
 import com.advancedraidtracker.rooms.toa.*;
 import com.advancedraidtracker.rooms.tob.*;
+import com.advancedraidtracker.ui.advancedstatistics.AdvancedData;
+import com.advancedraidtracker.ui.advancedstatistics.LiveAdvancedStatistics;
 import com.advancedraidtracker.ui.charts.ChartIO;
 import com.advancedraidtracker.ui.charts.ChartTheme;
 import com.advancedraidtracker.ui.charts.LiveChart;
 import com.advancedraidtracker.ui.RaidTrackerSidePanel;
 import com.advancedraidtracker.ui.charts.chartelements.OutlineBox;
-import com.advancedraidtracker.ui.dpsanalysis.Prayers;
 import com.advancedraidtracker.utility.*;
 import static com.advancedraidtracker.utility.DataType.ATTACK;
-import static com.advancedraidtracker.utility.DataType.PRAYER;
 import static com.advancedraidtracker.utility.DataType.RING;
 import static com.advancedraidtracker.utility.DataType.STRENGTH;
 import com.advancedraidtracker.utility.datautility.DataReader;
@@ -26,10 +26,12 @@ import com.advancedraidtracker.utility.wrappers.PlayerDidAttack;
 import com.advancedraidtracker.utility.wrappers.QueuedPlayerAttackLessProjectiles;
 import com.advancedraidtracker.ui.charts.chartelements.ThrallOutlineBox;
 import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.SetMultimap;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.Provides;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.swing.SwingUtilities;
 import lombok.Getter;
@@ -205,6 +207,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     private List<WorldPoint> chinSpawned = new ArrayList<>();
 
     public LiveChart liveFrame;
+	public LiveAdvancedStatistics liveAdvancedStatistics;
 	private int ringData;
 	private int strLevelData;
 	private int attLevelData;
@@ -228,6 +231,12 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         liveFrame.open(currentRoom.getName());
     }
 
+	public void openLiveData()
+	{
+		liveAdvancedStatistics.open();
+	}
+
+
     public int getTick()
     {
         return client.getTickCount();
@@ -248,6 +257,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 	@Inject
 	private Gson gson;
 
+	private AdvancedData liveData;
+
     @Override
     protected void startUp() throws Exception
     {
@@ -265,6 +276,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         activelyPiping = new LinkedHashMap<>();
         wasPiping = new ArrayList<>();
         liveFrame = new LiveChart(config, itemManager, clientThread, configManager, spriteManager);
+		liveData = new AdvancedData();
+		liveAdvancedStatistics = new LiveAdvancedStatistics(liveData);
         playersTextChanged = new ArrayList<>();
         clog = new DataWriter(config);
 		ChartIO.gson = gson;
@@ -411,6 +424,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                 inTheatre = false;
                 inInferno = false;
                 liveFrame.resetAll();
+				liveData.resetData();
             } else
             {
                 activeState = true;
@@ -457,6 +471,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                 inTheatre = false;
                 inColosseum = false;
                 liveFrame.resetAll();
+				liveData.resetData();
             } else
             {
                 activeState = true;
@@ -475,6 +490,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
             clog.addLine(SPECTATE);
             clog.addLine(LATE_START, room.name);
             liveFrame.resetAll();
+			liveData.resetData();
             liveFrame.switchToTOB();
             lastSplits = "";
 			currentDurationSum = 0;
@@ -490,6 +506,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
             clog.migrateToNewRaid();
             clog.addLine(ENTERED_TOA);
             liveFrame.resetAll();
+			liveData.resetData();
             liveFrame.switchToTOA();
             lastSplits = "";
 			currentDurationSum = 0;
@@ -503,6 +520,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                     currentRoom = maiden;
                     enteredMaiden();
                     liveFrame.resetAll();
+					liveData.resetData();
                     liveFrame.switchToTOB();
                     lastSplits = "";
 					currentDurationSum = 0;
@@ -1356,8 +1374,19 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 
     private void handleQueuedProjectiles()
     {
+		log.info("Tick: " + client.getTickCount());
+		for(Projectile projectile : client.getProjectiles())
+		{
+			log.info("projectile");
+			log.info(projectile.getStartCycle() + ", " + (client.getGameCycle()+41) + ", " + projectile.getId());
+			WorldPoint position = WorldPoint.fromLocal(client, new LocalPoint(projectile.getX1(), projectile.getY1()));
+			log.info(position.getRegionX()+","+position.getRegionY());
+		}
         for (QueuedPlayerAttackLessProjectiles playerAttackQueuedItem : playersAttacked)
         {
+			log.info("processing");
+			log.info(playerAttackQueuedItem.weapon + ", " + playerAttackQueuedItem.tick);
+			log.info(playerAttackQueuedItem.spotAnims + ", " + playerAttackQueuedItem.animation + ", " + playerAttackQueuedItem.player.getWorldLocation().getRegionX() + " , " + playerAttackQueuedItem.player.getWorldLocation().getRegionY());
             playerAttackQueuedItem.tick--;
             if (playerAttackQueuedItem.tick == 0)
             {
@@ -2254,4 +2283,79 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 
 	public int currentDurationSum = 0;
 
+	public void addDelayedNyloStall(int currentWave, ArrayList<Nylocas> nylosAlive, int roomTick)
+	{
+		int currentTick = roomTick;
+		Map<String, Integer> ageMap = new HashMap<>();
+		for(Nylocas nylocas : nylosAlive)
+		{
+			ageMap.put(nylocas.getDescription(), client.getTickCount()-nylocas.getOriginTick());
+		}
+		CompletableFuture.runAsync(() ->
+		{
+			try
+			{
+				Thread.sleep(3000);
+				addNyloStall(currentWave, ageMap, roomTick);
+			}
+			catch (InterruptedException e)
+			{
+				e.printStackTrace();
+			}
+		});
+	}
+
+	public void addNyloStall(int stalledWave, Map<String, Integer> ageMap, int roomTick)
+	{
+		for(String description : ageMap.keySet())
+		{
+			clog.addLine(NYLO_STALL_ALIVE, String.valueOf(stalledWave), String.valueOf(roomTick), description, String.valueOf(ageMap.get(description)));
+			liveData.addNyloAliveAtStall(stalledWave, roomTick, description, ageMap.get(description));
+		}
+		/*log.info("Stalled wave: " + stalledWave);
+		ageMap.entrySet().stream()
+			.sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+			.forEach(entry -> log.info(entry.getKey() + "(" + entry.getValue() + ")"));*/
+	}
+
+	public void addDelayedNylocasKilled(int roomTick, Nylocas nylocas)
+	{
+		int clientTick = client.getTickCount();
+		int killedTick = roomTick;
+		int origin = nylocas.getOriginTick();
+		String description = nylocas.getDescription();
+		CompletableFuture.runAsync(() ->
+		{
+			try
+			{
+				Thread.sleep(3000);
+				addKilledNylo(killedTick, origin, clientTick, description);
+			}
+			catch (InterruptedException e)
+			{
+				e.printStackTrace();
+			}
+		});
+	}
+
+	public void addKilledNylo(int roomTick, int origin, int clientTick, String description) {
+		int ageInTicks = clientTick - origin;
+		int naturalDeathTick = roomTick + (52 - ageInTicks);
+
+		int time = naturalDeathTick + (4 - (naturalDeathTick % 4));
+		if (naturalDeathTick % 4 == 0)
+		{
+			time = naturalDeathTick;
+		}
+
+		clog.addLine(NYLO_KILLED, String.valueOf(roomTick), String.valueOf(ageInTicks), description);
+		liveData.addNyloKilled(roomTick, ageInTicks, description);
+		if(time > 260)
+		{
+			/*log.info(description + " killed on room tick " + roomTick +
+				" at age " + ageInTicks +
+				". Would have died naturally on " + naturalDeathTick +
+				", for " + time);*/
+		}
+	}
 }

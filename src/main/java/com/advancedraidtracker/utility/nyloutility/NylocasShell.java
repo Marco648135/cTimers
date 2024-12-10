@@ -87,6 +87,8 @@ public class NylocasShell
                 return "west small " + type + " (N)";
             case WEST_SOUTH:
                 return "west small " + type + " (S)";
+			case ROOM:
+				return type + " split";
         }
         return "";
     }

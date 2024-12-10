@@ -148,6 +148,12 @@ public class RaidTrackerSidePanel extends PluginPanel
 		livePanelButton.addActionListener(al ->
 			plugin.openLiveFrame());
 
+		JButton liveDataButton = new JButton("View Live Data");
+		liveDataButton.addActionListener(al ->
+		{
+			plugin.openLiveData();
+		});
+
 		JButton chartCreatorButton = new JButton("Create A Chart");
 		chartCreatorButton.addActionListener(al ->
 		{
@@ -192,6 +198,7 @@ public class RaidTrackerSidePanel extends PluginPanel
 		primaryContainer.add(viewRaidsButton);
 		primaryContainer.add(tableRaidsButton);
 		primaryContainer.add(livePanelButton);
+		primaryContainer.add(liveDataButton);
 		primaryContainer.add(chartCreatorButton);
 		primaryContainer.add(setupCreatorButton);
 		primaryContainer.add(copyLastSplitsButton);

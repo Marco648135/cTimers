@@ -47,7 +47,7 @@ public class NyloHandler extends TOBRoomHandler
     private int lastDead = -1;
     private int entryTickOffset = -1;
     private int wave31 = -1;
-    private final ArrayList<NPC> nylosAlive;
+    private final ArrayList<Nylocas> nylosAlive;
     int currentWave = 0;
     boolean hard = false;
     boolean story = false;
@@ -119,6 +119,7 @@ public class NyloHandler extends TOBRoomHandler
         {
             clog.addLine(NYLO_STALL, String.valueOf(currentWave), String.valueOf(client.getTickCount() - roomStartTick), String.valueOf(nylosAlive.size()));
             plugin.addDelayedLine(RaidRoom.NYLOCAS, client.getTickCount() - roomStartTick, "Stall");
+			plugin.addDelayedNyloStall(currentWave, nylosAlive, (client.getTickCount()-roomStartTick));
             expectedWaveTick += 4;
         }
         super.updateGameTick(event);
@@ -182,6 +183,7 @@ public class NyloHandler extends TOBRoomHandler
                     startNylo();
                 }
                 NylocasShell cShell = new NylocasShell(event.getNpc().getId(), event.getNpc().getWorldLocation().getRegionX(), event.getNpc().getWorldLocation().getRegionY());
+				String description = "";
                 if (cShell.isBig())
                 {
                     bigDescription.put(event.getNpc().getIndex(), "W" + (currentWave + 1) + " " + cShell.getDescription());
@@ -189,8 +191,9 @@ public class NyloHandler extends TOBRoomHandler
                 if (cShell.position != NylocasData.NyloPosition.ROOM)
                 {
                     buildWave.add(cShell);
-                    plugin.liveFrame.getPanel(getName()).addNPCMapping(event.getNpc().getIndex(), "W" + (currentWave + 1) + " " + cShell.getDescription());
-                    clog.addLine(ADD_NPC_MAPPING, String.valueOf(event.getNpc().getIndex()), "W" + (currentWave + 1) + " " + cShell.getDescription(), getName());
+					description = "W" + (currentWave + 1) + " " + cShell.getDescription();
+                    plugin.liveFrame.getPanel(getName()).addNPCMapping(event.getNpc().getIndex(), description);
+                    clog.addLine(ADD_NPC_MAPPING, String.valueOf(event.getNpc().getIndex()), description, getName());
                 } else
                 {
                     int matches = 0;
@@ -211,7 +214,12 @@ public class NyloHandler extends TOBRoomHandler
                     {
                         clog.addLine(ADD_NPC_MAPPING, String.valueOf(event.getNpc().getIndex()), NylocasShell.getTypeName(event.getNpc().getId()) + " split from " + lastMatchedDescription + "(on w" + currentWave + ")", getName());
                         plugin.liveFrame.getPanel(getName()).addNPCMapping(event.getNpc().getIndex(), NylocasShell.getTypeName(event.getNpc().getId()) + " split from " + lastMatchedDescription + "(on w" + currentWave + ")");
+						description = NylocasShell.getTypeName(event.getNpc().getId()) + " split from " + lastMatchedDescription + "(on w" + currentWave + ")";
                     }
+					else
+					{
+						description = "Unknown " + cShell.getDescription() + " (W" + (currentWave+1)+")";
+					}
                     switch (event.getNpc().getId())
                     {
                         case NYLO_MELEE_SMALL:
@@ -240,7 +248,8 @@ public class NyloHandler extends TOBRoomHandler
                             break;
                     }
                 }
-                nylosAlive.add(event.getNpc());
+                nylosAlive.add(new Nylocas(event.getNpc(), client.getTickCount(), description));
+
                 break;
             case NYLO_BOSS_MELEE:
             case NYLO_BOSS_RANGE:
@@ -270,7 +279,7 @@ public class NyloHandler extends TOBRoomHandler
             case NYLO_PRINKIPAS_MELEE:
             case NYLO_PRINKIPAS_MAGIC:
             case NYLO_PRINKIPAS_RANGE:
-                nylosAlive.add(event.getNpc());
+                nylosAlive.add(new Nylocas(event.getNpc(), client.getTickCount(), "W" + (currentWave+1) + " prinkipas"));
                 break;
 
         }
@@ -339,7 +348,13 @@ public class NyloHandler extends TOBRoomHandler
             case NYLO_PRINKIPAS_MELEE:
             case NYLO_PRINKIPAS_MAGIC:
             case NYLO_PRINKIPAS_RANGE:
-                nylosAlive.remove(event.getNpc());
+				Nylocas nylocas = Nylocas.getNylocas(nylosAlive, event.getNpc());
+				if(nylocas != null)
+				{
+					int roomTick = (client.getTickCount()-roomStartTick);
+					plugin.addDelayedNylocasKilled(roomTick, nylocas);
+					nylosAlive.remove(nylocas);
+				}
                 if (nylosAlive.isEmpty() && NylocasWaveMatcher.getWave().getWave() == 31)
                 {
                     cleanupOver();

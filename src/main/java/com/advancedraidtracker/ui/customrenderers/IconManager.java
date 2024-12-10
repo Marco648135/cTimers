@@ -13,8 +13,10 @@ public class IconManager
 	static ImageIcon save;
 	static ImageIcon add;
 	static ImageIcon refresh;
-
 	static ImageIcon delete;
+	static ImageIcon ischyros;
+	static ImageIcon toxobolos;
+	static ImageIcon hagios;
     public static ImageIcon getHeartFilled()
     {
         if(filled == null)
@@ -67,5 +69,32 @@ public class IconManager
 			refresh = new ImageIcon(ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/refresh.png").getScaledInstance(24, 24, Image.SCALE_SMOOTH));
 		}
 		return refresh;
+	}
+
+	public static ImageIcon getHagios()
+	{
+		if(hagios == null)
+		{
+			hagios = new ImageIcon(ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/hagios.png").getScaledInstance(64, 64, Image.SCALE_SMOOTH));
+		}
+		return hagios;
+	}
+
+	public static ImageIcon getToxobolos()
+	{
+		if(toxobolos == null)
+		{
+			toxobolos = new ImageIcon(ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/toxobolos.png").getScaledInstance(64, 64, Image.SCALE_SMOOTH));
+		}
+		return toxobolos;
+	}
+
+	public static ImageIcon getIschyros()
+	{
+		if(ischyros == null)
+		{
+			ischyros = new ImageIcon(ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/ischyros.png").getScaledInstance(64, 64, Image.SCALE_SMOOTH));
+		}
+		return ischyros;
 	}
 }

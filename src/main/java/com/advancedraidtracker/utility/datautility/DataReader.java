@@ -2,6 +2,7 @@ package com.advancedraidtracker.utility.datautility;
 
 import com.advancedraidtracker.constants.LogID;
 import com.advancedraidtracker.constants.RaidRoom;
+import com.advancedraidtracker.ui.advancedstatistics.AdvancedData;
 import com.advancedraidtracker.utility.DataType;
 import com.advancedraidtracker.utility.PlayerDataChanged;
 import com.advancedraidtracker.utility.datautility.datapoints.col.Colo;
@@ -124,6 +125,45 @@ public class DataReader //todo move any methods that read files to here. I belie
         }
         return lines;
     }
+
+	public static AdvancedData getAdvancedData(Path path)
+	{
+		AdvancedData advancedData = new AdvancedData();
+		try
+		{
+			Scanner scanner = new Scanner(Files.newInputStream(path));
+			RaidRoom currentRoom = RaidRoom.UNKNOWN;
+			while (scanner.hasNextLine())
+			{
+				String[] line = scanner.nextLine().split(",");
+				try
+				{
+					if (!RaidRoom.getRoom(line[line.length - 1]).equals(RaidRoom.UNKNOWN))
+					{
+						currentRoom = RaidRoom.getRoom(line[line.length - 1]);
+					}
+					switch (line[3])
+					{
+						case "38": //Nylo stall alive
+							advancedData.addNyloAliveAtStall(Integer.parseInt(line[4]), Integer.parseInt(line[5]), line[6], Integer.parseInt(line[7]));
+							break;
+						case "39": //Nylo killed
+							advancedData.addNyloKilled(Integer.parseInt(line[4]), Integer.parseInt(line[5]), line[6]);
+							break;
+					}
+				}
+				catch (Exception ignored)
+				{
+
+				}
+			}
+
+		} catch (Exception ignore)
+		{
+			log.info("Failed to parse!");
+		}
+		return advancedData;
+	}
 
     public static ChartData getChartData(Path path, ItemManager itemManager)
     {

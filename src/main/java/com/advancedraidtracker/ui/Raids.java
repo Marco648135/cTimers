@@ -7,6 +7,7 @@ import com.advancedraidtracker.constants.RaidType;
 import com.advancedraidtracker.filters.*;
 import com.advancedraidtracker.rooms.cox.Cox;
 import com.advancedraidtracker.rooms.inf.InfernoHandler;
+import com.advancedraidtracker.ui.advancedstatistics.LiveAdvancedStatistics;
 import com.advancedraidtracker.ui.customrenderers.*;
 import com.advancedraidtracker.ui.charts.ChartFrame;
 import com.advancedraidtracker.ui.comparisonview.ComparisonViewFrame;
@@ -1960,6 +1961,8 @@ public class Raids extends BaseFrame implements UpdateableWindow
 
 		JMenuItem viewCharts = getThemedMenuItem("View Charts");
 
+		JMenuItem viewAdvancedData = getThemedMenuItem("View advanced data");
+
 		JMenuItem copySplits = getThemedMenuItem("Copy Splits");
 
 		copySplits.addActionListener(e ->
@@ -1995,6 +1998,22 @@ public class Raids extends BaseFrame implements UpdateableWindow
 			{
 				chartFrame.switchTo(raidData);
 				chartFrame.open();
+			}
+		});
+
+		viewAdvancedData.addActionListener(e ->
+		{
+			int[] selected = table.getSelectedRows();
+			if(selected.length != 1)
+			{
+				JOptionPane.showMessageDialog(this, "Please only select one raid", "Failed to open", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+			Raid raidData = currentData.get(Integer.parseInt(table.getModel().getValueAt(selected[0], 0).toString()));
+			if(raidData != null)
+			{
+				LiveAdvancedStatistics liveAdvancedStatistics = new LiveAdvancedStatistics(DataReader.getAdvancedData(raidData.getFilepath()));
+				liveAdvancedStatistics.open();
 			}
 		});
 
@@ -2141,6 +2160,7 @@ public class Raids extends BaseFrame implements UpdateableWindow
 		raidPopup.add(filterOptionsSubMenu);
 		raidPopup.add(analyzeSessions);
 		raidPopup.add(viewCharts);
+		raidPopup.add(viewAdvancedData);
 		raidPopup.add(viewGraphs);
 		raidPopup.add(copySplits);
 		raidPopup.add(favoriteRaid);
