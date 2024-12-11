@@ -258,11 +258,13 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 	private Gson gson;
 
 	private AdvancedData liveData;
+	private BloodveldAnalyzer bloodveldAnalyzer;
 
     @Override
     protected void startUp() throws Exception
     {
         super.startUp();
+		bloodveldAnalyzer = new BloodveldAnalyzer(client);
         splitLegacyFiles();
         migrateSavedFilesToZip();
         localPlayers = new ArrayList<>();
@@ -277,7 +279,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         wasPiping = new ArrayList<>();
         liveFrame = new LiveChart(config, itemManager, clientThread, configManager, spriteManager);
 		liveData = new AdvancedData();
-		liveAdvancedStatistics = new LiveAdvancedStatistics(liveData);
+		liveAdvancedStatistics = new LiveAdvancedStatistics(liveData, itemManager);
         playersTextChanged = new ArrayList<>();
         clog = new DataWriter(config);
 		ChartIO.gson = gson;
@@ -1386,7 +1388,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                     {
                         offset = 51; //dawnbringer
                     }
-                    if (Math.abs(projectile.getStartCycle()-client.getGameCycle() + offset) < 2)
+                    if (Math.abs(projectile.getStartCycle()-(client.getGameCycle() + offset)) < 2)
                     {
                         WorldPoint position = WorldPoint.fromLocal(client, new LocalPoint(projectile.getX1(), projectile.getY1()));
                         if (position.distanceTo(playerAttackQueuedItem.player.getWorldLocation()) == 0)
@@ -1851,6 +1853,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     @Subscribe
     public void onAnimationChanged(AnimationChanged event)
     {
+		bloodveldAnalyzer.animationChanged(event);
         if (event.getActor() instanceof NPC)
         {
             if (currentRoom != null)
@@ -2002,6 +2005,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     @Subscribe
     public void onNpcSpawned(NpcSpawned event)
     {
+		bloodveldAnalyzer.npcSpawned(event);
         int id = event.getNpc().getId();
         if (id == MELEE_THRALL || id == RANGE_THRALL || id == MAGE_THRALL)
         {
@@ -2168,6 +2172,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     @Subscribe
     public void onHitsplatApplied(HitsplatApplied event)
     {
+		bloodveldAnalyzer.hitsplatApplied(event);
         if (inTheatre)
         {
             if (event.getActor() instanceof Player && inTheatre)

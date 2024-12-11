@@ -17,6 +17,8 @@ public class IconManager
 	static ImageIcon ischyros;
 	static ImageIcon toxobolos;
 	static ImageIcon hagios;
+	static ImageIcon cross;
+	static ImageIcon check;
     public static ImageIcon getHeartFilled()
     {
         if(filled == null)
@@ -96,5 +98,23 @@ public class IconManager
 			ischyros = new ImageIcon(ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/ischyros.png").getScaledInstance(64, 64, Image.SCALE_SMOOTH));
 		}
 		return ischyros;
+	}
+
+	public static ImageIcon getCross()
+	{
+		if(cross == null)
+		{
+			cross = new ImageIcon(ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/x.png").getScaledInstance(64, 64, Image.SCALE_SMOOTH));
+		}
+		return cross;
+	}
+
+	public static ImageIcon getCheck()
+	{
+		if(check == null)
+		{
+			check = new ImageIcon(ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/check.png").getScaledInstance(64, 64, Image.SCALE_SMOOTH));
+		}
+		return check;
 	}
 }

@@ -126,7 +126,7 @@ public class DataReader //todo move any methods that read files to here. I belie
         return lines;
     }
 
-	public static AdvancedData getAdvancedData(Path path)
+	public static AdvancedData getAdvancedData(Path path, ItemManager itemManager)
 	{
 		AdvancedData advancedData = new AdvancedData();
 		try
@@ -149,6 +149,9 @@ public class DataReader //todo move any methods that read files to here. I belie
 							break;
 						case "39": //Nylo killed
 							advancedData.addNyloKilled(Integer.parseInt(line[4]), Integer.parseInt(line[5]), line[6]);
+							break;
+						case "801": //Player Attacked
+							advancedData.addAttack(currentRoom, ChartData.getPlayerDidAttack(line, itemManager));
 							break;
 					}
 				}

@@ -6,6 +6,8 @@ import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.JTabbedPane;
+import net.runelite.api.Item;
+import net.runelite.client.game.ItemManager;
 
 public class LiveAdvancedStatistics extends BaseFrame
 {
@@ -13,9 +15,9 @@ public class LiveAdvancedStatistics extends BaseFrame
 
 	private AdvancedNylocasPanel nylocasPanel;
 
-	public LiveAdvancedStatistics(AdvancedData dataSource)
+	public LiveAdvancedStatistics(AdvancedData dataSource, ItemManager itemManager)
 	{
-		nylocasPanel = new AdvancedNylocasPanel(dataSource);
+		nylocasPanel = new AdvancedNylocasPanel(dataSource, itemManager);
 
 		tabbedPane = getThemedTabbedPane();
 

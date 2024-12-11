@@ -1,6 +1,7 @@
 package com.advancedraidtracker.ui.advancedstatistics;
 
 import static com.advancedraidtracker.ui.RaidTrackerSidePanel.config;
+
 import com.advancedraidtracker.ui.customrenderers.IconManager;
 import com.advancedraidtracker.utility.RoomUtil;
 import com.advancedraidtracker.utility.UISwingUtility;
@@ -10,6 +11,7 @@ import static com.advancedraidtracker.utility.UISwingUtility.getThemedTable;
 import java.awt.geom.Area;
 import java.awt.geom.Rectangle2D;
 import javax.swing.*;
+import javax.swing.Timer;
 import javax.swing.border.TitledBorder;
 import javax.swing.table.*;
 import java.awt.*;
@@ -21,6 +23,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import com.advancedraidtracker.ui.advancedstatistics.AdvancedData.StallEvent;
 import com.advancedraidtracker.ui.advancedstatistics.AdvancedData.KilledNylo;
+import net.runelite.client.game.ItemManager;
 
 public class AdvancedNylocasPanel extends DataTab
 {
@@ -32,7 +35,7 @@ public class AdvancedNylocasPanel extends DataTab
 	// Tables
 	private JTable stallEventsTable;
 	private JTable naturalKillTable;
-	private JTable bigNyloTable;
+	// Removed bigNyloTable as per changes
 	private JTable lastDeathsTable;
 
 	// Slider components
@@ -46,7 +49,7 @@ public class AdvancedNylocasPanel extends DataTab
 	// Target time for coloring
 	private int targetTime;
 
-	public AdvancedNylocasPanel(AdvancedData dataSource)
+	public AdvancedNylocasPanel(AdvancedData dataSource, ItemManager itemManager)
 	{
 		super(dataSource);
 		setLayout(new BorderLayout());
@@ -60,19 +63,18 @@ public class AdvancedNylocasPanel extends DataTab
 		// Initialize tables
 		stallEventsTable = getThemedTable();
 		naturalKillTable = getThemedTable();
-		bigNyloTable = getThemedTable();
+		// Removed bigNyloTable as per changes
 		lastDeathsTable = getThemedTable();
 
 		// Set row height to 40 pixels for specified tables
-		stallEventsTable.setRowHeight(40);
+		stallEventsTable.setRowHeight(50);
 		naturalKillTable.setRowHeight(20);
-		bigNyloTable.setRowHeight(40);
 		lastDeathsTable.setRowHeight(40); // For Last Deaths panel
 
 		// Add tables to subpanels with scroll panes
 		subpanel1.add(new JScrollPane(stallEventsTable), BorderLayout.CENTER);
 		subpanel2.add(new JScrollPane(naturalKillTable), BorderLayout.CENTER);
-		subpanel3.add(new JScrollPane(bigNyloTable), BorderLayout.CENTER);
+		// subpanel3.add(new JScrollPane(bigNyloTable), BorderLayout.CENTER); // Removed
 		subpanel4.add(new JScrollPane(lastDeathsTable), BorderLayout.CENTER);
 
 		// Create titled borders for each subpanel
@@ -114,6 +116,11 @@ public class AdvancedNylocasPanel extends DataTab
 
 		JPanel wrapperPanel3 = getThemedPanel(new BorderLayout());
 		wrapperPanel3.setBorder(title3);
+		// wrapperPanel3.add(subpanel3, BorderLayout.CENTER);
+
+		// Initialize subpanel3 without adding bigNyloTable
+		// subpanel3 = getThemedPanel(new BorderLayout()); // Already initialized
+
 		wrapperPanel3.add(subpanel3, BorderLayout.CENTER);
 
 		JPanel wrapperPanel4 = getThemedPanel(new BorderLayout());
@@ -243,30 +250,30 @@ public class AdvancedNylocasPanel extends DataTab
 				}
 			}
 		}
-		BigNyloTableModel model = new BigNyloTableModel(bigNylos);
-		bigNyloTable.setModel(model);
 
-		// Center text in all columns
-		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-		centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
+		// Remove previous content from subpanel3
+		subpanel3.removeAll();
 
-		for (int i = 0; i < bigNyloTable.getColumnCount(); i++)
-		{
-			bigNyloTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
-		}
+		// Create the grid component
+		BigNyloTileGrid grid = new BigNyloTileGrid(bigNylos);
 
-		// Adjust column widths
-		Set<Integer> flexibleColumns = new HashSet<>();
-		flexibleColumns.add(2); // "Died Naturally" column index
-		adjustTableColumnWidths(bigNyloTable, flexibleColumns);
+		// Add the grid to subpanel3 within a scroll pane
+		JScrollPane scrollPane = new JScrollPane(grid);
+		scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+		subpanel3.add(scrollPane, BorderLayout.CENTER);
 
-		// Set auto resize mode
-		bigNyloTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+		// Revalidate and repaint
+		subpanel3.revalidate();
+		subpanel3.repaint();
 	}
 
 	private void updateLastDeathsTable()
 	{
-		LastDeathsTableModel model = new LastDeathsTableModel(dataSource.getKilledNylos());
+		List<KilledNylo> killedNylos = dataSource.getKilledNylos();
+		// Sort the list by time descending
+		killedNylos.sort((k1, k2) -> k2.getRoomTick() - k1.getRoomTick());
+
+		LastDeathsTableModel model = new LastDeathsTableModel(killedNylos);
 		lastDeathsTable.setModel(model);
 
 		// Set up renderers
@@ -276,9 +283,13 @@ public class AdvancedNylocasPanel extends DataTab
 		DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
 		centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
 
-		lastDeathsTable.getColumnModel().getColumn(0).setCellRenderer(centerRenderer); // Time
-		lastDeathsTable.getColumnModel().getColumn(2).setCellRenderer(centerRenderer); // Origin
-		lastDeathsTable.getColumnModel().getColumn(3).setCellRenderer(centerRenderer); // Type
+		for (int i = 0; i < lastDeathsTable.getColumnCount(); i++)
+		{
+			if (i != 1)
+			{
+				lastDeathsTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+			}
+		}
 
 		// Adjust column widths
 		Set<Integer> flexibleColumns = new HashSet<>();
@@ -300,61 +311,116 @@ public class AdvancedNylocasPanel extends DataTab
 	// Adjusts the column widths based on content
 	private void adjustTableColumnWidths(JTable table, Set<Integer> flexibleColumns)
 	{
-		TableModel model = table.getModel();
 		TableColumnModel columnModel = table.getColumnModel();
-		int totalColumnCount = model.getColumnCount();
 
-		// Calculate preferred widths for fixed columns
+		// First, calculate total width needed for fixed columns
 		int totalFixedWidth = 0;
-		for (int col = 0; col < totalColumnCount; col++)
+		for (int i = 0; i < table.getColumnCount(); i++)
 		{
-			if (!flexibleColumns.contains(col))
+			if (!flexibleColumns.contains(i))
 			{
-				int maxWidth = getMaxColumnWidth(table, col);
-				totalFixedWidth += maxWidth;
-				TableColumn tableColumn = columnModel.getColumn(col);
-				tableColumn.setPreferredWidth(maxWidth);
-				tableColumn.setMaxWidth(maxWidth);
-				tableColumn.setMinWidth(maxWidth);
+				int width = getMaxColumnWidth(table, i);
+				TableColumn column = columnModel.getColumn(i);
+				column.setPreferredWidth(width);
+				column.setMinWidth(width);
+				column.setMaxWidth(width);
+				totalFixedWidth += width;
 			}
 		}
 
-		// Remaining width is for flexible columns
-		// Get the total available width from the parent scroll pane's viewport
-		Container parent = SwingUtilities.getAncestorOfClass(JViewport.class, table);
-		int totalTableWidth;
-		if (parent instanceof JViewport)
+		// Get the container's width
+		Container viewport = SwingUtilities.getAncestorOfClass(JViewport.class, table);
+		int availableWidth;
+		if (viewport != null)
 		{
-			totalTableWidth = parent.getWidth();
+			availableWidth = viewport.getWidth();
 		}
 		else
 		{
-			totalTableWidth = table.getParent().getWidth();
+			availableWidth = table.getPreferredSize().width;
 		}
 
-		if (totalTableWidth <= 0)
+		// Calculate width for flexible columns
+		int remainingWidth = Math.max(0, availableWidth - totalFixedWidth);
+		if (flexibleColumns.size() > 0)
 		{
-			totalTableWidth = table.getPreferredSize().width;
-		}
-		int remainingWidth = totalTableWidth - totalFixedWidth;
-		if (remainingWidth <= 0)
-		{
-			remainingWidth = 100 * flexibleColumns.size(); // Give default width
+			int flexibleColumnWidth = remainingWidth / flexibleColumns.size();
+
+			// Set minimum width for flexible columns
+			int minFlexibleWidth = 100; // Adjust this value as needed
+			flexibleColumnWidth = Math.max(flexibleColumnWidth, minFlexibleWidth);
+
+			// Apply the width to flexible columns
+			for (int i : flexibleColumns)
+			{
+				TableColumn column = columnModel.getColumn(i);
+				column.setPreferredWidth(flexibleColumnWidth);
+				column.setMinWidth(minFlexibleWidth);
+				column.setMaxWidth(2000); // Set a reasonable maximum
+			}
 		}
 
-		// Set widths for flexible columns
-		int flexibleColumnWidth = remainingWidth / flexibleColumns.size();
-		for (int col : flexibleColumns)
-		{
-			TableColumn tableColumn = columnModel.getColumn(col);
-			tableColumn.setPreferredWidth(flexibleColumnWidth);
-			tableColumn.setMinWidth(50); // Minimum width for flexible columns
-			tableColumn.setMaxWidth(Integer.MAX_VALUE);
-		}
+		// Update table size
+		Dimension tableSize = new Dimension(
+			totalFixedWidth + (remainingWidth / flexibleColumns.size()) * flexibleColumns.size(),
+			table.getPreferredSize().height
+		);
+		table.setPreferredScrollableViewportSize(tableSize);
 
-		// Update the table's preferred size
-		table.setPreferredScrollableViewportSize(new Dimension(totalFixedWidth + remainingWidth, table.getPreferredSize().height));
+		// Force immediate revalidation
+		table.revalidate();
+		table.repaint();
+
+		// Add a component listener to handle resize events
+		if (viewport != null)
+		{
+			ComponentListener[] listeners = viewport.getComponentListeners();
+			boolean hasResizeListener = false;
+			for (ComponentListener listener : listeners)
+			{
+				if (listener instanceof ResizeListener)
+				{
+					hasResizeListener = true;
+					break;
+				}
+			}
+			if (!hasResizeListener)
+			{
+				viewport.addComponentListener(new ResizeListener(table, flexibleColumns));
+			}
+		}
 	}
+
+	// Separate class to handle resize events
+	private class ResizeListener extends ComponentAdapter
+	{
+		private final JTable table;
+		private final Set<Integer> flexibleColumns;
+		private Timer resizeTimer;
+
+		public ResizeListener(JTable table, Set<Integer> flexibleColumns)
+		{
+			this.table = table;
+			this.flexibleColumns = flexibleColumns;
+			this.resizeTimer = new Timer(150, e -> adjustTableColumnWidths(table, flexibleColumns));
+			this.resizeTimer.setRepeats(false);
+		}
+
+		@Override
+		public void componentResized(ComponentEvent e)
+		{
+			// Use a timer to prevent multiple rapid adjustments
+			if (resizeTimer.isRunning())
+			{
+				resizeTimer.restart();
+			}
+			else
+			{
+				resizeTimer.start();
+			}
+		}
+	}
+
 
 	// Helper method to get the maximum preferred width of a column
 	private int getMaxColumnWidth(JTable table, int columnIndex)
@@ -397,6 +463,17 @@ public class AdvancedNylocasPanel extends DataTab
 			}
 		}
 		return waveNumber;
+	}
+
+	private String extractWaveNumberFromDescriptionAsString(String description)
+	{
+		Pattern pattern = Pattern.compile(".*[wW](\\d+).*");
+		Matcher matcher = pattern.matcher(description);
+		if (matcher.matches())
+		{
+			return matcher.group(1);
+		}
+		return "";
 	}
 
 	// Implementation of StallEventsTableModel
@@ -534,7 +611,7 @@ public class AdvancedNylocasPanel extends DataTab
 	{
 		private int[] bins;
 		private Color backgroundColor = config.primaryDark();
-		private Color dataColor = config.markerColor();
+		private Color dataColor = UISwingUtility.getTransparentColor(config.markerColor(), 255);
 		private Color axisColor = config.boxColor();
 
 		private static final int MARGIN = 3;        // 3-pixel margin on all sides
@@ -547,9 +624,20 @@ public class AdvancedNylocasPanel extends DataTab
 		}
 
 		// Setters for customization
-		public void setBackgroundColor(Color color) { this.backgroundColor = color; }
-		public void setDataColor(Color color) { this.dataColor = color; }
-		public void setAxisColor(Color color) { this.axisColor = color; }
+		public void setBackgroundColor(Color color)
+		{
+			this.backgroundColor = color;
+		}
+
+		public void setDataColor(Color color)
+		{
+			this.dataColor = color;
+		}
+
+		public void setAxisColor(Color color)
+		{
+			this.axisColor = color;
+		}
 
 		@Override
 		protected void paintComponent(Graphics g)
@@ -581,23 +669,32 @@ public class AdvancedNylocasPanel extends DataTab
 			// Draw data
 			int maxBin = Arrays.stream(bins).max().getAsInt();
 			if (maxBin == 0)
+			{
 				return; // Nothing to draw
-
-			g2d.setColor(dataColor);
+			}
 
 			// Now draw the bars inside the graph area
 			int barWidth = (int) Math.ceil((double) graphWidth / bins.length);
 			for (int i = 0; i < bins.length; i++)
 			{
 				int barHeight = (int) ((bins[i] / (double) maxBin) * (graphHeight));
+				if (barHeight == 0)
+				{
+					continue;
+				}
 				int x = graphX + i * barWidth;
 				int y = graphY + (graphHeight - barHeight);
+
+				g2d.setColor(dataColor);
 				g2d.fillRect(x, y, barWidth, barHeight);
 			}
+
+			// Reset the paint to default
+			g2d.setPaint(null);
 		}
 	}
 
-	// Renderer for Statistics (min, max, avg, median)
+	// Renderer for Statistics (avg, median)
 	class StatisticsRenderer extends DefaultTableCellRenderer
 	{
 		@Override
@@ -606,33 +703,29 @@ public class AdvancedNylocasPanel extends DataTab
 		{
 			Map<String, Integer> ageMap = (Map<String, Integer>) value;
 			List<Integer> ages = new ArrayList<>(ageMap.values());
-			int min = Collections.min(ages);
-			int max = Collections.max(ages);
 			double avg = ages.stream().mapToInt(Integer::intValue).average().orElse(0);
 			Collections.sort(ages);
 			int median;
 			int size = ages.size();
 			if (size % 2 == 0)
+			{
 				median = (ages.get(size / 2 - 1) + ages.get(size / 2)) / 2;
+			}
 			else
+			{
 				median = ages.get(size / 2);
+			}
 
-			JPanel panel = getThemedPanel(new GridLayout(2, 2));
+			JPanel panel = getThemedPanel(new GridLayout(2, 1));
 			panel.setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
 
-			JLabel minLabel = getThemedLabel("Min: " + min, SwingConstants.CENTER);
-			JLabel maxLabel = getThemedLabel("Max: " + max, SwingConstants.CENTER);
 			JLabel avgLabel = getThemedLabel("Avg: " + String.format("%.1f", avg), SwingConstants.CENTER);
 			JLabel medianLabel = getThemedLabel("Median: " + median, SwingConstants.CENTER);
 
 			// Center text in labels
-			minLabel.setHorizontalAlignment(SwingConstants.CENTER);
-			maxLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			avgLabel.setHorizontalAlignment(SwingConstants.CENTER);
 			medianLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
-			panel.add(minLabel);
-			panel.add(maxLabel);
 			panel.add(avgLabel);
 			panel.add(medianLabel);
 
@@ -660,11 +753,11 @@ public class AdvancedNylocasPanel extends DataTab
 			naturallyExpiredDescriptions = new HashMap<>();
 			artificiallyKilledDescriptions = new HashMap<>();
 			int highestTime = 0;
-			for(KilledNylo nylo : killedNylos)
+			for (KilledNylo nylo : killedNylos)
 			{
 				int deathTick = nylo.getDeathTick();
-				int time = ((deathTick+3)/4)*4;
-				if(time > highestTime)
+				int time = ((deathTick + 3) / 4) * 4;
+				if (time > highestTime)
 				{
 					highestTime = time;
 				}
@@ -739,9 +832,13 @@ public class AdvancedNylocasPanel extends DataTab
 				return String.class;
 			}
 			else if (columnIndex == 1 || columnIndex == 2)
+			{
 				return Integer.class;
+			}
 			else
+			{
 				return Object.class;
+			}
 		}
 
 		@Override
@@ -793,11 +890,20 @@ public class AdvancedNylocasPanel extends DataTab
 			this.timePlus16 = timePlus16;
 		}
 
-		public int getNaturallyExpired() { return naturallyExpired; }
+		public int getNaturallyExpired()
+		{
+			return naturallyExpired;
+		}
 
-		public int getArtificiallyKilled() { return artificiallyKilled; }
+		public int getArtificiallyKilled()
+		{
+			return artificiallyKilled;
+		}
 
-		public int getTimePlus16() { return timePlus16; }
+		public int getTimePlus16()
+		{
+			return timePlus16;
+		}
 	}
 
 	// Renderer for the progress bar
@@ -851,11 +957,20 @@ public class AdvancedNylocasPanel extends DataTab
 			setPreferredSize(new Dimension(100, 20));
 		}
 
-		public void setBackgroundColor(Color color) { this.backgroundColor = color; }
+		public void setBackgroundColor(Color color)
+		{
+			this.backgroundColor = color;
+		}
 
-		public void setArtificialColor(Color color) { this.artificialColor = color; }
+		public void setArtificialColor(Color color)
+		{
+			this.artificialColor = color;
+		}
 
-		public void setNaturalColor(Color color) { this.naturalColor = color; }
+		public void setNaturalColor(Color color)
+		{
+			this.naturalColor = color;
+		}
 
 		@Override
 		protected void paintComponent(Graphics g)
@@ -864,7 +979,9 @@ public class AdvancedNylocasPanel extends DataTab
 
 			int total = naturallyExpired + artificiallyKilled;
 			if (total == 0)
+			{
 				return;
+			}
 
 			int width = getWidth() - (2 * MARGIN);
 			int height = getHeight();
@@ -896,11 +1013,14 @@ public class AdvancedNylocasPanel extends DataTab
 				stadiumHeight, stadiumHeight);
 
 			// Handle 100% cases
-			if (naturallyExpired == total) {
+			if (naturallyExpired == total)
+			{
 				g2d.setColor(naturalColor);
 				g2d.fill(fullStadium);
 				return;
-			} else if (artificiallyKilled == total) {
+			}
+			else if (artificiallyKilled == total)
+			{
 				g2d.setColor(artificialColor);
 				g2d.fill(fullStadium);
 				return;
@@ -946,111 +1066,10 @@ public class AdvancedNylocasPanel extends DataTab
 
 	}
 
-	// Implementation of BigNyloTableModel
-	class BigNyloTableModel extends AbstractTableModel
-	{
-		private final String[] columnNames = {"Description", "Age", "Died Naturally"};
-		private final List<KilledNylo> bigNylos;
-
-		public BigNyloTableModel(List<KilledNylo> bigNylos)
-		{
-			this.bigNylos = bigNylos;
-		}
-
-		@Override
-		public int getRowCount()
-		{
-			return bigNylos.size();
-		}
-
-		@Override
-		public int getColumnCount()
-		{
-			return columnNames.length;
-		}
-
-		@Override
-		public String getColumnName(int columnIndex)
-		{
-			return columnNames[columnIndex];
-		}
-
-		@Override
-		public Class<?> getColumnClass(int columnIndex)
-		{
-			if (columnIndex == 1)
-				return Integer.class;
-			else
-				return String.class;
-		}
-
-		@Override
-		public Object getValueAt(int rowIndex, int columnIndex)
-		{
-			KilledNylo nylo = bigNylos.get(rowIndex);
-			switch (columnIndex)
-			{
-				case 0:
-					return nylo.getDescription();
-				case 1:
-					return nylo.getAge();
-				case 2:
-					return nylo.getAge() == 52 ? "Yes" : "No";
-				default:
-					return null;
-			}
-		}
-	}
-
-	// Renderer for tooltips on "Expired" and "Killed" columns
-	class TooltipRenderer extends DefaultTableCellRenderer
-	{
-		@Override
-		public Component getTableCellRendererComponent(JTable table, Object value,
-													   boolean isSelected, boolean hasFocus, int row, int column)
-		{
-			Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-			NaturalKillTableModel model = (NaturalKillTableModel) table.getModel();
-			int time = model.getDisplayedTimeAtRow(row);
-			List<String> descriptions;
-
-			if (column == 1) // Expired
-			{
-				descriptions = model.getNaturallyExpiredDescriptions(time);
-			}
-			else if (column == 2) // Killed
-			{
-				descriptions = model.getArtificiallyKilledDescriptions(time);
-			}
-			else
-			{
-				return component;
-			}
-
-			if (!descriptions.isEmpty())
-			{
-				StringBuilder tooltipText = new StringBuilder("<html>");
-				for (String desc : descriptions)
-				{
-					tooltipText.append(desc).append("<br>");
-				}
-				tooltipText.append("</html>");
-
-				if (component instanceof JComponent)
-				{
-					((JComponent) component).setToolTipText(tooltipText.toString());
-				}
-			}
-
-			return component;
-		}
-	}
-
 	// Implementation of LastDeathsTableModel
 	class LastDeathsTableModel extends AbstractTableModel
 	{
-		private final String[] columnNames = {"Time", "Nylo", "Origin", "Type"};
+		private final String[] columnNames = {"Time", "Nylo", "Age", "Natural Expiration", "Origin", "Type"};
 		private final List<KilledNylo> lastDeaths;
 
 		public LastDeathsTableModel(List<KilledNylo> killedNylos)
@@ -1086,9 +1105,11 @@ public class AdvancedNylocasPanel extends DataTab
 				case 1:
 					return ImageIcon.class; // Nylo (image)
 				case 2:
-					return String.class; // Origin
+					return Integer.class; // Age
 				case 3:
-					return String.class; // Type
+				case 4:
+				case 5:
+					return String.class; // Natural Expiration, Origin, Type
 				default:
 					return Object.class;
 			}
@@ -1106,8 +1127,12 @@ public class AdvancedNylocasPanel extends DataTab
 				case 1:
 					return getNyloImage(nylo);
 				case 2:
-					return getNyloOrigin(nylo.getDescription());
+					return nylo.getAge();
 				case 3:
+					return RoomUtil.time(nylo.getRoomTick() + 52 - nylo.getAge());
+				case 4:
+					return getNyloOrigin(nylo.getDescription());
+				case 5:
 					return nylo.getDescription().toLowerCase().contains("split") ? "Split" : "Lane";
 				default:
 					return null;
@@ -1117,7 +1142,8 @@ public class AdvancedNylocasPanel extends DataTab
 		private ImageIcon getNyloImage(KilledNylo nylo)
 		{
 			String description = nylo.getDescription().toLowerCase();
-			int size = description.contains("big") ? 40 : 20;
+			boolean isBig = description.contains("big") && !description.contains("split");
+			int size = isBig ? 40 : 20;
 			ImageIcon icon = null;
 
 			int meleeIndex = description.indexOf("melee");
@@ -1189,7 +1215,7 @@ public class AdvancedNylocasPanel extends DataTab
 		public Component getTableCellRendererComponent(JTable table, Object value,
 													   boolean isSelected, boolean hasFocus, int row, int column)
 		{
-			JLabel label = new JLabel();
+			JLabel label = getThemedLabel();
 			label.setHorizontalAlignment(SwingConstants.CENTER);
 			if (value instanceof ImageIcon)
 			{
@@ -1205,6 +1231,159 @@ public class AdvancedNylocasPanel extends DataTab
 			}
 			label.setOpaque(true);
 			return label;
+		}
+	}
+
+	// BigNyloTileGrid component
+	class BigNyloTileGrid extends JPanel
+	{
+		public BigNyloTileGrid(List<KilledNylo> bigNylos)
+		{
+			int columns = 6; // Adjust as needed
+			int rows = (int) Math.ceil(bigNylos.size() / (double) columns);
+			setLayout(new GridLayout(rows, columns, 5, 5)); // 5 px gaps
+
+			// Create tiles
+			for (KilledNylo nylo : bigNylos)
+			{
+				BigNyloTile tile = new BigNyloTile(nylo);
+				add(tile);
+			}
+		}
+	}
+
+	// BigNyloTile component
+	class BigNyloTile extends JPanel
+	{
+		private KilledNylo nylo;
+
+		public BigNyloTile(KilledNylo nylo)
+		{
+			this.nylo = nylo;
+			setPreferredSize(new Dimension(50, 50));
+		}
+
+		@Override
+		protected void paintComponent(Graphics g)
+		{
+			super.paintComponent(g);
+
+			Graphics2D g2d = (Graphics2D) g;
+
+			// Fill background
+			g2d.setColor(config.primaryDark());
+			g2d.fillRect(0, 0, getWidth(), getHeight());
+
+			// Draw the 40x40 image centered
+			ImageIcon nyloIcon = getNyloImage(nylo);
+			if (nyloIcon != null)
+			{
+				Image image = nyloIcon.getImage();
+				int imgX = (getWidth() - 40) / 2;
+				int imgY = (getHeight() - 40) / 2;
+				g2d.drawImage(image, imgX, imgY, 40, 40, this);
+			}
+
+			// Set rendering hints for text
+			g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+			// Set font
+			g2d.setFont(new Font("SansSerif", Font.BOLD, 10));
+			FontMetrics fm = g2d.getFontMetrics();
+			g2d.setColor(Color.WHITE);
+
+			// Draw the wave number at bottom right
+			String waveString = "W" + extractWaveNumberFromDescriptionAsString(nylo.getDescription());
+			int waveWidth = fm.stringWidth(waveString);
+			int waveHeight = fm.getHeight();
+			g2d.drawString(waveString, getWidth() - waveWidth - 2, getHeight() - 2);
+
+			// Draw the age at bottom left
+			String ageString = String.valueOf(nylo.getAge());
+			// int ageWidth = fm.stringWidth(ageString);
+			g2d.drawString(ageString, 2, getHeight() - 2);
+
+			// Draw the direction first letter at top left
+			String direction = extractDirection(nylo.getDescription());
+			if (!direction.isEmpty())
+			{
+				g2d.drawString(direction, 2, fm.getAscent() + 2);
+			}
+
+			// Draw the icon at top right
+			ImageIcon icon;
+			if (nylo.getAge() == 52)
+			{
+				icon = IconManager.getCross(); // Died naturally
+			}
+			else
+			{
+				icon = IconManager.getCheck(); // Did not die naturally
+			}
+			if (icon != null)
+			{
+				Image image = icon.getImage();
+				int iconSize = 16;
+				int iconX = getWidth() - iconSize - 2;
+				int iconY = 2;
+				g2d.drawImage(image, iconX, iconY, iconSize, iconSize, this);
+			}
+		}
+
+		private ImageIcon getNyloImage(KilledNylo nylo)
+		{
+			String description = nylo.getDescription().toLowerCase();
+			ImageIcon icon = null;
+
+			// Find the style in the description
+			if (description.contains("melee"))
+			{
+				icon = IconManager.getIschyros();
+			}
+			else if (description.contains("range"))
+			{
+				icon = IconManager.getToxobolos();
+			}
+			else if (description.contains("mage"))
+			{
+				icon = IconManager.getHagios();
+			}
+
+			return icon;
+		}
+
+		private String extractWaveNumberFromDescriptionAsString(String description)
+		{
+			Pattern pattern = Pattern.compile(".*[wW](\\d+).*");
+			Matcher matcher = pattern.matcher(description);
+			if (matcher.matches())
+			{
+				return matcher.group(1);
+			}
+			return "";
+		}
+
+		private String extractDirection(String description)
+		{
+			// Description format: W<wave number> <direction> big <style>
+
+			String descriptionLower = description.toLowerCase();
+			if (descriptionLower.contains("south"))
+			{
+				return "S";
+			}
+			else if (descriptionLower.contains("west"))
+			{
+				return "W";
+			}
+			else if (descriptionLower.contains("east"))
+			{
+				return "E";
+			}
+			else
+			{
+				return "";
+			}
 		}
 	}
 }

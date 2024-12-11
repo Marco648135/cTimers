@@ -2012,7 +2012,7 @@ public class Raids extends BaseFrame implements UpdateableWindow
 			Raid raidData = currentData.get(Integer.parseInt(table.getModel().getValueAt(selected[0], 0).toString()));
 			if(raidData != null)
 			{
-				LiveAdvancedStatistics liveAdvancedStatistics = new LiveAdvancedStatistics(DataReader.getAdvancedData(raidData.getFilepath()));
+				LiveAdvancedStatistics liveAdvancedStatistics = new LiveAdvancedStatistics(DataReader.getAdvancedData(raidData.getFilepath(), itemManager), itemManager);
 				liveAdvancedStatistics.open();
 			}
 		});

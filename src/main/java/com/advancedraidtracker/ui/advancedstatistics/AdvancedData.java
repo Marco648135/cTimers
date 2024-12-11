@@ -1,5 +1,10 @@
 package com.advancedraidtracker.ui.advancedstatistics;
 
+import com.advancedraidtracker.constants.RaidRoom;
+import com.advancedraidtracker.utility.PlayerAttack;
+import com.advancedraidtracker.utility.weapons.AnimationDecider;
+import com.advancedraidtracker.utility.weapons.PlayerAnimation;
+import com.advancedraidtracker.utility.wrappers.PlayerDidAttack;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,6 +14,28 @@ import lombok.Value;
 
 public class AdvancedData
 {
+	@Getter
+	List<PlayerAttack> playerAttacks = new ArrayList<>();
+	public void addAttack(RaidRoom currentRoom, PlayerDidAttack attack)
+	{
+		PlayerAnimation playerAnimation = AnimationDecider.getWeapon(attack.animation, attack.spotAnims, attack.projectile, attack.weapon);
+		playerAttacks.add(new PlayerAttack(playerAnimation, attack.player, attack.tick, currentRoom));
+		refresh();
+	}
+
+	public List<PlayerAttack> getRoomAttacks(RaidRoom room)
+	{
+		List<PlayerAttack> attacks = new ArrayList<>();
+		for(PlayerAttack playerAttack : playerAttacks)
+		{
+			if(playerAttack.getRoom().equals(room))
+			{
+				attacks.add(playerAttack);
+			}
+		}
+		return attacks;
+	}
+
 	class StallEvent
 	{
 		private int waveStalled;
