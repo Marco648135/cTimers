@@ -1374,19 +1374,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 
     private void handleQueuedProjectiles()
     {
-		log.info("Tick: " + client.getTickCount());
-		for(Projectile projectile : client.getProjectiles())
-		{
-			log.info("projectile");
-			log.info(projectile.getStartCycle() + ", " + (client.getGameCycle()+41) + ", " + projectile.getId());
-			WorldPoint position = WorldPoint.fromLocal(client, new LocalPoint(projectile.getX1(), projectile.getY1()));
-			log.info(position.getRegionX()+","+position.getRegionY());
-		}
         for (QueuedPlayerAttackLessProjectiles playerAttackQueuedItem : playersAttacked)
         {
-			log.info("processing");
-			log.info(playerAttackQueuedItem.weapon + ", " + playerAttackQueuedItem.tick);
-			log.info(playerAttackQueuedItem.spotAnims + ", " + playerAttackQueuedItem.animation + ", " + playerAttackQueuedItem.player.getWorldLocation().getRegionX() + " , " + playerAttackQueuedItem.player.getWorldLocation().getRegionY());
             playerAttackQueuedItem.tick--;
             if (playerAttackQueuedItem.tick == 0)
             {
@@ -1397,7 +1386,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                     {
                         offset = 51; //dawnbringer
                     }
-                    if (projectile.getStartCycle() == client.getGameCycle() + offset)
+                    if (Math.abs(projectile.getStartCycle()-client.getGameCycle() + offset) < 2)
                     {
                         WorldPoint position = WorldPoint.fromLocal(client, new LocalPoint(projectile.getX1(), projectile.getY1()));
                         if (position.distanceTo(playerAttackQueuedItem.player.getWorldLocation()) == 0)
