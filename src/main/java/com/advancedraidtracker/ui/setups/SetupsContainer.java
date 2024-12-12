@@ -32,6 +32,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionEvent;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
@@ -51,6 +52,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javax.swing.AbstractAction;
 import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.ImageIcon;
@@ -64,6 +66,7 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
 import javax.swing.RepaintManager;
 import javax.swing.SwingUtilities;
@@ -770,7 +773,7 @@ class GridPanel extends JPanel
 				revertDrag();
 			}
 		}
-		else
+		else if(!SwingUtilities.isMiddleMouseButton(e))
 		{
 			performMassFill(rmb);
 		}
@@ -867,6 +870,7 @@ class GridPanel extends JPanel
 					box.setId(DragState.dragItemId);
 				}
 			}
+			box.isPreviewing = false;
 		}
 	}
 
@@ -1252,7 +1256,48 @@ public class SetupsContainer extends JPanel
 			}
 		});
 
+		int menuShortcutKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx();
+
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_S, menuShortcutKey), "saveSetup");
+		getActionMap().put("saveSetup", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (currentLoadedSetupName != null) {
+					String setupsText = exportSetupsToText();
+					deleteSetupFromFile(currentLoadedSetupName);
+					saveSetupsToFile(setupsText, currentLoadedSetupName);
+					JOptionPane.showMessageDialog(SetupsContainer.this, "Setup saved as \"" + currentLoadedSetupName + "\"", "Success", JOptionPane.INFORMATION_MESSAGE);
+				} else {
+					JOptionPane.showMessageDialog(SetupsContainer.this, "No setup currently loaded to save.", "Info", JOptionPane.INFORMATION_MESSAGE);
+				}
+			}
+		});
+
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_S, menuShortcutKey | KeyEvent.SHIFT_DOWN_MASK), "saveSetupAs");
+		getActionMap().put("saveSetupAs", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String name = JOptionPane.showInputDialog(SetupsContainer.this, "Enter name for the setup");
+				if (name != null && !name.trim().isEmpty()) {
+					String setupsText = exportSetupsToText();
+					saveSetupsToFile(setupsText, name.trim());
+					currentLoadedSetupName = name.trim();
+					JOptionPane.showMessageDialog(SetupsContainer.this, "Setup saved as \"" + name.trim() + "\"", "Success", JOptionPane.INFORMATION_MESSAGE);
+				}
+			}
+		});
+
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_C, menuShortcutKey), "copyImage");
+		getActionMap().put("copyImage", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				copySetupContainerImageToClipboard();
+			}
+		});
+
 		attachSetupPanelMouseListeners();
+
+
 	}
 
 	private void attachSetupPanelMouseListeners()
@@ -1278,8 +1323,11 @@ public class SetupsContainer extends JPanel
 	{
 		popupMenu.removeAll();
 
+		int menuShortcutKey = Toolkit.getDefaultToolkit().getMenuShortcutKeyMaskEx(); //ctrl or cmd
+
 		JMenuItem copyImageItem = getThemedMenuItem("Copy image to clipboard");
 		copyImageItem.addActionListener(e -> copySetupContainerImageToClipboard());
+		copyImageItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_C, menuShortcutKey));
 		popupMenu.add(copyImageItem);
 
 		popupMenu.add(getThemedSeperator());
@@ -1404,6 +1452,7 @@ public class SetupsContainer extends JPanel
 
 		JMenuItem saveSetupItem = getThemedMenuItem("Save Setup");
 		saveSetupItem.setEnabled(currentLoadedSetupName != null);
+		saveSetupItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, menuShortcutKey));
 		saveSetupItem.addActionListener(e -> {
 			if (currentLoadedSetupName != null)
 			{
@@ -1416,6 +1465,7 @@ public class SetupsContainer extends JPanel
 		popupMenu.add(saveSetupItem);
 
 		JMenuItem saveSetupAsItem = getThemedMenuItem("Save Setup As...");
+		saveSetupAsItem.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, menuShortcutKey | KeyEvent.SHIFT_DOWN_MASK));
 		saveSetupAsItem.addActionListener(e -> {
 			String name = JOptionPane.showInputDialog(SetupsContainer.this, "Enter name for the setup");
 			if (name != null && !name.trim().isEmpty())
