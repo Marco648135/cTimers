@@ -839,7 +839,9 @@ class GridPanel extends JPanel
 				}
 			}
 
-			for (PixelBox box : DragState.getAffectedBoxes())
+			List<PixelBox> previousAffectedBoxes = new ArrayList<>(DragState.getAffectedBoxes());
+
+			for (PixelBox box : previousAffectedBoxes)
 			{
 				if (!currentAffectedBoxes.contains(box))
 				{
@@ -851,6 +853,7 @@ class GridPanel extends JPanel
 			DragState.setAffectedBoxes(currentAffectedBoxes);
 		}
 	}
+
 
 	private void performMassFill(boolean rmb)
 	{
