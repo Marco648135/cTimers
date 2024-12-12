@@ -233,6 +233,13 @@ class PixelBox extends JButton
 					{
 						clearItem();
 					}
+					else if(SwingUtilities.isMiddleMouseButton(e))
+					{
+						if(id != -1)
+						{
+							IconGridPanel.setSelectedItem(id);
+						}
+					}
 				}
 				DragState.stopDrag();
 				SetupsWindow.getInstance().hideDragImage();
@@ -1181,6 +1188,7 @@ public class SetupsContainer extends JPanel
 	private int setupCount;
 
 	private JPopupMenu popupMenu;
+	private String currentLoadedSetupName = null;
 
 	public SetupsContainer(ItemManager itemManager, SetupsWindow setupsWindow)
 	{
@@ -1339,6 +1347,7 @@ public class SetupsContainer extends JPanel
 				String data = (String) clipboard.getData(DataFlavor.stringFlavor);
 				if (data != null && !data.isEmpty())
 				{
+					currentLoadedSetupName = null;
 					importSetupsFromText(data);
 				}
 			}
@@ -1393,6 +1402,19 @@ public class SetupsContainer extends JPanel
 
 		popupMenu.add(getThemedSeperator());
 
+		JMenuItem saveSetupItem = getThemedMenuItem("Save Setup");
+		saveSetupItem.setEnabled(currentLoadedSetupName != null);
+		saveSetupItem.addActionListener(e -> {
+			if (currentLoadedSetupName != null)
+			{
+				String setupsText = exportSetupsToText();
+				deleteSetupFromFile(currentLoadedSetupName);
+				saveSetupsToFile(setupsText, currentLoadedSetupName);
+				JOptionPane.showMessageDialog(this, "Setup saved as \"" + currentLoadedSetupName + "\"", "Success", JOptionPane.INFORMATION_MESSAGE);
+			}
+		});
+		popupMenu.add(saveSetupItem);
+
 		JMenuItem saveSetupAsItem = getThemedMenuItem("Save Setup As...");
 		saveSetupAsItem.addActionListener(e -> {
 			String name = JOptionPane.showInputDialog(SetupsContainer.this, "Enter name for the setup");
@@ -1400,6 +1422,7 @@ public class SetupsContainer extends JPanel
 			{
 				String setupsText = exportSetupsToText();
 				saveSetupsToFile(setupsText, name.trim());
+				currentLoadedSetupName = name.trim();
 			}
 		});
 		popupMenu.add(saveSetupAsItem);
@@ -1424,12 +1447,17 @@ public class SetupsContainer extends JPanel
 				JMenuItem loadItem = getThemedMenuItem("Load");
 				loadItem.addActionListener(e -> {
 					importSetupsFromText(setupsText);
+					currentLoadedSetupName = name;
 				});
 				setupMenu.add(loadItem);
 
 				JMenuItem deleteItem = getThemedMenuItem("Delete");
 				deleteItem.addActionListener(e -> {
 					deleteSetupFromFile(name);
+					if(currentLoadedSetupName != null && currentLoadedSetupName.equals(name))
+					{
+						currentLoadedSetupName = null;
+					}
 					rebuildPopupMenus();
 				});
 				setupMenu.add(deleteItem);

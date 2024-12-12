@@ -8,9 +8,11 @@ import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.List;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 import net.runelite.api.Client;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.ItemManager;
@@ -192,7 +194,10 @@ public class SetupsWindow extends BaseFrame
 					e.consume();
 				}
 			}
+
 		});
+
+
 
 		this.setExtendedState(this.getExtendedState() | this.MAXIMIZED_BOTH);
 	}

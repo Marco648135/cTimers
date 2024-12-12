@@ -34,6 +34,36 @@ public class IconGridPanel extends JPanel
 	protected SetupsWindow setupsWindow;
 	private static List<WeakReference<IconGridPanel>> instances = new CopyOnWriteArrayList<>();
 
+	public static void setSelectedItem(int id)
+	{
+		Iterator<WeakReference<IconGridPanel>> iterator = instances.iterator();
+		while (iterator.hasNext())
+		{
+			WeakReference<IconGridPanel> ref = iterator.next();
+			IconGridPanel instance = ref.get();
+			if (instance != null)
+			{
+				int index = 0;
+				for(ItemEntry itemEntry : instance.items)
+				{
+					if(itemEntry.id == id)
+					{
+						SELECTED = instance;
+						instance.selectedIndex = index;
+						instance.setupsWindow.setSelectedItem(id);
+						break;
+					}
+					index++;
+				}
+			}
+			else
+			{
+				iterator.remove();
+			}
+		}
+		repaintAll();
+	}
+
 	static class ItemEntry
 	{
 		int id;
