@@ -95,6 +95,10 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	Map<PlayerAnimation, BufferedImage> iconMap = new HashMap<>();
 	Map<Integer, Double> probabilityMap = new ConcurrentHashMap<>();
 
+	private int globalEarliestAttackTick = Integer.MAX_VALUE;
+	private int globalLatestAttackTick = Integer.MIN_VALUE;
+	private Map<String, Integer> idleCounts = new HashMap<>();
+
 	// Dimensions for the action icons box
 
 	private int sidebarWidth = 200; // Initial width, will adjust dynamically
@@ -1869,6 +1873,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		g.setColor(config.fontColor());
 		for (int i = 0; i < attackers.size(); i++)
 		{
+			String attackerName = attackers.get(i);
 			playerOffsets.put(attackers.get(i), i);
 			for (int j = currentBox; j < currentBox + boxesToShow; j++)
 			{
@@ -1882,38 +1887,43 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 				g.setColor(config.fontColor());
 				Font oldFont = g.getFont();
 				setConfigFont(g);
-				int width = getStringWidth(g, attackers.get(i));
+				String displayedName = attackerName;
+				if(j == currentBox)
+				{
+					int idleCount = idleCounts.getOrDefault(displayedName, 0);
+					displayedName = displayedName + " (" + idleCount + ")";
+				}
+				int width = getStringWidth(g, displayedName);
 				int margin = 5;
 				int subBoxWidth = LEFT_MARGIN - (margin * 2);
 				int textPosition = margin + (subBoxWidth - width) / 2;
 				int yPosition = ((j * boxHeight) + ((i + 1) * scale) + (fontHeight) / 2) + (scale / 2) + TOP_MARGIN - (currentScrollOffsetY);
 				if (yPosition > scale + 5)
 				{
-					String attackerName = attackers.get(i);
 					for (int r : NPCMap.keySet())
 					{
-						if (String.valueOf(r).equals(attackerName))
+						if (String.valueOf(r).equals(displayedName))
 						{
-							attackerName = NPCMap.get(r).split(" ")[0];
+							displayedName = NPCMap.get(r).split(" ")[0];
 						}
 					}
 					if (config.chartTheme().equals(ChartTheme.EXCEL))
 					{
-						if (attackerName.startsWith("Player"))
+						if (displayedName.startsWith("Player"))
 						{
-							attackerName = "P" + attackerName.substring(attackerName.length() - 1);
+							displayedName = "P" + displayedName.substring(displayedName.length() - 1);
 						}
-						int strWidth = getStringWidth(g, attackerName);
+						int strWidth = getStringWidth(g, displayedName);
 						textPosition = LEFT_MARGIN - strWidth - (scale / 2) + 2;
 						g.setColor(config.boxColor());
 						g.drawRect(LEFT_MARGIN - (int) (scale * 1.5), yPosition - (fontHeight / 2) - (scale / 2), (int) (scale * 1.5), scale);
 					}
 					g.setColor(config.fontColor());
-					if (lateDroppers.contains(attackerName))
+					if (lateDroppers.contains(displayedName))
 					{
 						g.setColor(Color.RED);
 					}
-					g.drawString(attackerName, textPosition, yPosition + margin);
+					g.drawString(displayedName, textPosition, yPosition + margin);
 				}
 
 				if (i == 0)
@@ -2865,8 +2875,11 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 					shouldWrap = true;
 					int yOffset = ((playerOffsets.get(player) + 1) * scale) + getYOffset(i);
 
+					boolean inAttackRange = (globalEarliestAttackTick != -1 && globalLatestAttackTick != -1 &&
+						i >= globalEarliestAttackTick && i <= globalLatestAttackTick);
+
 					// Determine if the current tick is an idle tick (no attack)
-					boolean isIdleTick = !playerWasOnCD.get(player).contains(i);
+					boolean isIdleTick = inAttackRange && !playerWasOnCD.get(player).contains(i);
 
 					// Set the color based on whether the tick is idle and the highlightIdleTicks toggle or hover
 					if (isIdleTick)
@@ -3002,6 +3015,9 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 			scheduleRedraw();
 			return;
 		}
+
+		computeIdleCounts();
+
 		lastRefresh = System.nanoTime();
 		Graphics2D g = (Graphics2D) img.getGraphics();
 		g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -4196,6 +4212,33 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		}
 	}
 
+	private void computeIdleCounts()
+	{
+		idleCounts.clear();
+		if (globalEarliestAttackTick == -1 || globalLatestAttackTick == -1)
+		{
+			for (String player : playerOffsets.keySet())
+			{
+				idleCounts.put(player, 0);
+			}
+			return;
+		}
+
+		for (String player : playerOffsets.keySet())
+		{
+			int count = 0;
+			for (int tick = globalEarliestAttackTick; tick <= globalLatestAttackTick; tick++)
+			{
+				boolean isIdleTick = !playerWasOnCD.get(player).contains(tick);
+				if (isIdleTick)
+				{
+					count++;
+				}
+			}
+			idleCounts.put(player, count);
+		}
+	}
+
 
 	private void removeAttack(OutlineBox box)
 	{
@@ -4226,6 +4269,9 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 						playerWasOnCD.remove(player, i);
 					}
 				}
+
+				recalculateGlobalAttackRange();
+
 				postChartChange(new ChartChangedEvent(REMOVE_ELEMENT, ATTACK, removedBoxes.toArray()));
 				if (shouldRecord)
 				{
@@ -4238,6 +4284,28 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 			computeProbability2();
 		}
 		drawGraph();
+	}
+
+	private void recalculateGlobalAttackRange()
+	{
+		globalEarliestAttackTick = Integer.MAX_VALUE;
+		globalLatestAttackTick = Integer.MIN_VALUE;
+		for (OutlineBox box : outlineBoxes)
+		{
+			if (box.cd > 0)
+			{
+				globalEarliestAttackTick = Math.min(globalEarliestAttackTick, box.tick);
+				globalLatestAttackTick = Math.max(globalLatestAttackTick, box.tick-1);
+			}
+		}
+		if (globalEarliestAttackTick == Integer.MAX_VALUE)
+		{
+			globalEarliestAttackTick = -1;
+		}
+		if (globalLatestAttackTick == Integer.MIN_VALUE)
+		{
+			globalLatestAttackTick = -1;
+		}
 	}
 
 	public void copyAttackData()
@@ -4613,6 +4681,17 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 			outlineBoxes.add(box);
 			postChartChange(new ChartChangedEvent(ADD_ELEMENT, ATTACK, box));
 			updatePlayerAnimationsInUse();
+			if (box.cd > 0)
+			{
+				if (box.tick < globalEarliestAttackTick)
+				{
+					globalEarliestAttackTick = box.tick;
+				}
+				if (box.tick + box.cd - 1 > globalLatestAttackTick)
+				{
+					globalLatestAttackTick = box.tick - 1;
+				}
+			}
 		}
 		for (int i = box.tick; i < box.tick + box.cd; i++) {
 			playerWasOnCD.put(box.player, i);
