@@ -852,6 +852,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		hoveredColumn = -1;
 		hoveredTick = -1;
 		hoveredPlayer = "";
+		globalEarliestAttackTick = Integer.MAX_VALUE;
+		globalLatestAttackTick = Integer.MIN_VALUE;
 		synchronized (outlineBoxes)
 		{
 			outlineBoxes.clear();
