@@ -440,10 +440,8 @@ class PixelBox extends JButton
 		}
 
 		List<Trie.Entry> suggestions = ItemParser.getItemTrie().getSuggestions(input, 10);
-		log.info("Requesting suggestions for: " + input);
 		for (Trie.Entry entry : suggestions)
 		{
-			log.info(entry.getName() + ", " + entry.getId());
 			listModel.addElement(entry);
 		}
 	}
@@ -1186,7 +1184,7 @@ class TransferableImage implements Transferable
 		return flavor.equals(java.awt.datatransfer.DataFlavor.imageFlavor);
 	}
 }
-
+@Slf4j
 public class SetupsContainer extends JPanel
 {
 	private ItemManager itemManager;
@@ -1390,6 +1388,15 @@ public class SetupsContainer extends JPanel
 		popupMenu.add(saveGroupItem);
 		popupMenu.add(getThemedSeperator());
 
+		JMenuItem importFromImageItem = UISwingUtility.getThemedMenuItem("Import from image (experimental)");
+		importFromImageItem.addActionListener(e -> {
+			ImageImportProcessor processor = new ImageImportProcessor();
+			//processor.setDebugMode(true);
+			processor.importFromClipboardAsync(SetupsContainer.this);
+		});
+		popupMenu.add(importFromImageItem);
+
+
 		JMenuItem importTextItem = getThemedMenuItem("Import text setup from clipboard");
 		importTextItem.addActionListener(e -> {
 			Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
@@ -1547,7 +1554,7 @@ public class SetupsContainer extends JPanel
 			}
 			innerSetup.put("inv", invList);
 
-			List<Map<String, Object>> eqList = new ArrayList<>(Collections.nCopies(14, null)); // Initialize with nulls
+			List<Map<String, Object>> eqList = new ArrayList<>(Collections.nCopies(14, null));
 
 			List<Integer> equipIds = getEquipmentForSetup(setup);
 			if (equipIds.size() >= 15)
@@ -1593,7 +1600,7 @@ public class SetupsContainer extends JPanel
 			}
 			else
 			{
-				System.err.println("Equipment list size is less than expected.");
+				log.debug("Equipment list size is less than expected.");
 				return null;
 			}
 			innerSetup.put("eq", eqList);
@@ -1810,12 +1817,12 @@ public class SetupsContainer extends JPanel
 		}
 		if (!file.delete())
 		{
-			System.err.println("Could not delete original file");
+			log.debug("Could not delete original file");
 			return;
 		}
 		if (!tempFile.renameTo(file))
 		{
-			System.err.println("Could not rename temp file");
+			log.debug("Could not rename temp file");
 		}
 	}
 
@@ -1900,26 +1907,25 @@ public class SetupsContainer extends JPanel
 
 	public void importSetupsFromText(String text)
 	{
-		String[] setups = text.split("(?<=\\})(?:,)");
-		List<SetupPanel> newSetupPanels = new ArrayList<>();
-		for (String setupText : setups)
+		String[] setupsArray = text.split("(?<=\\})(?:,)");
+		int newCount = setupsArray.length;
+		ensureSetupCount(newCount);
+		for (int i = 0; i < newCount; i++)
 		{
+			String setupText = setupsArray[i];
 			String[] parts = setupText.split("\\}(?=\\{)");
 			if (parts.length < 5)
 			{
 				continue;
 			}
-			String topLabel = parts[0].replaceFirst("^\\{", "");
-			String invPart = parts[1].replaceFirst("^\\{", "");
-			String runePart = parts[2].replaceFirst("^\\{", "");
-			String equipPart = parts[3].replaceFirst("^\\{", "");
+
+			String invPart    = parts[1].replaceFirst("^\\{", "");
+			String runePart   = parts[2].replaceFirst("^\\{", "");
+			String equipPart  = parts[3].replaceFirst("^\\{", "");
 			String savedLabel = parts[4].replaceAll("^\\{|}$", "");
 
 			String[] invTokens = invPart.split(",", -1);
-			if (invTokens.length != 28)
-			{
-				continue;
-			}
+			if (invTokens.length != 28) continue;
 			List<Integer> invIds = new ArrayList<>();
 			for (String t : invTokens)
 			{
@@ -1927,29 +1933,25 @@ public class SetupsContainer extends JPanel
 			}
 
 			String[] runeTokens = runePart.split(",", -1);
-			if (runeTokens.length != 4)
-			{
-				continue;
-			}
+			if (runeTokens.length != 4) continue;
 			int[] runes = new int[4];
-			for (int i = 0; i < 4; i++)
+			for (int j = 0; j < 4; j++)
 			{
-				runes[i] = Integer.parseInt(runeTokens[i]);
+				runes[j] = Integer.parseInt(runeTokens[j]);
 			}
 
 			String[] equipTokens = equipPart.split(",", -1);
-			if (equipTokens.length != 15)
-			{
-				continue;
-			}
+			if (equipTokens.length != 15) continue;
 			List<Integer> equipIds = new ArrayList<>();
 			for (String t : equipTokens)
 			{
 				equipIds.add(Integer.parseInt(t));
 			}
 
-			SetupPanel setupPanel = new SetupPanel(itemManager, setupsWindow, this);
-			setupPanel.labelField.setText(savedLabel); // Use savedLabel
+			SetupPanel setupPanel = this.setupPanels.get(i);
+
+			setupPanel.labelField.setText(savedLabel);
+
 			int idx = 0;
 			for (int r = 0; r < 7; r++)
 			{
@@ -1958,10 +1960,12 @@ public class SetupsContainer extends JPanel
 					setupPanel.inventoryGrid.boxes[r][c].setId(invIds.get(idx++));
 				}
 			}
+
 			for (int c = 0; c < 4; c++)
 			{
 				setupPanel.runepouchGrid.boxes[0][c].setId(runes[c]);
 			}
+
 			idx = 0;
 			for (int r = 0; r < 5; r++)
 			{
@@ -1975,45 +1979,67 @@ public class SetupsContainer extends JPanel
 					idx++;
 				}
 			}
-
-			newSetupPanels.add(setupPanel);
 		}
-		setSetupCount(newSetupPanels.size());
-		this.setupPanels.clear();
-		this.removeAll();
+		revalidate();
+		repaint();
+	}
+	private void ensureSetupCount(int newCount)
+	{
+		int currentCount = setupPanels.size();
 
-		setLayout(new GridBagLayout());
-		GridBagConstraints gbc = new GridBagConstraints();
-
-		gbc.gridy = 0;
-		gbc.anchor = GridBagConstraints.CENTER;
-		gbc.fill = GridBagConstraints.NONE;
-
-		int x = 0;
-		for (SetupPanel sp : newSetupPanels)
+		if (newCount == currentCount)
 		{
-			gbc.gridx = x++;
-			if (x == 1)
-			{
-				gbc.insets = new Insets(0, 10, 0, 0);
-			}
-			else if (x == newSetupPanels.size())
-			{
-				gbc.insets = new Insets(0, 0, 0, 10);
-			}
-			else
-			{
-				gbc.insets = new Insets(0, 0, 0, 0);
-			}
-			this.setupPanels.add(sp);
-			this.add(sp, gbc);
+			return;
 		}
 
-		attachSetupPanelMouseListeners();
+		else if (newCount < currentCount)
+		{
+			for (int i = currentCount - 1; i >= newCount; i--)
+			{
+				SetupPanel sp = setupPanels.remove(i);
+				this.remove(sp);
+			}
+		}
+		else
+		{
+			GridBagConstraints gbc = new GridBagConstraints();
+			gbc.gridy = 0;
+			gbc.anchor = GridBagConstraints.CENTER;
+			gbc.fill = GridBagConstraints.NONE;
+
+			int x = currentCount * 2;
+
+			for (int i = currentCount; i < newCount; i++)
+			{
+				gbc.gridx = x++;
+				if (i == 0)
+				{
+					gbc.insets = new Insets(0, 10, 0, 0);
+				}
+				else if (i == newCount - 1)
+				{
+					gbc.insets = new Insets(0, 0, 0, 10);
+				}
+				else
+				{
+					gbc.insets = new Insets(0, 0, 0, 0);
+				}
+
+				SetupPanel sp = new SetupPanel(itemManager, setupsWindow, this);
+				setupPanels.add(sp);
+				this.add(sp, gbc);
+
+				if (i < newCount - 1)
+				{
+					gbc.gridx = x++;
+				}
+			}
+		}
 
 		revalidate();
 		repaint();
 	}
+
 
 	public Map<Integer, Integer> getItemCounts()
 	{

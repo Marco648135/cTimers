@@ -98,7 +98,16 @@ public class IconGridPanel extends JPanel
 		while (iterator.hasNext())
 		{
 			WeakReference<IconGridPanel> ref = iterator.next();
-			IconGridPanel instance = ref.get();
+			IconGridPanel instance;
+			try
+			{
+				instance = ref.get();
+			}
+			catch (NullPointerException e)
+			{
+				iterator.remove();
+				continue;
+			}
 			if (instance != null)
 			{
 				instance.repaint();
@@ -109,6 +118,7 @@ public class IconGridPanel extends JPanel
 			}
 		}
 	}
+
 
 
 	public IconGridPanel(ItemManager itemManager, SetupsWindow setupsWindow)
