@@ -123,7 +123,8 @@ public enum PlayerAnimation
 	VILE_VIGOUR("Vile Vigour", "VV", new Color(70, 70, 70), -1, new int[]{8978}, new int[]{1876}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
 	WARD_OF_ARCEUSS("Ward of Arceuus", "WA", new Color(70, 70, 70), -1, new int[]{8970}, new int[]{1851}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
 	MARK_OF_DARKNESS("Mark of Darkness", "MD", new Color(70, 70, 70), -1, new int[]{8970}, new int[]{1852}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
-	LESSER_CORRUPTION("Lesser Corruption", "LC", new Color(70, 70, 70), -1, new int[]{8979}, new int[]{1877}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT);
+	LESSER_CORRUPTION("Lesser Corruption", "LC", new Color(70, 70, 70), -1, new int[]{8979}, new int[]{1877}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
+	SULPHUR_BLADES("Sulphur Blades", "SUL", new Color(180, 20, 40), 4, new int[]{2068}, new int[]{}, new int[]{29084}, new int[]{}, 0, Style.MELEE);
 
 	public final String name;
 	public final String shorthand;
