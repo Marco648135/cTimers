@@ -205,7 +205,6 @@ public class ChartFrame extends BaseFrame
 					? (bossName.contains("P2")) ? roomData.get(bossName + " Time") +
 					roomData.get(bossName.replace('2', '1') + " Time") :
 					roomData.get(bossName.substring(0, bossName.length() - 2) + "Time") : roomData.get(bossName + " Time"));
-
 				chartPanel.setEndTick(Math.max(chartPanel.endTick + 1, getLastAttackTick(chartData.getAttacks(room))));
 			}
 			chartPanel.addThrallBoxes(chartData.getThralls(room));
