@@ -3,6 +3,7 @@ package com.advancedraidtracker.rooms.tob;
 import com.advancedraidtracker.AdvancedRaidTrackerConfig;
 import com.advancedraidtracker.AdvancedRaidTrackerPlugin;
 import com.advancedraidtracker.constants.RaidRoom;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
@@ -67,7 +68,7 @@ public class BloatHandler extends TOBRoomHandler
         bloatDeathTick = client.getTickCount() + BLOAT_DEATH_ANIMATION_LENGTH;
         plugin.addDelayedLine(RaidRoom.BLOAT, client.getTickCount() - roomStartTick, "Dead");
         clog.addLine(ACCURATE_BLOAT_END);
-        plugin.liveFrame.setRoomFinished(getName(), bloatDeathTick - roomStartTick);
+		SwingUtilities.invokeLater(() -> plugin.liveFrame.setRoomFinished(getName(), bloatDeathTick - roomStartTick));
         if (roomStartTick != -1)
         {
             sendTimeMessage("Wave 'Bloat last down' complete! Duration: ", splitLastDown(), " Room time: ", bloatDeathTick - roomStartTick, true);
@@ -217,7 +218,7 @@ public class BloatHandler extends TOBRoomHandler
 					int currentTick = (client.getTickCount()-roomStartTick);
 					plugin.sendChatMessage(p.getName() + " got handed on room tick " + currentTick + " (" + RoomUtil.time(currentTick) + " )");
 					clog.addLine(BLOAT_PLAYER_HANDED, p.getName(), String.valueOf(currentTick));
-					plugin.liveFrame.addPlayerHanded(getName(), p.getName(), currentTick);
+					SwingUtilities.invokeLater(() -> plugin.liveFrame.addPlayerHanded(getName(), p.getName(), currentTick));
 				}
 			}
 		}

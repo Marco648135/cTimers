@@ -1,4 +1,4 @@
-package com.advancedraidtracker.ui.docking;
+package com.advancedraidtracker.ui.setups.docking;
 
 import static com.advancedraidtracker.ui.RaidTrackerSidePanel.config;
 import com.advancedraidtracker.ui.setups.ItemDepot;
@@ -405,7 +405,7 @@ public class CustomPanel extends JPanel
 		{
 			Component draggedComponent = tabbedPane.getComponentAt(draggedTabIndex);
 			String draggedTitle = tabbedPane.getTitleAt(draggedTabIndex);
-
+			DockingPanel oldDockingPanel = (DockingPanel) SwingUtilities.getAncestorOfClass(DockingPanel.class, tabbedPane.getParent());
 			tabbedPane.remove(draggedComponent);
 			if (tabbedPane.getTabCount() == 0)
 			{
@@ -421,12 +421,18 @@ public class CustomPanel extends JPanel
 			newFrame.setLocation(locationOnScreen);
 
 			CustomPanel newCustomPanel = new CustomPanel(draggedTitle);
-
+			newCustomPanel.getContentPanel().setLayout(new BorderLayout());
+			newCustomPanel.getContentPanel().add(draggedComponent);
 
 			MultiSplitPane newMainPane = new MultiSplitPane(true);
 			newMainPane.addComponent(newCustomPanel);
 
+
 			DockingPanel newDockingPanel = new DockingPanel("test.json");
+			if(oldDockingPanel != null)
+			{
+				newDockingPanel.setPanelFactory(oldDockingPanel.getPanelFactory());
+			}
 			newDockingPanel.init(newMainPane);
 
 			CustomLayerUI layerUI = new CustomLayerUI();

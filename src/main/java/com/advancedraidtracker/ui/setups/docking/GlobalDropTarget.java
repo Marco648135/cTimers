@@ -1,4 +1,4 @@
-package com.advancedraidtracker.ui.docking;
+package com.advancedraidtracker.ui.setups.docking;
 
 import java.awt.Component;
 import java.awt.Dimension;
@@ -160,6 +160,22 @@ public class GlobalDropTarget implements DropTargetListener
 			String draggedTitle = sourceTabbedPane.getTitleAt(draggedTabIndex);
 			Component draggedTabComponent = sourceTabbedPane.getTabComponentAt(draggedTabIndex);
 
+			int highlightedIndex = layerUI.getHighlightedIndex();
+			Point mouseLocationInMainPane = SwingUtilities.convertPoint(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), mainPane);
+
+			Component componentUnderMouse = SwingUtilities.getDeepestComponentAt(mainPane, mouseLocationInMainPane.x, mouseLocationInMainPane.y);
+
+			boolean isOverPanel = isCustomPanel(componentUnderMouse);
+			boolean nearMainPaneEdge = isNearMainPaneEdge(mouseLocationInMainPane);
+
+			CustomPanel targetPanel = getCustomPanelFromComponent(componentUnderMouse);
+			if (highlightedIndex == -1 || (targetPanel == sourceCustomPanel && sourceTabbedPane.getTabCount() <= 1 && !nearMainPaneEdge))
+			{
+				dtde.acceptDrop(DnDConstants.ACTION_MOVE);
+				dtde.dropComplete(true);
+				return;
+			}
+
 			sourceTabbedPane.remove(draggedComponent);
 			if (sourceTabbedPane.getTabCount() == 0)
 			{
@@ -170,21 +186,6 @@ public class GlobalDropTarget implements DropTargetListener
 				}
 			}
 
-			Point mouseLocationInMainPane = SwingUtilities.convertPoint(dtde.getDropTargetContext().getComponent(), dtde.getLocation(), mainPane);
-
-			Component componentUnderMouse = SwingUtilities.getDeepestComponentAt(mainPane, mouseLocationInMainPane.x, mouseLocationInMainPane.y);
-
-			boolean isOverPanel = isCustomPanel(componentUnderMouse);
-			boolean nearMainPaneEdge = isNearMainPaneEdge(mouseLocationInMainPane);
-
-			CustomPanel targetPanel = getCustomPanelFromComponent(componentUnderMouse);
-			int highlightedIndex = layerUI.getHighlightedIndex();
-
-			if (highlightedIndex == -1 || (targetPanel == sourceCustomPanel && sourceTabbedPane.getTabCount() == 0 && !nearMainPaneEdge))
-			{
-				dtde.rejectDrop();
-				return;
-			}
 			dtde.acceptDrop(DnDConstants.ACTION_MOVE);
 			if (sourceTabbedPane.getTabCount() == 0)
 			{
@@ -251,7 +252,6 @@ public class GlobalDropTarget implements DropTargetListener
 				layer.revalidate();
 				layer.repaint();
 			}
-
 			else if (isOverPanel)
 			{
 				if (highlightedIndex == 4)

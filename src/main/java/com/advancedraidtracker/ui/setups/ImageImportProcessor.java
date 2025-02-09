@@ -94,7 +94,7 @@ public class ImageImportProcessor
 			if (squares.isEmpty())
 			{
 				SwingUtilities.invokeLater(() ->
-					showError(container, "No squares detected by outline method.")
+					showError(container, "Failed to identify any squares. This feature is expecting an image that is from either this plugin or inventory setups.")
 				);
 				return;
 			}
@@ -124,10 +124,10 @@ public class ImageImportProcessor
 			for (List<DetectedSquare> vSet : verticalSetups)
 			{
 				int count = vSet.size();
-				if (count != 43 && count != 44)
+				if (count != 43 && count != 44 && count != 47 && count != 48 && count != 45 && count != 49)
 				{
 					SwingUtilities.invokeLater(() ->
-						showError(container, "A vertical setup has " + count + " squares, expected 43 or 44.")
+						showError(container, "A vertical setup has " + count + " squares, expected 43-45 or 47-49")
 					);
 					return;
 				}
@@ -179,7 +179,7 @@ public class ImageImportProcessor
 		vSet.sort(Comparator.comparingInt((DetectedSquare s)->s.y).thenComparingInt(s->s.x));
 
 		int total = vSet.size();
-		boolean hasExtraSkip = (total == 43);
+		boolean hasExtraSkip = (total == 43 || total == 47);
 
 		int rowThreshold = 10;
 		List<List<DetectedSquare>> rows = clusterRows(vSet, rowThreshold);

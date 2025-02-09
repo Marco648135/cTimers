@@ -228,7 +228,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 
     public void openLiveFrame()
     {
-        liveFrame.open(currentRoom.getName());
+		SwingUtilities.invokeLater(() -> liveFrame.open(currentRoom.getName()));
     }
 
 	public void openLiveData()
@@ -258,13 +258,11 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 	private Gson gson;
 
 	private AdvancedData liveData;
-	private BloodveldAnalyzer bloodveldAnalyzer;
 
     @Override
     protected void startUp() throws Exception
     {
         super.startUp();
-		bloodveldAnalyzer = new BloodveldAnalyzer(client);
         splitLegacyFiles();
         migrateSavedFilesToZip();
         localPlayers = new ArrayList<>();
@@ -399,10 +397,10 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                 clog.migrateToNewRaid();
                 clog.addLine(ENTERED_RAID);
                 clog.addLine(PARTY_MEMBERS, client.getLocalPlayer().getName());
-                liveFrame.switchToInf();
+				SwingUtilities.invokeLater(() -> liveFrame.switchToInf());
                 ArrayList<String> players = new ArrayList<>();
                 players.add(client.getLocalPlayer().getName());
-                liveFrame.setPlayers(players);
+				SwingUtilities.invokeLater(() -> liveFrame.setPlayers(players));
                 inTheatre = true;
                 inInferno = true;
                 activeState = true;
@@ -425,7 +423,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                 infernoHandler.reset();
                 inTheatre = false;
                 inInferno = false;
-                liveFrame.resetAll();
+				SwingUtilities.invokeLater(() -> liveFrame.resetAll());
 				liveData.resetData();
             } else
             {
@@ -442,10 +440,10 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                 clog.migrateToNewRaid();
                 clog.addLine(ENTERED_RAID);
                 clog.addLine(PARTY_MEMBERS, client.getLocalPlayer().getName());
-                liveFrame.switchToCol();
+				SwingUtilities.invokeLater(() -> liveFrame.switchToCol());
                 ArrayList<String> players = new ArrayList<>();
                 players.add(client.getLocalPlayer().getName());
-                liveFrame.setPlayers(players);
+				SwingUtilities.invokeLater(() -> liveFrame.setPlayers(players));
                 inTheatre = true;
                 inColosseum = true;
                 activeState = true;
@@ -472,7 +470,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                 colloseumHandler.reset();
                 inTheatre = false;
                 inColosseum = false;
-                liveFrame.resetAll();
+				SwingUtilities.invokeLater(() -> liveFrame.resetAll());
 				liveData.resetData();
             } else
             {
@@ -491,9 +489,9 @@ public class AdvancedRaidTrackerPlugin extends Plugin
             clog.addLine(ENTERED_RAID);
             clog.addLine(SPECTATE);
             clog.addLine(LATE_START, room.name);
-            liveFrame.resetAll();
+			SwingUtilities.invokeLater(() -> liveFrame.resetAll());
 			liveData.resetData();
-            liveFrame.switchToTOB();
+			SwingUtilities.invokeLater(() -> liveFrame.switchToTOB());
             lastSplits = "";
 			currentDurationSum = 0;
         }
@@ -507,9 +505,9 @@ public class AdvancedRaidTrackerPlugin extends Plugin
             clog.checkForEndFlag();
             clog.migrateToNewRaid();
             clog.addLine(ENTERED_TOA);
-            liveFrame.resetAll();
+			SwingUtilities.invokeLater(() -> liveFrame.resetAll());
 			liveData.resetData();
-            liveFrame.switchToTOA();
+			SwingUtilities.invokeLater(() -> liveFrame.switchToTOA());
             lastSplits = "";
 			currentDurationSum = 0;
         }
@@ -521,9 +519,9 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                     clog.setRaidType(RaidType.TOB);
                     currentRoom = maiden;
                     enteredMaiden();
-                    liveFrame.resetAll();
+					SwingUtilities.invokeLater(() -> liveFrame.resetAll());
 					liveData.resetData();
-                    liveFrame.switchToTOB();
+					SwingUtilities.invokeLater(() -> liveFrame.switchToTOB());
                     lastSplits = "";
 					currentDurationSum = 0;
                 }
@@ -676,14 +674,14 @@ public class AdvancedRaidTrackerPlugin extends Plugin
             toaHandler.start();
         }
         clog.addLine(ENTERED_NEW_TOA_REGION, CRONDIS.name);
-        liveFrame.tabbedPane.setSelectedIndex(4);
+		SwingUtilities.invokeLater(() -> liveFrame.tabbedPane.setSelectedIndex(4));
         crondis.reset();
     }
 
     private void enteredZebak()
     {
         clog.addLine(ENTERED_NEW_TOA_REGION, ZEBAK.name);
-        liveFrame.tabbedPane.setSelectedIndex(5);
+		SwingUtilities.invokeLater(() -> liveFrame.tabbedPane.setSelectedIndex(5));
         zebak.reset();
     }
 
@@ -694,14 +692,14 @@ public class AdvancedRaidTrackerPlugin extends Plugin
             toaHandler.start();
         }
         clog.addLine(ENTERED_NEW_TOA_REGION, SCABARAS.name);
-        liveFrame.tabbedPane.setSelectedIndex(2);
+		SwingUtilities.invokeLater(() -> liveFrame.tabbedPane.setSelectedIndex(2));
         scabaras.reset();
     }
 
     private void enteredKephri()
     {
         clog.addLine(ENTERED_NEW_TOA_REGION, KEPHRI.name);
-        liveFrame.tabbedPane.setSelectedIndex(3);
+		SwingUtilities.invokeLater(() -> liveFrame.tabbedPane.setSelectedIndex(3));
         kephri.reset();
     }
 
@@ -712,14 +710,14 @@ public class AdvancedRaidTrackerPlugin extends Plugin
             toaHandler.start();
         }
         clog.addLine(ENTERED_NEW_TOA_REGION, APMEKEN.name);
-        liveFrame.tabbedPane.setSelectedIndex(0);
+		SwingUtilities.invokeLater(() -> liveFrame.tabbedPane.setSelectedIndex(0));
         apmeken.reset();
     }
 
     private void enteredBaba()
     {
         clog.addLine(ENTERED_NEW_TOA_REGION, BABA.name);
-        liveFrame.tabbedPane.setSelectedIndex(1);
+		SwingUtilities.invokeLater(() -> liveFrame.tabbedPane.setSelectedIndex(1));
         baba.reset();
     }
 
@@ -730,21 +728,21 @@ public class AdvancedRaidTrackerPlugin extends Plugin
             toaHandler.start();
         }
         clog.addLine(ENTERED_NEW_TOA_REGION, HET.name);
-        liveFrame.tabbedPane.setSelectedIndex(6);
+		SwingUtilities.invokeLater(() -> liveFrame.tabbedPane.setSelectedIndex(6));
         het.reset();
     }
 
     private void enteredAkkha()
     {
         clog.addLine(ENTERED_NEW_TOA_REGION, AKKHA.name);
-        liveFrame.tabbedPane.setSelectedIndex(7);
+		SwingUtilities.invokeLater(() -> liveFrame.tabbedPane.setSelectedIndex(7));
         akkha.reset();
     }
 
     private void enteredWardens()
     {
         clog.addLine(ENTERED_NEW_TOA_REGION, WARDENS.name);
-        liveFrame.tabbedPane.setSelectedIndex(8);
+		SwingUtilities.invokeLater(() -> liveFrame.tabbedPane.setSelectedIndex(8));
         wardens.reset();
     }
 
@@ -766,10 +764,10 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         clog.checkForEndFlag();
         clog.migrateToNewRaid();
         clog.addLine(ENTERED_RAID);
-        liveFrame.switchToTOB();
+		SwingUtilities.invokeLater(() -> liveFrame.switchToTOB());
         deferredTick = client.getTickCount() + 2;
         maiden.reset();
-        liveFrame.tabbedPane.setSelectedIndex(0);
+		SwingUtilities.invokeLater(() -> liveFrame.tabbedPane.setSelectedIndex(0));
     }
 
     private void enteredBloat()
@@ -777,7 +775,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         clog.addLine(ENTERED_NEW_TOB_REGION, String.valueOf(RaidRoom.BLOAT.ordinal()));
         maiden.reset();
         bloat.reset();
-        liveFrame.tabbedPane.setSelectedIndex(1);
+		SwingUtilities.invokeLater(() -> liveFrame.tabbedPane.setSelectedIndex(1));
     }
 
     private void enteredNylo()
@@ -785,7 +783,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         clog.addLine(ENTERED_NEW_TOB_REGION, String.valueOf(NYLOCAS.ordinal()));
         bloat.reset();
         nylo.reset();
-        liveFrame.tabbedPane.setSelectedIndex(2);
+		SwingUtilities.invokeLater(() -> liveFrame.tabbedPane.setSelectedIndex(2));
     }
 
     private void enteredSote()
@@ -793,7 +791,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         clog.addLine(ENTERED_NEW_TOB_REGION, String.valueOf(SOTETSEG.ordinal()));
         nylo.reset();
         sote.reset();
-        liveFrame.tabbedPane.setSelectedIndex(3);
+		SwingUtilities.invokeLater(() -> liveFrame.tabbedPane.setSelectedIndex(3));
     }
 
     private void enteredXarpus()
@@ -801,7 +799,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         clog.addLine(ENTERED_NEW_TOB_REGION, String.valueOf(XARPUS.ordinal()));
         sote.reset();
         xarpus.reset();
-        liveFrame.tabbedPane.setSelectedIndex(4);
+		SwingUtilities.invokeLater(() -> liveFrame.tabbedPane.setSelectedIndex(4));
     }
 
     private void enteredVerzik()
@@ -809,7 +807,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         clog.addLine(ENTERED_NEW_TOB_REGION, String.valueOf(VERZIK.ordinal()));
         xarpus.reset();
         verzik.reset();
-        liveFrame.tabbedPane.setSelectedIndex(5);
+		SwingUtilities.invokeLater(() -> liveFrame.tabbedPane.setSelectedIndex(5));
     }
 
     @Subscribe
@@ -937,22 +935,22 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         switch (RaidRoom.valueOf(room.value))
         {
             case MAIDEN:
-                liveFrame.addLine("Maiden", value, description);
+				SwingUtilities.invokeLater(() -> liveFrame.addLine("Maiden", value, description));
                 break;
             case BLOAT:
-                liveFrame.addLine("Bloat", value, description);
+				SwingUtilities.invokeLater(() -> liveFrame.addLine("Bloat", value, description));
                 break;
             case NYLOCAS:
-                liveFrame.addLine("Nylocas", value, description);
+				SwingUtilities.invokeLater(() -> liveFrame.addLine("Nylocas", value, description));
                 break;
             case SOTETSEG:
-                liveFrame.addLine("Sotetseg", value, description);
+				SwingUtilities.invokeLater(() -> liveFrame.addLine("Sotetseg", value, description));
                 break;
             case XARPUS:
-                liveFrame.addLine("Xarpus", value, description);
+				SwingUtilities.invokeLater(() -> liveFrame.addLine("Xarpus", value, description));
                 break;
             case VERZIK:
-                liveFrame.addLine("Verzik", value, description);
+				SwingUtilities.invokeLater(() -> liveFrame.addLine("Verzik", value, description));
                 break;
         }
     }
@@ -974,7 +972,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     public void addThrallOutlineBox(ThrallOutlineBox outlineBox)
     {
         clog.addLine(THRALL_SPAWN, outlineBox.owner, String.valueOf(outlineBox.spawnTick), String.valueOf(outlineBox.id), currentRoom.getName());
-        liveFrame.getPanel(currentRoom.getName()).addThrallBox(outlineBox);
+		SwingUtilities.invokeLater(() -> liveFrame.getPanel(currentRoom.getName()).addThrallBox(outlineBox));
     }
 
     public Map<String, PlayerCopy> lastTickPlayer = new HashMap<>();
@@ -1037,7 +1035,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                                     "",
                                     previous.weapon + ":" + previous.interactingIndex + ":" + previous.interactingID,
                                     "-1:" + previous.interactingName, currentRoom.getName());
-                            liveFrame.addAttack(new PlayerDidAttack(itemManager,
+							SwingUtilities.invokeLater(() -> liveFrame.addAttack(new PlayerDidAttack(itemManager,
                                     previous.name,
                                     String.valueOf(7618),
                                     -1,
@@ -1048,7 +1046,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                                     previous.interactingID,
                                     previous.interactingName,
                                     previous.wornItems
-                            ), currentRoom.getName());
+                            ), currentRoom.getName()));
                         }
                     }
                 }
@@ -1125,12 +1123,11 @@ public class AdvancedRaidTrackerPlugin extends Plugin
             if (currentRoom.isActive())
             {
 				checkChangedPartyData();
-				SwingUtilities.invokeLater(() ->
-				{
-					liveFrame.incrementTick(currentRoom.getName());
-				});
+				SwingUtilities.invokeLater(() -> liveFrame.incrementTick(currentRoom.getName()));
                 int HP_VARBIT = 6448;
-                liveFrame.getPanel(currentRoom.getName()).addRoomHP(client.getTickCount() - currentRoom.roomStartTick, client.getVarbitValue(HP_VARBIT));
+				int tick = client.getTickCount();
+				int varbitValue = client.getVarbitValue(HP_VARBIT);
+				SwingUtilities.invokeLater(() -> liveFrame.getPanel(currentRoom.getName()).addRoomHP(tick - currentRoom.roomStartTick, varbitValue));
                 clog.addLine(UPDATE_HP, String.valueOf(client.getVarbitValue(HP_VARBIT)), String.valueOf(client.getTickCount() - currentRoom.roomStartTick), currentRoom.getName());
             }
 			else
@@ -1161,7 +1158,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                             currentPlayers.add(s);
                         }
                     }
-                    liveFrame.setPlayers(currentPlayers);
+					SwingUtilities.invokeLater(() -> liveFrame.setPlayers(currentPlayers));
                     clog.addLine(PARTY_MEMBERS, players[0], players[1], players[2], players[3], players[4], players[5], players[6], players[7]);
                     clog.addLine(INVOCATION_LEVEL, String.valueOf(client.getVarbitValue(TOA_RAID_LEVEL)));
                 } else
@@ -1182,7 +1179,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                             currentPlayers.add(s.replaceAll(String.valueOf((char) 160), String.valueOf((char) 32)));
                         }
                     }
-                    liveFrame.setPlayers(currentPlayers);
+					SwingUtilities.invokeLater(() -> liveFrame.setPlayers(currentPlayers));
                     checkPartyUpdate();
                     boolean flag = false;
                     for (String p : players)
@@ -1318,7 +1315,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 		String playerName = e.getUsername();
 		DataType dataType = e.getChangeType();
 		int dataValue = e.getNewValue();
-		liveFrame.addPlayerDataChanged(e, getRoom().name);
+		SwingUtilities.invokeLater(() -> liveFrame.addPlayerDataChanged(e, getRoom().name));
 		clog.addLine(PLAYER_DATA_CHANGED, playerName, e.getChangeType().name, String.valueOf(e.getNewValue()), String.valueOf(e.getRoomTick()), getRoom().name);
 
 		// Get or create PlayerData for the player
@@ -1402,8 +1399,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                             }
                             if (projectile.getId() == DAWNBRINGER_AUTO_PROJECTILE || projectile.getId() == ZCB_PROJECTILE || projectile.getId() == ZCB_SPEC_PROJECTILE || projectile.getId() == DAWNBRINGER_SPEC_PROJECTILE)
                             {
-                                int interactedIndex = -1;
-                                int interactedID = -1;
+                                int interactedIndex;
+                                int interactedID;
                                 Actor interacted = playerAttackQueuedItem.player.getInteracting();
                                 String targetName = "";
                                 if (interacted instanceof NPC)
@@ -1413,7 +1410,12 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                                     interactedIndex = npc.getIndex();
                                     targetName = npc.getName();
                                 }
-                                if (interacted instanceof Player)
+								else
+								{
+									interactedID = -1;
+									interactedIndex = -1;
+								}
+								if (interacted instanceof Player)
                                 {
                                     Player player = (Player) interacted;
                                     targetName = player.getName();
@@ -1424,7 +1426,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                                         playerAttackQueuedItem.spotAnims,
                                         playerAttackQueuedItem.weapon + ":" + interactedIndex + ":" + interactedID,
                                         projectile.getId() + ":" + targetName, currentRoom.getName());
-                                liveFrame.addAttack(new PlayerDidAttack(itemManager,
+								String finalTargetName = targetName;
+								SwingUtilities.invokeLater(() -> liveFrame.addAttack(new PlayerDidAttack(itemManager,
                                                 playerAttackQueuedItem.player.getName(),
                                                 playerAttackQueuedItem.animation,
                                                 0,
@@ -1433,9 +1436,9 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                                                 playerAttackQueuedItem.spotAnims,
                                                 interactedIndex,
                                                 interactedID,
-                                                targetName,
+										finalTargetName,
                                                 PlayerWornItems.getStringFromComposition(playerAttackQueuedItem.player.getPlayerComposition()))
-                                        , currentRoom.getName());
+                                        , currentRoom.getName()));
                             }
                         }
                     }
@@ -1462,7 +1465,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                                 "",
                                 previous.weapon + ":" + previous.interactingIndex + ":" + previous.interactingID,
                                 "-1:" + previous.interactingName, currentRoom.getName());
-                        liveFrame.addAttack(new PlayerDidAttack(itemManager,
+						SwingUtilities.invokeLater(() -> liveFrame.addAttack(new PlayerDidAttack(itemManager,
                                 previous.name,
                                 String.valueOf(previous.animation),
                                 -1,
@@ -1473,7 +1476,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                                 previous.interactingID,
                                 previous.interactingName,
                                 previous.wornItems
-                        ), currentRoom.getName());
+                        ), currentRoom.getName()));
                     }
                 }
             }
@@ -1829,7 +1832,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         }
         if (event.getGroup().equals("Advanced Raid Tracker") && event.getKey().contains("primary"))
         {
-            liveFrame.redrawAll();
+			SwingUtilities.invokeLater(() -> liveFrame.redrawAll());
         } else if (event.getGroup().equals("Advanced Raid Tracker") && event.getKey().contains("theme"))
         {
             ChartTheme theme = ChartTheme.valueOf(event.getNewValue());
@@ -1853,22 +1856,24 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     @Subscribe
     public void onAnimationChanged(AnimationChanged event)
     {
-		bloodveldAnalyzer.animationChanged(event);
         if (event.getActor() instanceof NPC)
         {
             if (currentRoom != null)
             {
-                liveFrame.addAttack(new PlayerDidAttack(itemManager,
-                        String.valueOf(((NPC) event.getActor()).getIndex()),
-                        String.valueOf(event.getActor().getAnimation()),
+				String name = client.getLocalPlayer().getName();
+				int index = ((NPC) event.getActor()).getIndex();
+				int animation = event.getActor().getAnimation();
+				SwingUtilities.invokeLater(() -> liveFrame.addAttack(new PlayerDidAttack(itemManager,
+                        String.valueOf(index),
+                        String.valueOf(animation),
                         0,
                         100, //todo why is this 100?
                         "-1",
                         "",
                         0,
                         0,
-                        client.getLocalPlayer().getName(),
-                        ""), currentRoom.getName());
+                        name,
+                        ""), currentRoom.getName()));
             }
 
         }
@@ -1936,28 +1941,37 @@ public class AdvancedRaidTrackerPlugin extends Plugin
      */
     private void generatePlayerAttackInfo(Player p, String animations, Actor interacted, int overriddenAnimation)
     {
-        int interactedIndex = -1;
-        int interactedID = -1;
-        String targetName = "";
+        int interactedIndex;
+        int interactedID;
+        String targetName;
         if (interacted != null && interacted.getName() != null)
         {
             targetName = interacted.getName();
         }
-        if (interacted instanceof NPC)
+		else
+		{
+			targetName = "";
+		}
+		if (interacted instanceof NPC)
         {
             NPC npc = (NPC) interacted;
             interactedID = npc.getId();
             interactedIndex = npc.getIndex();
         }
+		else
+		{
+			interactedID = -1;
+			interactedIndex = -1;
+		}
 
-        int animationToUse = (overriddenAnimation == -1) ? p.getAnimation() : overriddenAnimation;
+		int animationToUse = (overriddenAnimation == -1) ? p.getAnimation() : overriddenAnimation;
         clog.addLine(PLAYER_ATTACK,
                 p.getName() + ":" + (client.getTickCount() - currentRoom.roomStartTick),
                 animationToUse + ":" + PlayerWornItems.getStringFromComposition(p.getPlayerComposition()),
                 animations,
                 p.getPlayerComposition().getEquipmentId(KitType.WEAPON) + ":" + interactedIndex + ":" + interactedID,
                 "-1:" + targetName, currentRoom.getName());
-        liveFrame.addAttack(new PlayerDidAttack(itemManager,
+		SwingUtilities.invokeLater(() -> liveFrame.addAttack(new PlayerDidAttack(itemManager,
                 String.valueOf(p.getName()),
                 String.valueOf(animationToUse),
                 0,
@@ -1968,7 +1982,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                 interactedID,
                 targetName,
                 PlayerWornItems.getStringFromComposition(p.getPlayerComposition())
-        ), currentRoom.getName());
+        ), currentRoom.getName()));
     }
 
     @Subscribe
@@ -2005,7 +2019,6 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     @Subscribe
     public void onNpcSpawned(NpcSpawned event)
     {
-		bloodveldAnalyzer.npcSpawned(event);
         int id = event.getNpc().getId();
         if (id == MELEE_THRALL || id == RANGE_THRALL || id == MAGE_THRALL)
         {
@@ -2149,7 +2162,9 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                 if (currentRoom != null)
                 {
                     currentRoom.updateNpcSpawned(event);
-                    liveFrame.getPanel(currentRoom.getName()).addNPCMapping(event.getNpc().getIndex(), event.getNpc().getName());
+					int index = event.getNpc().getIndex();
+					String name = event.getNpc().getName();
+					SwingUtilities.invokeLater(() -> liveFrame.getPanel(currentRoom.getName()).addNPCMapping(index, name));
                 }
                 break;
         }
@@ -2172,7 +2187,6 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     @Subscribe
     public void onHitsplatApplied(HitsplatApplied event)
     {
-		bloodveldAnalyzer.hitsplatApplied(event);
         if (inTheatre)
         {
             if (event.getActor() instanceof Player && inTheatre)

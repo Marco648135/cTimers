@@ -6,6 +6,7 @@ import com.advancedraidtracker.constants.LogID;
 import com.advancedraidtracker.utility.Point;
 import com.advancedraidtracker.utility.RoomUtil;
 import com.advancedraidtracker.utility.datautility.DataWriter;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameObject;
@@ -210,7 +211,7 @@ public class ScabarasHandler extends TOARoomHandler
         int scabarasDuration = client.getTickCount() - roomStartTick;
         sendTimeMessage("Scabaras Puzzle time: ", scabarasDuration);
         clog.addLine(LogID.TOA_SCABARAS_FINISHED, scabarasDuration);
-        plugin.liveFrame.setRoomFinished(getName(), scabarasDuration);
+		SwingUtilities.invokeLater(() -> plugin.liveFrame.setRoomFinished(getName(), scabarasDuration));
 		plugin.lastSplits += "Scabaras: " + RoomUtil.time(plugin.currentDurationSum) + "(+" + RoomUtil.time(scabarasDuration) + ")\n";
 		plugin.currentDurationSum += scabarasDuration;
     }

@@ -8,6 +8,7 @@ import com.advancedraidtracker.utility.RoomUtil;
 import com.advancedraidtracker.utility.datautility.DataWriter;
 import com.advancedraidtracker.utility.wrappers.PlayerDidAttack;
 import com.advancedraidtracker.utility.wrappers.DawnSpec;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.events.*;
@@ -186,7 +187,7 @@ public class VerzikHandler extends TOBRoomHandler
                     clog.addLine(DAWN_DAMAGE, String.valueOf(event.getHitsplat().getAmount()), String.valueOf(client.getTickCount() - roomStartTick));
                     DawnSpec dawnSpec = new DawnSpec("", client.getTickCount() - roomStartTick);
                     dawnSpec.setDamage(event.getHitsplat().getAmount());
-                    plugin.liveFrame.getPanel(getName()).addDawnSpec(dawnSpec);
+					SwingUtilities.invokeLater(() -> plugin.liveFrame.getPanel(getName()).addDawnSpec(dawnSpec));
                 }
             }
         }
@@ -198,7 +199,8 @@ public class VerzikHandler extends TOBRoomHandler
         if (event.getActor().hasSpotAnim(VERZIK_BOUNCE_SPOT_ANIMATION))
         {
             clog.addLine(LogID.VERZIK_BOUNCE, event.getActor().getName(), String.valueOf(client.getTickCount() - roomStartTick));
-            plugin.liveFrame.addAttack(new PlayerDidAttack(itemManager, event.getActor().getName(), VERZIK_BOUNCE_ANIMATION, client.getTickCount() - roomStartTick, -1, "-1", "-1", -1, -1, "", ""), "Verzik");
+			int tick = client.getTickCount();
+			SwingUtilities.invokeLater(() -> plugin.liveFrame.addAttack(new PlayerDidAttack(itemManager, event.getActor().getName(), VERZIK_BOUNCE_ANIMATION, tick - roomStartTick, -1, "-1", "-1", -1, -1, "", ""), "Verzik"));
 
         }
     }
@@ -208,7 +210,8 @@ public class VerzikHandler extends TOBRoomHandler
         if (event.getItem().getId() == DAWNBRINGER_ITEM)
         {
             clog.addLine(DAWN_DROPPED, String.valueOf(client.getTickCount() - roomStartTick));
-            plugin.liveFrame.getPanel(getName()).addRoomSpecificData(client.getTickCount() - roomStartTick, "X");
+			int tick = client.getTickCount();
+			SwingUtilities.invokeLater(() -> plugin.liveFrame.getPanel(getName()).addRoomSpecificData(tick - roomStartTick, "X"));
         }
     }
 
@@ -372,7 +375,7 @@ public class VerzikHandler extends TOBRoomHandler
         sendTimeMessage("Wave 'Verzik phase 3' complete. Duration: ", verzikP3EndTick - roomStartTick, verzikP3EndTick - verzikP2EndTick);
         clog.addLine(VERZIK_P3_DESPAWNED, String.valueOf(verzikP3EndTick - roomStartTick));
         plugin.addDelayedLine(RaidRoom.VERZIK, client.getTickCount() - roomStartTick, "Dead");
-        plugin.liveFrame.setRoomFinished(getName(), verzikP3EndTick - roomStartTick);
+		SwingUtilities.invokeLater(() -> plugin.liveFrame.setRoomFinished(getName(), verzikP3EndTick - roomStartTick));
         active = false;
 		if(!plugin.lastSplits.contains("Completion"))
 		{

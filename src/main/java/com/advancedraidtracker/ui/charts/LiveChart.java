@@ -213,7 +213,39 @@ public class LiveChart extends BaseFrame
 				}
 			}
 		});
-		add(tabbedPane);
+		setLayout(new BorderLayout());
+		add(tabbedPane, BorderLayout.CENTER);
+		JPanel bottomOptions = new JPanel(new BorderLayout());
+		JButton resetButton = new JButton("Reset This Graph");
+		resetButton.addActionListener(al ->
+		{
+			String activePanel = "";
+			switch (activeRaid)
+			{
+				case TOB:
+					activePanel = tob[tabbedPane.getSelectedIndex()];
+					break;
+				case TOA:
+					activePanel = toa[tabbedPane.getSelectedIndex()];
+					break;
+				case COLOSSEUM:
+					activePanel = col[tabbedPane.getSelectedIndex()];
+					break;
+				case INFERNO:
+					activePanel = inf[tabbedPane.getSelectedIndex()];
+			}
+			if(!activePanel.isEmpty())
+			{
+				ChartPanel currentChart = currentPanels.get(activePanel);
+				if(currentChart != null)
+				{
+					currentChart.softReset();
+					currentChart.redraw();
+				}
+			}
+		});
+		bottomOptions.add(resetButton, BorderLayout.WEST);
+		add(bottomOptions, BorderLayout.SOUTH);
 		pack();
 	}
 

@@ -1,4 +1,4 @@
-package com.advancedraidtracker.ui.docking;
+package com.advancedraidtracker.ui.setups.docking;
 
 import com.google.gson.Gson;
 import java.awt.AWTEvent;
@@ -17,6 +17,7 @@ import javax.swing.JComponent;
 import javax.swing.JLayer;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import lombok.Getter;
 
 public class DockingPanel extends JPanel implements CustomLayerListener
 {
@@ -25,7 +26,7 @@ public class DockingPanel extends JPanel implements CustomLayerListener
 	private Map<String, CustomPanel> customPanelMap = new LinkedHashMap<>(); // This map is for reconstructed panels from tabs.
 	private String layoutFilePath;
 	MultiSplitPane mainPane;
-
+	@Getter
 	private Function<String, CustomPanel> panelFactory;
 
 	public void setPanelFactory(Function<String, CustomPanel> factory)

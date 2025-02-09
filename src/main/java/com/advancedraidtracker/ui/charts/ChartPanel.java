@@ -839,6 +839,30 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	int baseStartTick = 0;
 	int baseEndTick = 0;
 
+	public void softReset()
+	{
+		playerWasOnCD.clear();
+		currentBox = 0;
+		currentScrollOffsetY = 0;
+		currentScrollOffsetX = 0;
+		startTick = endTick;
+		baseEndTick = 0;
+		baseStartTick = 0;
+		hoveredColumn = -1;
+		hoveredTick = -1;
+		hoveredPlayer = "";
+		synchronized (outlineBoxes)
+		{
+			outlineBoxes.clear();
+		}
+		autos.clear();
+		lines.clear();
+		specific.clear();
+		dawnSpecs.clear();
+		thrallOutlineBoxes.clear();
+		recalculateSize();
+	}
+
 	public void resetGraph()
 	{
 		playerWasOnCD.clear();

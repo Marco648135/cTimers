@@ -6,6 +6,7 @@ import com.advancedraidtracker.constants.LogID;
 import com.advancedraidtracker.utility.RoomState;
 import com.advancedraidtracker.utility.RoomUtil;
 import com.advancedraidtracker.utility.datautility.DataWriter;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.NpcID;
@@ -123,7 +124,8 @@ public class WardensHandler extends TOARoomHandler
             sendTimeMessage("Wardens Duration: ", client.getTickCount() - roomStartTick, client.getTickCount() - enraged);
             clog.addLine(LogID.TOA_WARDENS_FINISHED, client.getTickCount() - roomStartTick);
             roomState = FINISHED;
-            plugin.liveFrame.setRoomFinished(getName(), client.getTickCount() - roomStartTick);
+			int tick = client.getTickCount();
+			SwingUtilities.invokeLater(() -> plugin.liveFrame.setRoomFinished(getName(), tick - roomStartTick));
 			plugin.lastSplits += "Wardens: " + RoomUtil.time(plugin.currentDurationSum) + "(+" + RoomUtil.time(duration) + ")\n";
 			plugin.currentDurationSum += duration;
 			plugin.lastSplits += "Duration (Completion): " + RoomUtil.time(plugin.currentDurationSum);

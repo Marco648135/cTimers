@@ -7,6 +7,7 @@ import com.advancedraidtracker.constants.RaidRoom;
 import com.advancedraidtracker.utility.Point;
 import com.advancedraidtracker.utility.RoomUtil;
 import com.advancedraidtracker.utility.datautility.DataWriter;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
@@ -229,7 +230,7 @@ public class SotetsegHandler extends TOBRoomHandler
         roomState = RoomState.SotetsegRoomState.FINISHED;
         clog.addLine(LogID.ACCURATE_SOTE_END);
         clog.addLine(LogID.SOTETSEG_ENDED, String.valueOf(soteDeathTick - roomStartTick));
-        plugin.liveFrame.setRoomFinished(getName(), soteDeathTick - roomStartTick);
+		SwingUtilities.invokeLater(() -> plugin.liveFrame.setRoomFinished(getName(), soteDeathTick - roomStartTick));
         sendTimeMessage("Wave 'Sotetseg phase 3' complete. Duration: ", soteDeathTick - roomStartTick, soteDeathTick - soteSecondMazeEnd, false);
 		plugin.lastSplits += "Sotetseg: " + RoomUtil.time(soteDeathTick-roomStartTick) + " (" + RoomUtil.time(plugin.currentDurationSum) + ")\n";
 		plugin.currentDurationSum += (soteDeathTick-roomStartTick);

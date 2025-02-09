@@ -7,6 +7,7 @@ import com.advancedraidtracker.utility.Point;
 import com.advancedraidtracker.utility.RoomState;
 import com.advancedraidtracker.utility.RoomUtil;
 import com.advancedraidtracker.utility.datautility.DataWriter;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
@@ -195,7 +196,7 @@ public class KephriHandler extends TOARoomHandler
             int duration = client.getTickCount() - roomStartTick + 3;
             sendTimeMessage("Kephri Duration: ", duration, duration - s2End);
             clog.addLine(LogID.TOA_KEPHRI_FINISHED, duration);
-            plugin.liveFrame.setRoomFinished(getName(), duration);
+			SwingUtilities.invokeLater(() -> plugin.liveFrame.setRoomFinished(getName(), duration));
             active = false;
 			plugin.lastSplits += "Kephri: " + RoomUtil.time(plugin.currentDurationSum) + "(+" + RoomUtil.time(duration) + ")\n";
 			plugin.currentDurationSum += duration;

@@ -6,6 +6,7 @@ import com.advancedraidtracker.constants.LogID;
 import com.advancedraidtracker.utility.Point;
 import com.advancedraidtracker.utility.RoomUtil;
 import com.advancedraidtracker.utility.datautility.DataWriter;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.events.GameTick;
@@ -51,7 +52,7 @@ public class CrondisHandler extends TOARoomHandler
             int duration = client.getTickCount() - roomStartTick;
             sendTimeMessage("Crondis Duration: ", duration);
             clog.addLine(LogID.TOA_CRONDIS_FINISHED, duration);
-            plugin.liveFrame.setRoomFinished(getName(), duration);
+			SwingUtilities.invokeLater(() -> plugin.liveFrame.setRoomFinished(getName(), duration));
 			plugin.lastSplits += "Crondis: " + RoomUtil.time(plugin.currentDurationSum) + "(+" + RoomUtil.time(duration) + ")\n";
 			plugin.currentDurationSum += duration;
         }

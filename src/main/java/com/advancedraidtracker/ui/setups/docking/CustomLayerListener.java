@@ -1,4 +1,4 @@
-package com.advancedraidtracker.ui.docking;
+package com.advancedraidtracker.ui.setups.docking;
 
 public interface CustomLayerListener
 {

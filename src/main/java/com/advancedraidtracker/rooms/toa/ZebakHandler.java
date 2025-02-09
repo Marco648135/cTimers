@@ -7,6 +7,7 @@ import com.advancedraidtracker.utility.Point;
 import com.advancedraidtracker.utility.RoomState;
 import com.advancedraidtracker.utility.RoomUtil;
 import com.advancedraidtracker.utility.datautility.DataWriter;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.Player;
@@ -96,7 +97,7 @@ public class ZebakHandler extends TOARoomHandler
             int duration = client.getTickCount() - roomStartTick;
             sendTimeMessage("Zebak Duration: ", duration);
             clog.addLine(LogID.TOA_ZEBAK_FINISHED, duration);
-            plugin.liveFrame.setRoomFinished(getName(), duration);
+			SwingUtilities.invokeLater(() -> plugin.liveFrame.setRoomFinished(getName(), duration));
             active = false;
 			plugin.lastSplits += "Zebak: " + RoomUtil.time(plugin.currentDurationSum) + "(+" + RoomUtil.time(duration) + ")\n";
 			plugin.currentDurationSum += duration;

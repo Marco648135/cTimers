@@ -4,6 +4,7 @@ import com.advancedraidtracker.AdvancedRaidTrackerConfig;
 import com.advancedraidtracker.AdvancedRaidTrackerPlugin;
 import com.advancedraidtracker.constants.RaidRoom;
 import com.advancedraidtracker.constants.TobIDs;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
 import net.runelite.api.Client;
@@ -190,7 +191,7 @@ public class XarpusHandler extends TOBRoomHandler
         roomState = FINISHED;
         xarpusEndTick = client.getTickCount() + XARPUS_DEATH_ANIMATION_LENGTH;
         clog.addLine(ACCURATE_XARP_END);
-        plugin.liveFrame.setRoomFinished(getName(), xarpusEndTick - xarpusEntryTick);
+		SwingUtilities.invokeLater(() -> plugin.liveFrame.setRoomFinished(getName(), xarpusEndTick - xarpusEntryTick));
         String splitMessage = "Wave 'Xarpus phase 3' complete. Duration: " + timeColor() + RoomUtil.time(xarpusEndTick - xarpusEntryTick) + " (" + RoomUtil.time(xarpusEndTick - xarpusScreechTick) + ")";
         this.client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", splitMessage, null, false);
         active = false;

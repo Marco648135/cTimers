@@ -14,6 +14,7 @@ import com.advancedraidtracker.utility.wrappers.NPCTimeInChunkShell;
 import com.advancedraidtracker.utility.wrappers.PlayerHitsWrapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.errorprone.annotations.Immutable;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
@@ -166,7 +167,7 @@ public class MaidenHandler extends TOBRoomHandler
             sendTimeMessage("Wave 'Maiden Skip' complete! Duration: ", maidenDeathTick - roomStartTick, maidenDeathTick - p30, false);
         clog.addLine(ACCURATE_MAIDEN_END);
         plugin.addDelayedLine(RaidRoom.MAIDEN, client.getTickCount() - roomStartTick, "Dead");
-        plugin.liveFrame.setRoomFinished(getName(), maidenDeathTick - roomStartTick);
+		SwingUtilities.invokeLater(() -> plugin.liveFrame.setRoomFinished(getName(), maidenDeathTick - roomStartTick));
 		plugin.lastSplits += "Maiden: " + RoomUtil.time(maidenDeathTick-roomStartTick) + "\n";
 		plugin.currentDurationSum += (maidenDeathTick-roomStartTick);
     }
@@ -194,7 +195,8 @@ public class MaidenHandler extends TOBRoomHandler
                 {
                     if (config.showMistakesInChat())
                     {
-						plugin.liveFrame.addBadChin(getName(), player.getName(), client.getTickCount()-roomStartTick);
+						int tick = client.getTickCount();
+						SwingUtilities.invokeLater(() -> plugin.liveFrame.addBadChin(getName(), player.getName(), tick-roomStartTick));
 						client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", player.getName() + " chinned from " + distance + " tiles away.", null, false);
                     }
                 }
@@ -328,8 +330,8 @@ public class MaidenHandler extends TOBRoomHandler
             case MAIDEN_MATOMENOS_SM:
                 String crabName = identifySpawn(npc);
                 clog.addLine(ADD_NPC_MAPPING, String.valueOf(npc.getIndex()), crabName, getName());
-                plugin.liveFrame.getPanel(getName()).addNPCMapping(npc.getIndex(), crabName);
-                plugin.liveFrame.getPanel(getName()).addMaidenCrab(crabName);
+				SwingUtilities.invokeLater(() -> plugin.liveFrame.getPanel(getName()).addNPCMapping(npc.getIndex(), crabName));
+				SwingUtilities.invokeLater(() -> plugin.liveFrame.getPanel(getName()).addMaidenCrab(crabName));
                 MaidenCrab crab = new MaidenCrab(npc, AdvancedRaidTrackerPlugin.scale, crabName);
                 logCrabSpawn(crab.description);
                 maidenCrabs.add(crab);
@@ -387,11 +389,13 @@ public class MaidenHandler extends TOBRoomHandler
             {
                 if (p.bloodTicksAlive == -1)
                 {
-					plugin.liveFrame.addStoodInSpawnedBlood(getName(), p.playerName, (client.getTickCount()-roomStartTick));
+					int tick = client.getTickCount();
+					SwingUtilities.invokeLater(() -> plugin.liveFrame.addStoodInSpawnedBlood(getName(), p.playerName, (tick-roomStartTick)));
                     clog.addLine(PLAYER_STOOD_IN_SPAWNED_BLOOD, p.playerName, String.valueOf(bloodDamage), String.valueOf((client.getTickCount()-roomStartTick))); //player, dmg, room tick
                 } else
                 {
-					plugin.liveFrame.addStoodInThrownBlood(getName(), p.playerName, (client.getTickCount()-roomStartTick));
+					int tick = client.getTickCount();
+					SwingUtilities.invokeLater(() -> plugin.liveFrame.addStoodInThrownBlood(getName(), p.playerName, (tick-roomStartTick)));
                     clog.addLine(PLAYER_STOOD_IN_THROWN_BLOOD, p.playerName, String.valueOf(bloodDamage), String.valueOf(p.bloodTicksAlive), String.valueOf(client.getTickCount()-roomStartTick)); //player, dmg, blood tick, room tick
                 }
                 bloodHeals++;
@@ -587,7 +591,8 @@ public class MaidenHandler extends TOBRoomHandler
                 }
                 String value5 = getTargetsBelow27(healths, targets, didDoubleHit);
                 clog.addLine(MAIDEN_DINHS_SPEC, p.getName(), value3, value4.toString(), value5, String.valueOf(client.getTickCount()-roomStartTick));
-				plugin.liveFrame.addDinhsSpec(getName(), p.getName(), targets.size(), (client.getTickCount()-roomStartTick));
+				int tick = client.getTickCount();
+				SwingUtilities.invokeLater(() -> plugin.liveFrame.addDinhsSpec(getName(), p.getName(), targets.size(), (tick-roomStartTick)));
             }
         }
         dinhsers.clear();
@@ -634,7 +639,8 @@ public class MaidenHandler extends TOBRoomHandler
                         plugin.sendChatMessage(drained.getName() + " was targeted by Maiden with melee as their highest bonus.");
                     }
                     clog.addLine(MAIDEN_PLAYER_DRAINED, drained.getName(), String.valueOf((client.getTickCount() - roomStartTick)));
-					plugin.liveFrame.addDrain(getName(), drained.getName(), (client.getTickCount()-roomStartTick));
+					int tick = client.getTickCount();
+					SwingUtilities.invokeLater(() -> plugin.liveFrame.addDrain(getName(), drained.getName(), (tick-roomStartTick)));
                 }
             }
             didAuto = false;

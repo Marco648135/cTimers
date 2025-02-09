@@ -7,6 +7,7 @@ import com.advancedraidtracker.utility.Point;
 import com.advancedraidtracker.utility.RoomState;
 import com.advancedraidtracker.utility.RoomUtil;
 import com.advancedraidtracker.utility.datautility.DataWriter;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Actor;
 import net.runelite.api.Client;
@@ -163,7 +164,7 @@ public class AkkhaHandler extends TOARoomHandler
             sendTimeMessage("Akkha Duration: ", duration, duration - p5End);
             roomState = RoomState.AkkhaRoomState.FINISHED;
             clog.addLine(LogID.TOA_AKKHA_FINISHED, duration);
-            plugin.liveFrame.setRoomFinished(getName(), duration);
+			SwingUtilities.invokeLater(() -> plugin.liveFrame.setRoomFinished(getName(), duration));
             active = false;
 			plugin.lastSplits += "Akkha: " + RoomUtil.time(plugin.currentDurationSum) + "(+" + RoomUtil.time(duration) + ")\n";
 			plugin.currentDurationSum += duration;

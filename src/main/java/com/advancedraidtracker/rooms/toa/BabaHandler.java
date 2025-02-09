@@ -7,6 +7,7 @@ import com.advancedraidtracker.utility.Point;
 import com.advancedraidtracker.utility.RoomState;
 import com.advancedraidtracker.utility.RoomUtil;
 import com.advancedraidtracker.utility.datautility.DataWriter;
+import javax.swing.SwingUtilities;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.events.GameTick;
@@ -70,7 +71,7 @@ public class BabaHandler extends TOARoomHandler
             sendTimeMessage("Baba Duration: ", duration, duration - b2End);
             roomState = RoomState.BabaRoomState.FINISHED;
             clog.addLine(LogID.TOA_BABA_FINISHED, duration);
-            plugin.liveFrame.setRoomFinished(getName(), duration);
+			SwingUtilities.invokeLater(() -> plugin.liveFrame.setRoomFinished(getName(), duration));
             active = false;
 			plugin.lastSplits += "Baba: " + RoomUtil.time(plugin.currentDurationSum) + "(+" + RoomUtil.time(duration) + ")\n";
 			plugin.currentDurationSum += duration;

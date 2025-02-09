@@ -110,7 +110,6 @@ public class AddPresetWindow
 	private JLabel magicDamageLabel;
 	private JLabel prayerLabel;
 
-	// Target-Specific labels
 	private JLabel undeadLabel;
 	private JLabel slayerLabel;
 

@@ -1,18 +1,17 @@
 package com.advancedraidtracker.ui.setups;
 
 import com.advancedraidtracker.ui.BaseFrame;
-import com.advancedraidtracker.ui.docking.*;
+import com.advancedraidtracker.ui.setups.docking.CustomPanel;
+import com.advancedraidtracker.ui.setups.docking.DockingPanel;
+import com.advancedraidtracker.ui.setups.docking.MultiSplitPane;
 import static com.advancedraidtracker.utility.datautility.DataWriter.PLUGIN_DIRECTORY;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.List;
-import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 import net.runelite.api.Client;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.ItemManager;
@@ -22,19 +21,19 @@ public class SetupsWindow extends BaseFrame
 {
 	List<Integer> magicDefaults = List.of(
 		21018, 21021, 21024, 21006, 12002, 19544, 13235, 21791,
-		27275, 27251, 28313, 22323, 26241, 26243, 26245, 11663, 27624
+		27275, 27251, 28313, 22323, 26241, 26243, 26245, 11663, 27624, 23444, 25733, 24424
 	);
 
 	List<Integer> meleeDefaults = List.of(
 		28254, 28256, 28258, 22325, 29801, 22981, 13239, 21295,
 		11804, 28307, 28316, 21003, 13576, 22322, 21015, 23987,
-		13652, 24219, 11665
+		13652, 24219, 11665, 19553, 20366, 21285
 	);
 
 	List<Integer> rangedDefaults = List.of(
 		11664, 13072, 13073, 20997, 19547, 8842, 13237, 28951,
 		12926, 26374, 27235, 27238, 27241, 26235, 11959, 21000,
-		11212, 21944, 28922, 28310
+		11212, 21944, 28922, 28310, 22249, 28902
 	);
 
 	List<Integer> miscDefaults = List.of(
