@@ -705,7 +705,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	public void addRoomSpecificData(int tick, String data)
 	{
-		specific.put(tick, data);
+		specific.put(tick+(endTick-lastSoftResetTick), data);
 		if (specific.size() == 1)
 		{
 			recalculateSize();
@@ -720,7 +720,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	public void addLine(int tick, String lineInfo)
 	{
-		ChartLine line = new ChartLine(lineInfo, tick);
+		ChartLine line = new ChartLine(lineInfo, tick+(endTick-lastSoftResetTick));
 		lines.add(line);
 		postChartChange(new ChartChangedEvent(ADD_ELEMENT, LINE, line));
 		changesSaved = false;
@@ -744,12 +744,12 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	public void addRoomHP(int tick, int hp)
 	{
-		roomHP.put(tick, hp);
+		roomHP.put(tick+(endTick-lastSoftResetTick), hp);
 	}
 
 	public void addAuto(int autoTick)
 	{
-		ChartAuto auto = new ChartAuto(autoTick);
+		ChartAuto auto = new ChartAuto(autoTick+(endTick-lastSoftResetTick));
 		autos.add(auto);
 		postChartChange(new ChartChangedEvent(ADD_ELEMENT, AUTO, auto));
 		changesSaved = false;
@@ -839,12 +839,14 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	int baseStartTick = 0;
 	int baseEndTick = 0;
 
+	int lastSoftResetTick = 0;
 	public void softReset()
 	{
 		playerWasOnCD.clear();
 		currentBox = 0;
 		currentScrollOffsetY = 0;
 		currentScrollOffsetX = 0;
+		lastSoftResetTick = endTick;
 		startTick = endTick;
 		baseEndTick = 0;
 		baseStartTick = 0;

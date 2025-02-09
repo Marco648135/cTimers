@@ -335,7 +335,6 @@ public class VerzikHandler extends TOBRoomHandler
         roomStartTick = client.getTickCount();
         clog.addLine(VERZIK_P1_START);
         clog.addLine(ACCURATE_VERZIK_START);
-        roomStartTick = client.getTickCount();
         active = true;
     }
 
