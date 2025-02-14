@@ -44,8 +44,16 @@ public interface AdvancedRaidTrackerConfig extends Config
         return true;
     }
 
+	@ConfigItem(
+		position = 3,
+		keyName = "showStatsInChat",
+		name = "Show Stats/Prayer messages in chat",
+		description = "Shows stat/prayer messages in chat"
+	)
+	default boolean showStatsPrayerMessagesInChat() { return true; }
+
     @ConfigItem(
-            position = 3,
+            position = 4,
             keyName = "chartScaleSize",
             name = "Chart Scale Size",
             description = "Adjusts box size in chart"

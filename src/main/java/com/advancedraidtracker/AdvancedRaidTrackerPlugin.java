@@ -1102,13 +1102,13 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 				PlayerData playerData = playerDataMap.get(p);
 				if (playerData != null)
 				{
-					if (playerData.getStrengthLevel() != 118)
+					if (playerData.getStrengthLevel() != 118 && config.showStatsPrayerMessagesInChat())
 					{
 						sendChatMessage(p + " scythed with: " + playerData.getStrengthLevel() + " strength");
 					}
 
 					Boolean isPietyActive = playerData.getPrayers().get(Prayer.PIETY);
-					if (Boolean.FALSE.equals(isPietyActive))
+					if (Boolean.FALSE.equals(isPietyActive) && config.showStatsPrayerMessagesInChat())
 					{
 						sendChatMessage(p + " scythed without piety");
 					}
