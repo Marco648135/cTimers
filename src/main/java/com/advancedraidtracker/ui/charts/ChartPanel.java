@@ -1325,6 +1325,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	private BufferedImage hand;
 	private BufferedImage xSymbol;
 	private BufferedImage checkSymbol;
+	private BufferedImage star;
 
 	public ChartPanel(String room, boolean isLive, AdvancedRaidTrackerConfig config, ClientThread clientThread, ConfigManager configManager, ItemManager itemManager, SpriteManager spriteManager)
 	{
@@ -1354,6 +1355,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		hand = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/hand.png");
 		xSymbol = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/x.png");
 		checkSymbol = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/check.png");
+		star = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/star.png");
 
 
 		if (!isLive)
@@ -2025,6 +2027,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 						if (room.contains("Verzik"))
 						{
 							boolean lateDrop = true;
+							boolean earlyDrop = false;
 							int lastSpecTick = 0;
 							String lastSpecPlayer = "";
 							for (OutlineBox box : outlineBoxes)
@@ -2042,6 +2045,10 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 									if (box.playerAnimation.equals(DAWN_SPEC))
 									{
 										lateDrop = false;
+										if(box.tick == i-1)
+										{
+											earlyDrop = true;
+										}
 									}
 								}
 							}
@@ -2064,6 +2071,11 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 								g.setColor(config.fontColor());
 								int stringHeight = getStringHeight(g);
 								g.drawString(lastSpecPlayer, xOffset + scale, yOffset - scale / 2 + stringHeight / 2);
+							}
+							else if(earlyDrop)
+							{
+								BufferedImage starSymbolScaled = getSmoothScaledIcon(star, twoThird, twoThird);
+								g.drawImage(starSymbolScaled, xOffset + sixth, yOffset - scale + sixth, null);
 							}
 							else
 							{
