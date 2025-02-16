@@ -1326,6 +1326,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	private BufferedImage xSymbol;
 	private BufferedImage checkSymbol;
 	private BufferedImage star;
+	private BufferedImage questionMark;
 
 	public ChartPanel(String room, boolean isLive, AdvancedRaidTrackerConfig config, ClientThread clientThread, ConfigManager configManager, ItemManager itemManager, SpriteManager spriteManager)
 	{
@@ -1356,6 +1357,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		xSymbol = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/x.png");
 		checkSymbol = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/check.png");
 		star = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/star.png");
+		questionMark = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/questionmark.png");
 
 
 		if (!isLive)
@@ -2015,21 +2017,27 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 			else
 			{
 				lateDroppers.clear();
+
 				for (Integer i : specific.keySet())
 				{
 					int xOffset = getXOffset(i);
 					int yOffset = getYOffset(i);
 					yOffset += (playerOffsets.size() + 2) * scale;
+
 					g.setColor(config.fontColor());
 					int strWidth = getStringBounds(g, specific.get(i)).width;
+
 					if (yOffset > scale + 5 && xOffset > LEFT_MARGIN - 5)
 					{
 						if (room.contains("Verzik"))
 						{
 							boolean lateDrop = true;
 							boolean earlyDrop = false;
+							boolean doubleDrop = false;
+
 							int lastSpecTick = 0;
 							String lastSpecPlayer = "";
+
 							for (OutlineBox box : outlineBoxes)
 							{
 								if (box.playerAnimation.equals(DAWN_SPEC) || box.playerAnimation.equals(DAWN_AUTO))
@@ -2040,39 +2048,59 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 										lastSpecPlayer = box.player;
 									}
 								}
-								if (box.tick == i - 2 || box.tick == i-1)
+
+								if (box.tick == i - 2 || box.tick == i - 1)
 								{
 									if (box.playerAnimation.equals(DAWN_SPEC))
 									{
 										lateDrop = false;
-										if(box.tick == i-1)
+										if (box.tick == i - 1)
 										{
 											earlyDrop = true;
 										}
 									}
 								}
 							}
+
+							if (lastSpecTick > 0)
+							{
+								for (Integer iPrime : specific.keySet())
+								{
+									if (iPrime > lastSpecTick && iPrime < i)
+									{
+										doubleDrop = true;
+										break;
+									}
+								}
+							}
+
 							if (lateDrop)
 							{
 								lateDroppers.add(lastSpecPlayer);
 							}
+
 							int sixth = scale / 8;
 							int twoThird = scale * 3 / 4;
-							g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION,
-								RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-							g.setRenderingHint(RenderingHints.KEY_INTERPOLATION,
-								RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-							g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-								RenderingHints.VALUE_ANTIALIAS_ON);
-							if (lateDrop)
+
+							g.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
+							g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+							g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+							if(doubleDrop)
+							{
+								BufferedImage questionMarkScaled = getSmoothScaledIcon(questionMark, twoThird, twoThird);
+								g.drawImage(questionMarkScaled, xOffset + sixth, yOffset - scale + sixth, null);
+							}
+							else if (lateDrop)
 							{
 								BufferedImage xSymbolScaled = getSmoothScaledIcon(xSymbol, twoThird, twoThird);
 								g.drawImage(xSymbolScaled, xOffset + sixth, yOffset - scale + sixth, null);
+
 								g.setColor(config.fontColor());
 								int stringHeight = getStringHeight(g);
 								g.drawString(lastSpecPlayer, xOffset + scale, yOffset - scale / 2 + stringHeight / 2);
 							}
-							else if(earlyDrop)
+							else if (earlyDrop)
 							{
 								BufferedImage starSymbolScaled = getSmoothScaledIcon(star, twoThird, twoThird);
 								g.drawImage(starSymbolScaled, xOffset + sixth, yOffset - scale + sixth, null);
