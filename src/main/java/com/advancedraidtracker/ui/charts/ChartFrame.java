@@ -41,7 +41,7 @@ public class ChartFrame extends BaseFrame
 {
 	private int frameX = this.getWidth();
 	private int frameY = this.getHeight();
-	private Set<String> TOBRooms = new LinkedHashSet<>(Arrays.asList("Maiden", "Bloat", "Nylocas", "Sotetseg", "Xarpus", "Verzik P1", "Verzik P2", "Verzik P3"));
+	private Set<String> TOBRooms = new LinkedHashSet<>(Arrays.asList("Maiden", "Bloat", "Nylocas", "Nylo Boss", "Sotetseg", "Xarpus", "Verzik P1", "Verzik P2", "Verzik P3"));
 	private Set<String> TOARooms = new LinkedHashSet<>(Arrays.asList("Apmeken", "Baba", "Scabaras", "Kephri", "Het", "Akkha", "Crondis", "Zebak", "Wardens P1", "Wardens P2", "Wardens P3"));
 	private Set<String> COLRooms = new LinkedHashSet<>(Arrays.asList("Col Wave 1", "Col Wave 2", "Col Wave 3", "Col Wave 4", "Col Wave 5", "Col Wave 6", "Col Wave 7", "Col Wave 8", "Col Wave 9", "Col Wave 10", "Col Wave 11", "Col Wave 12"));
 	private Set<String> InfRooms = new LinkedHashSet<>(Arrays.asList("Inf Wave 1", "Inf Wave 2", "Inf Wave 3", "Inf Wave 4", "Inf Wave 5", "Inf Wave 6", "Inf Wave 7", "Inf Wave 8", "Inf Wave 9", "Inf Wave 10", "Inf Wave 11", "Inf Wave 12"));
@@ -162,6 +162,9 @@ public class ChartFrame extends BaseFrame
 		for (String bossName : activeSet)
 		{
 			RaidRoom room = RaidRoom.getRoom(bossName);
+			if (bossName.equalsIgnoreCase("Nylo Boss")) {
+				room = RaidRoom.getRoom("Nylocas");
+			}
 			JPanel tab = getThemedPanel();
 			tab.setLayout(new GridLayout(1, 2));
 			JPanel chart = getThemedPanel();
@@ -198,15 +201,21 @@ public class ChartFrame extends BaseFrame
 			}
 			else
 			{
-				chartPanel.setStartTick((bossName.contains("Verzik") || bossName.contains("Wardens")) ? //Just trust
-					(bossName.contains("P1") ? 1 : (bossName.contains("P2") ? roomData.get(bossName.replace('2', '1') + " Time") :
-						roomData.get(bossName.replace('3', '1') + " Time") + roomData.get(bossName.replace('3', '2') + " Time"))) : 1);
-				chartPanel.setEndTick(((bossName.contains("Verzik") || bossName.contains("Wardens")) && !bossName.contains("P1"))
-					? (bossName.contains("P2")) ? roomData.get(bossName + " Time") +
-					roomData.get(bossName.replace('2', '1') + " Time") :
-					roomData.get(bossName.substring(0, bossName.length() - 2) + "Time") : roomData.get(bossName + " Time"));
+				if (bossName.equalsIgnoreCase("Nylo Boss")) {
+					chartPanel.setStartTick(roomData.get("Nylo boss spawn"));
+					chartPanel.setEndTick(roomData.get("Nylocas Time"));
+				} else {
+					chartPanel.setStartTick((bossName.contains("Verzik") || bossName.contains("Wardens")) ? //Just trust
+							(bossName.contains("P1") ? 1 : (bossName.contains("P2") ? roomData.get(bossName.replace('2', '1') + " Time") :
+									roomData.get(bossName.replace('3', '1') + " Time") + roomData.get(bossName.replace('3', '2') + " Time"))) : 1);
 
-				chartPanel.setEndTick(Math.max(chartPanel.endTick + 1, getLastAttackTick(chartData.getAttacks(room))));
+					chartPanel.setEndTick(((bossName.contains("Verzik") || bossName.contains("Wardens")) && !bossName.contains("P1"))
+							? (bossName.contains("P2")) ? roomData.get(bossName + " Time") +
+							roomData.get(bossName.replace('2', '1') + " Time") :
+							roomData.get(bossName.substring(0, bossName.length() - 2) + "Time") : roomData.get(bossName + " Time"));
+
+					chartPanel.setEndTick(Math.max(chartPanel.endTick + 1, getLastAttackTick(chartData.getAttacks(room))));
+				}
 			}
 			chartPanel.addThrallBoxes(chartData.getThralls(room));
 			chartPanel.addLines(roomData.getLines(room));
