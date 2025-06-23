@@ -45,7 +45,9 @@ public class ItemReference
 					"combat bracelet",
 					"rancour",
 					"anchor",
-					"blood moon"
+					"blood moon",
+					"dharok",
+					"oathplate"
             },
             {
                     "masori",
