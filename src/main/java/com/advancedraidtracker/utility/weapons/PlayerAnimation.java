@@ -37,7 +37,7 @@ public enum PlayerAnimation
 	BLITZ("Blitz", "F?", new Color(50, 50, 170), 5, new int[]{1978}, new int[]{}, new int[]{ItemID.KODAI_WAND}, new int[]{}, 0, true, Style.MAGE),
 	DAWN_SPEC("Dawnbringer Spec", "DB", new Color(10, 100, 150), 4, new int[]{1167}, new int[]{}, new int[]{ItemID.DAWNBRINGER}, new int[]{1547}, 35, Style.MAGE),
 	DAWN_AUTO("Dawnbringer Auto", "db", new Color(10, 100, 150), 4, new int[]{1167}, new int[]{}, new int[]{ItemID.DAWNBRINGER}, new int[]{1544}, 0, true, Style.MAGE),
-	CLAW_SCRATCH("Claw Scratch", "c", new Color(76, 89, 1), 4, new int[]{393, 1067}, new int[]{}, new int[]{ItemID.DRAGON_CLAWS, ItemID.DRAGON_CLAWS_OR, ItemID.DRAGON_CLAWS_CR}, new int[]{}, 0, true, Style.MELEE),
+	CLAW_SCRATCH("Claw Scratch", "c", new Color(76, 89, 1), 4, new int[]{393, 1067}, new int[]{}, new int[]{ItemID.DRAGON_CLAWS, ItemID.DRAGON_CLAWS_OR, ItemID.DRAGON_CLAWS_CR, 29577}, new int[]{}, 0, true, Style.MELEE),
 	CLAW_SPEC("Claw Spec", "C", new Color(76, 89, 1), 4, new int[]{7514}, new int[]{}, new int[]{ItemID.DRAGON_CLAWS, ItemID.DRAGON_CLAWS_OR, ItemID.DRAGON_CLAWS_CR}, new int[]{}, 50, Style.MELEE),
 	SHADOW("Shadow", "Sh", new Color(20, 20, 60), 5, new int[]{9493}, new int[]{}, new int[]{ItemID.TUMEKENS_SHADOW}, new int[]{2126}, 0, Style.MAGE),
 	DART("Dart", "Da", new Color(10, 60, 60), 2, new int[]{7554}, new int[]{}, new int[]{ItemID.DRAGON_DART, ItemID.AMETHYST_DART, ItemID.RUNE_DART, ItemID.DRAGON_DARTP, 11233, 11234, ItemID.AMETHYST_DARTP, 25855, 25857, ItemID.RUNE_DARTP, 5634, 5641, -1}, new int[]{}, 0, Style.RANGE),
@@ -124,7 +124,10 @@ public enum PlayerAnimation
 	WARD_OF_ARCEUSS("Ward of Arceuus", "WA", new Color(70, 70, 70), -1, new int[]{8970}, new int[]{1851}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
 	MARK_OF_DARKNESS("Mark of Darkness", "MD", new Color(70, 70, 70), -1, new int[]{8970}, new int[]{1852}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
 	LESSER_CORRUPTION("Lesser Corruption", "LC", new Color(70, 70, 70), -1, new int[]{8979}, new int[]{1877}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
-	SULPHUR_BLADES("Sulphur Blades", "SUL", new Color(180, 20, 40), 4, new int[]{2068}, new int[]{}, new int[]{29084}, new int[]{}, 0, Style.MELEE);
+	SULPHUR_BLADES("Sulphur Blades", "SUL", new Color(180, 20, 40), 4, new int[]{2068}, new int[]{}, new int[]{29084}, new int[]{}, 0, Style.MELEE),
+	DHAROK_AXE("Dharok's Great Axe", "DH", new Color(100, 70, 70), 7, new int[]{2067}, new int[] {}, new int[]{4886, 4887, 4888, 4889}, new int[] {}, 0, Style.MELEE),
+	SOULFLAME_HORN("Soulflame Horn", "SH", new Color(100, 70, 70), 0, new int[]{12158}, new int[]{}, new int[]{30759}, new int[]{}, 1, Style.NON_COMBAT),
+	BURNING_CLAW_SPEC("Burning Claws Spec", "BC", new Color(100, 70, 70), 4, new int[] {11140}, new int[] {}, new int[]{29577}, new int[] {}, 0, Style.MELEE);
 
 	public final String name;
 	public final String shorthand;
