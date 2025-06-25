@@ -34,7 +34,7 @@ public enum PlayerAnimation
 	TENT_WHIP("Tent Whip", "TW", new Color(10, 70, 80), 4, new int[]{1658}, new int[]{}, new int[]{ItemID.ABYSSAL_TENTACLE}, new int[]{}, 0, Style.MELEE),
 	ABYSSAL_WHIP("Abyssal Whip", "AW", new Color(10, 70, 80), 4, new int[]{1658}, new int[]{}, new int[]{ItemID.ABYSSAL_WHIP, ItemID.FROZEN_ABYSSAL_WHIP, ItemID.VOLCANIC_ABYSSAL_WHIP}, new int[]{}, 0, Style.MELEE),
 	BARRAGE("Barrage", "F", new Color(50, 50, 170), 5, new int[]{1979, 10092}, new int[]{}, new int[]{ItemID.KODAI_WAND}, new int[]{}, 0, Style.MAGE),
-	BLITZ("Blitz", "F?", new Color(50, 50, 170), 5, new int[]{1978}, new int[]{}, new int[]{ItemID.KODAI_WAND}, new int[]{}, 0, true, Style.MAGE),
+	BLITZ("Blitz", "F?", new Color(50, 50, 170), 5, new int[]{1978, 10091}, new int[]{}, new int[]{ItemID.KODAI_WAND}, new int[]{}, 0, true, Style.MAGE),
 	DAWN_SPEC("Dawnbringer Spec", "DB", new Color(10, 100, 150), 4, new int[]{1167}, new int[]{}, new int[]{ItemID.DAWNBRINGER}, new int[]{1547}, 35, Style.MAGE),
 	DAWN_AUTO("Dawnbringer Auto", "db", new Color(10, 100, 150), 4, new int[]{1167}, new int[]{}, new int[]{ItemID.DAWNBRINGER}, new int[]{1544}, 0, true, Style.MAGE),
 	CLAW_SCRATCH("Claw Scratch", "c", new Color(76, 89, 1), 4, new int[]{393, 1067}, new int[]{}, new int[]{ItemID.DRAGON_CLAWS, ItemID.DRAGON_CLAWS_OR, ItemID.DRAGON_CLAWS_CR, 29577}, new int[]{}, 0, true, Style.MELEE),
