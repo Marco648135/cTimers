@@ -26,6 +26,7 @@ import java.util.stream.Collectors;
 import static com.advancedraidtracker.constants.LogID.*;
 import static com.advancedraidtracker.constants.TobIDs.*;
 import static com.advancedraidtracker.utility.ItemReference.*;
+import static com.advancedraidtracker.utility.RoomUtil.crossedLine;
 
 import com.advancedraidtracker.utility.wrappers.MaidenCrab;
 import net.runelite.api.kit.KitType;
@@ -54,6 +55,9 @@ public class MaidenHandler extends TOBRoomHandler
     ArrayList<WorldPoint> spawnedBloodLocations;
     ArrayList<Integer> maidenHeals;
     ArrayList<BloodDamageToBeApplied> queuedBloodDamage;
+
+    private final com.advancedraidtracker.utility.Point MAIDEN_GATE_START = new com.advancedraidtracker.utility.Point(32 , 29);
+    private final com.advancedraidtracker.utility.Point MAIDEN_GATE_END = new com.advancedraidtracker.utility.Point(32, 32);
 
     ArrayList<Player> dinhsers;
 
@@ -121,6 +125,9 @@ public class MaidenHandler extends TOBRoomHandler
 
     public void startMaiden()
     {
+        if (active)
+            return;
+
         active = true;
         roomStartTick = client.getTickCount();
         deferVarbitCheck = roomStartTick + 2;
@@ -612,6 +619,9 @@ public class MaidenHandler extends TOBRoomHandler
 
     public void updateGameTick(GameTick event)
     {
+        if (!active && crossedLine(12613, MAIDEN_GATE_START, MAIDEN_GATE_END, true, client)) {
+            startMaiden();
+        }
         trackNPCMovements();
         analyzeDinhs();
 
