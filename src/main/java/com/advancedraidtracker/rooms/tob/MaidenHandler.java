@@ -620,6 +620,7 @@ public class MaidenHandler extends TOBRoomHandler
     public void updateGameTick(GameTick event)
     {
         if (!active && crossedLine(12613, MAIDEN_GATE_START, MAIDEN_GATE_END, true, client)) {
+            clog.addLine(MAIDEN_SPAWNED);
             startMaiden();
         }
         trackNPCMovements();
