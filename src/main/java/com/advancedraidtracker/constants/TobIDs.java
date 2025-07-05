@@ -120,8 +120,11 @@ public class TobIDs
     public final static int MAIDEN_AUTO_ANIMATION = 8092;
     public final static int DRAGON_WARHAMMER = 13576;
     public final static int DRAGON_WARHAMMER_ALTERNATE = 20785;
+    public final static int ELDER_MAUL = 21003;
+    public final static int ELDER_MAUL_ALTERNATIVE = 27100;
     public final static int BOP_ANIMATION = 401;
     public final static int WHACK_ANIMATION = 414;
+    public final static int ELDER_MAUL_WHACK =  7516;
     public final static int KODAI_WAND = 21006;
     public final static int KODAI_WAND_ALTERNATE = 23626;
     public final static int STAB_ANIMATION = 440;

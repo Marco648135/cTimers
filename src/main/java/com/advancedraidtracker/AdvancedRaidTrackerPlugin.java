@@ -1544,9 +1544,9 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                             sendChatMessage(p.getName() + " is using an uncharged scythe");
                         }
                     }
-                } else if (p.getAnimation() == BOP_ANIMATION)
+                } else if (p.getAnimation() == BOP_ANIMATION || p.getAnimation() == ELDER_MAUL_WHACK)
                 {
-                    if (id == DRAGON_WARHAMMER || id == DRAGON_WARHAMMER_ALTERNATE)
+                    if (id == DRAGON_WARHAMMER || id == DRAGON_WARHAMMER_ALTERNATE || id == ELDER_MAUL || id == ELDER_MAUL_ALTERNATIVE)
                     {
                         if (config.showMistakesInChat())
                         {
