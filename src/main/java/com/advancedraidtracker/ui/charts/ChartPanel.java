@@ -1921,10 +1921,6 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 						g.drawRect(LEFT_MARGIN - (int) (scale * 1.5), yPosition - (fontHeight / 2) - (scale / 2), (int) (scale * 1.5), scale);
 					}
 					g.setColor(config.fontColor());
-					if (lateDroppers.contains(displayedName))
-					{
-						g.setColor(Color.RED);
-					}
 					g.drawString(displayedName, textPosition, yPosition + margin);
 				}
 
