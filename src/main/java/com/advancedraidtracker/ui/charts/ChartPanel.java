@@ -1713,7 +1713,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	private void drawTicks(Graphics2D g)
 	{
-		if (room.equals("Nylocas")) //todo make generic, use existing methods
+		if (room.equals("Nylocas") || room.equals("Nylo Boss")) //todo make generic, use existing methods
 		{
 			for (ChartLine line : lines)
 			{
@@ -1926,7 +1926,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 				if (i == 0)
 				{
-					if (room.equals("Nylocas"))
+					if (room.equals("Nylocas") || room.equals("Nylo Boss"))
 					{
 						roomSpecificText = "Instance Time";
 					}
@@ -1959,9 +1959,9 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	private void drawRoomSpecificData(Graphics2D g)
 	{
-		if (!specific.isEmpty() || room.equals("Nylocas")) //todo make generic
+		if (!specific.isEmpty() || room.equals("Nylocas") || room.equals("Nylo Boss")) //todo make generic
 		{
-			if (room.equals("Nylocas"))
+			if (room.equals("Nylocas") || room.equals("Nylo Boss"))
 			{
 				for (int i = startTick; i < endTick; i++)
 				{
@@ -2600,7 +2600,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	private int getAdditionalRow()
 	{
-		return (!specific.isEmpty() || room.equals("Nylocas")) ? 1 : 0;
+		return (!specific.isEmpty() || room.equals("Nylocas") || room.equals("Nylo Boss")) ? 1 : 0;
 	}
 
 	private void drawSelectedRow(Graphics2D g)
@@ -2633,6 +2633,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 				case "Xarpus":
 					offset = 3;
 					break;
+				case "Nylo Boss":
 				case "Nylocas":
 					offset = 5;
 					offset += (4 - ((offset + hoveredColumn) % 4));
