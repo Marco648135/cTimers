@@ -369,7 +369,7 @@ public enum LogID
             new ParseInstruction(INCREMENT, MAIDEN_MELEE_DRAINS),
             "Player Drained", "Player", "Room Tick"),
     MAIDEN_AUTO(531, true, MAIDEN,
-            new ParseInstruction(MANUAL_PARSE),
+            new ParseInstruction(MAP, MAIDEN_AUTOS),
             "Maiden Auto", "Player targeted", "Room Tick"),
     UPDATE_HP(576, false, ANY_TOB,
             new ParseInstruction(MANUAL_PARSE),

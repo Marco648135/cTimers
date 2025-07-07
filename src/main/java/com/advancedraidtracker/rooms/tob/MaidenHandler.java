@@ -214,6 +214,7 @@ public class MaidenHandler extends TOBRoomHandler
 		else if (event.getActor().getAnimation() == MAIDEN_AUTO_ANIMATION)
         {
             didAuto = true;
+
         }
     }
 

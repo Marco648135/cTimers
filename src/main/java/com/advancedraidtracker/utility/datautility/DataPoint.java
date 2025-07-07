@@ -60,6 +60,7 @@ public enum DataPoint
     FLETCHING_XP("Fletching XP Gained", types.OTHER_INT, ALL, EXPERIENCE),
     SLAYER_XP("Slayer XP Gained", types.OTHER_INT, ALL, EXPERIENCE),
     BLOAT_DOWNS("Bloat downs", types.INT_MAP, BLOAT, MISC),
+    MAIDEN_AUTOS("Maiden autos", types.INT_MAP, MAIDEN, EXCLUDED),
     BLOAT_FIRST_WALK_SCYTHES("Bloat 1st Walk Scythes", types.OTHER_INT, BLOAT, MISC, true),
     BLOAT_FIRST_WALK_DEATHS("Bloat 1st Walk Deaths", types.OTHER_INT, BLOAT, MISC, true),
     BLOAT_HP_FIRST_DOWN("Bloat HP% 1st down", types.OTHER_INT, BLOAT, MISC),

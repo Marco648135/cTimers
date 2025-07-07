@@ -6,7 +6,9 @@ import com.advancedraidtracker.utility.datautility.DataPoint;
 import com.advancedraidtracker.utility.datautility.datapoints.Raid;
 import com.advancedraidtracker.utility.datautility.datapoints.RoomParser;
 
+import javax.xml.crypto.Data;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class MaidenParser extends RoomParser
@@ -20,6 +22,15 @@ public class MaidenParser extends RoomParser
     public int getFirstPossibleNonIdleTick()
     {
         return 5;
+    }
+
+    @Override
+    public List<Integer> getRoomAutos() {
+        if (autos.isEmpty())
+        {
+            autos.addAll(data.getList(DataPoint.MAIDEN_AUTOS));
+        }
+        return autos;
     }
 
     @Override
