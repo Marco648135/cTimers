@@ -13,6 +13,7 @@ import com.advancedraidtracker.utility.maidenbloodtracking.BloodPositionWrapper;
 import com.advancedraidtracker.utility.wrappers.NPCTimeInChunkShell;
 import com.advancedraidtracker.utility.wrappers.PlayerHitsWrapper;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.errorprone.annotations.Immutable;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
@@ -30,9 +31,10 @@ import static com.advancedraidtracker.utility.RoomUtil.crossedLine;
 
 import com.advancedraidtracker.utility.wrappers.MaidenCrab;
 import net.runelite.api.kit.KitType;
+import net.runelite.client.game.ItemEquipmentStats;
 import net.runelite.client.game.ItemManager;
-import net.runelite.http.api.item.ItemEquipmentStats;
-import net.runelite.http.api.item.ItemStats;
+import net.runelite.client.game.ItemStats;
+import net.runelite.client.game.ItemVariationMapping;
 
 @Slf4j
 public class MaidenHandler extends TOBRoomHandler
@@ -58,6 +60,12 @@ public class MaidenHandler extends TOBRoomHandler
 
     private final com.advancedraidtracker.utility.Point MAIDEN_GATE_START = new com.advancedraidtracker.utility.Point(32 , 29);
     private final com.advancedraidtracker.utility.Point MAIDEN_GATE_END = new com.advancedraidtracker.utility.Point(32, 32);
+
+    private static final Set<Integer> DIZANAS_QUIVER_IDS = ImmutableSet.<Integer>builder()
+            .addAll(ItemVariationMapping.getVariations(ItemVariationMapping.map(ItemID.DIZANAS_QUIVER)))
+            .addAll(ItemVariationMapping.getVariations(ItemVariationMapping.map(ItemID.BLESSED_DIZANAS_QUIVER)))
+            .addAll(ItemVariationMapping.getVariations(ItemVariationMapping.map(ItemID.DIZANAS_MAX_CAPE)))
+            .build();
 
     ArrayList<Player> dinhsers;
 
@@ -229,6 +237,7 @@ public class MaidenHandler extends TOBRoomHandler
         int crush = 0;
         int magic = 0;
         int range = 0;
+        boolean quiver = false;
         PlayerComposition pc = player.getPlayerComposition();
         int[] wornItems = {
                 pc.getEquipmentId(KitType.HEAD),
@@ -238,12 +247,13 @@ public class MaidenHandler extends TOBRoomHandler
                 pc.getEquipmentId(KitType.TORSO),
                 pc.getEquipmentId(KitType.SHIELD),
                 pc.getEquipmentId(KitType.LEGS),
+                pc.getEquipmentId(KitType.HAIR),
                 pc.getEquipmentId(KitType.HANDS),
                 pc.getEquipmentId(KitType.BOOTS)
         };
         for (int item : wornItems)
         {
-            ItemStats itemStats = itemManager.getItemStats(item, false);
+            ItemStats itemStats = itemManager.getItemStats(item);
             if (itemStats != null)
             {
                 ItemEquipmentStats itemEquipmentStats = itemStats.getEquipment();
@@ -253,6 +263,16 @@ public class MaidenHandler extends TOBRoomHandler
                 magic += itemEquipmentStats.getAmagic();
                 range += itemEquipmentStats.getArange();
             }
+
+            // Check for dizana's quiver
+            if (DIZANAS_QUIVER_IDS.contains(item)) {
+                // Player is wearing a quiver.
+                quiver = true;
+            }
+        }
+        if (quiver) {
+            // Assume player is wearing ammo for now.
+            range += 10;
         }
         if ((stab >= magic && stab >= range) || (slash >= magic && slash >= range) || (crush >= magic && crush >= range))
         {
