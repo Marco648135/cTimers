@@ -842,6 +842,10 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                 {
                     clog.addLine(HAMMER_HIT, name, String.valueOf(client.getTickCount() - currentRoom.roomStartTick));
                 }
+                if (event.getWeapon().equals(SpecialWeapon.ELDER_MAUL))
+                {
+                    clog.addLine(HAMMER_HIT, name, String.valueOf(client.getTickCount() - currentRoom.roomStartTick));
+                }
             }
         }
     }
