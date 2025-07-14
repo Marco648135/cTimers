@@ -152,6 +152,7 @@ public enum DataPoint
     BGS_WHACKS("BGS whacks", types.OTHER_INT, ALL, MISTAKES, true),
     UNKNOWN("Unknown", types.OTHER_BOOL, ALL, EXCLUDED),
     DAWN_DROPS("Dawn Drops", types.INT_MAP, VERZIK, EXCLUDED),
+    HAMMERS_HIT("Hammers hit", types.INT_MAP, ALL, EXCLUDED),
 
     WEBS_THROWN("Webs Thrown", types.INT_MAP, VERZIK, EXCLUDED),
 

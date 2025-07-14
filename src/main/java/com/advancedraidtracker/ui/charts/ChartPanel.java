@@ -52,6 +52,7 @@ import javax.swing.tree.DefaultTreeModel;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Player;
 import net.runelite.api.Prayer;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -795,6 +796,30 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		}
 	}
 
+	public void addDefenceReduction(DefenceReduction dr)
+	{
+		System.out.println("Adding defence reduction " + dr.tick + " damage " + dr.damage );
+
+		synchronized (outlineBoxes)
+		{
+			for (OutlineBox outlineBox : outlineBoxes)
+			{
+				// Check it's a Maul/BGS etc.
+				if (Math.abs(outlineBox.tick - dr.tick) <= 5
+						&& outlineBox.tick <= dr.tick
+						&& outlineBox.playerAnimation.equals(ELDER_MAUL_SPEC)
+						&& outlineBox.player.equalsIgnoreCase(dr.player))
+				{
+					if (dr.damage > 0) {
+						outlineBox.setTertiaryID(20023);
+					} else {
+						outlineBox.setTertiaryID(20022);
+					}
+				}
+			}
+		}
+	}
+
 	public void addDawnSpec(DawnSpec dawnSpec)
 	{
 		synchronized (outlineBoxes)
@@ -809,6 +834,15 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 				}
 			}
 		}
+	}
+
+	public void addDefenceReductions(List<DefenceReduction> defReds)
+	{
+		for (DefenceReduction dr : defReds)
+		{
+			addDefenceReduction(dr);
+		}
+		drawGraph();
 	}
 
 	public void addDawnSpecs(List<DawnSpec> dawnSpecs)
@@ -1299,6 +1333,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	private BufferedImage hand;
 	private BufferedImage xSymbol;
 	private BufferedImage checkSymbol;
+	private BufferedImage missHit;
+	private BufferedImage damageHit;
 
 	public ChartPanel(String room, boolean isLive, AdvancedRaidTrackerConfig config, ClientThread clientThread, ConfigManager configManager, ItemManager itemManager, SpriteManager spriteManager)
 	{
@@ -1324,6 +1360,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		windowHeight = 600;
 		drainSymbol = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/drain.png");
 		spawnedBlood = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/spawnedblood.png");
+		missHit = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/miss.png");
+		damageHit = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/damage.png");
 		thrownBlood = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/thrownblood.png");
 		hand = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/hand.png");
 		xSymbol = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/x.png");
@@ -2219,7 +2257,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 									}
 
 // Update for tertiary icons
-									if (showSubIcons && box.tertiaryID != -2)
+									if (showSubIcons && box.tertiaryID != -2 && box.tertiaryID != 20022 && box.tertiaryID != 20023)
 									{
 										BufferedImage tertiary = getSpellSpecificIcon(box.tertiaryID);
 										if (tertiary != null)
@@ -2234,6 +2272,16 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 											g.drawImage(scaledTertiary, xOffset + (scale / 2), yOffset, null);
 											g.setComposite(originalCompositeTert);
 										}
+									}
+
+									if (showSubIcons && (box.tertiaryID == 20022 || box.tertiaryID == 20023))
+									{
+
+										BufferedImage scaledMiss = getSmoothScaledIcon(box.tertiaryID == 20022 ? missHit : damageHit, scale / 2, scale / 2);
+										Composite originalCompositeTert = g.getComposite();
+										//g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.3f));
+										g.drawImage(scaledMiss, xOffset + (scale / 2), yOffset + (scale / 2), null);
+										g.setComposite(originalCompositeTert);
 									}
 									if (!box.additionalText.isEmpty())
 									{

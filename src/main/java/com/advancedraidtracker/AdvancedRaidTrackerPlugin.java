@@ -21,6 +21,7 @@ import static com.advancedraidtracker.utility.DataType.STRENGTH;
 import com.advancedraidtracker.utility.datautility.DataReader;
 import com.advancedraidtracker.utility.datautility.DataWriter;
 import com.advancedraidtracker.utility.thrallvengtracking.*;
+import com.advancedraidtracker.utility.wrappers.DefenceReduction;
 import com.advancedraidtracker.utility.wrappers.PlayerCopy;
 import com.advancedraidtracker.utility.wrappers.PlayerDidAttack;
 import com.advancedraidtracker.utility.wrappers.QueuedPlayerAttackLessProjectiles;
@@ -837,14 +838,37 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                 if (event.getWeapon().equals(SpecialWeapon.BANDOS_GODSWORD))
                 {
                     clog.addLine(BGS_HIT, name, String.valueOf(event.getHit()), String.valueOf(client.getTickCount() - currentRoom.roomStartTick));
+                    if (event.getHit() == 0) {
+                        sendChatMessage(name + " missed BGS");
+                    } else {
+                        sendChatMessage(name + " hit BGS, (damage " + event.getHit() + ")");
+                    }
                 }
                 if (event.getWeapon().equals(SpecialWeapon.DRAGON_WARHAMMER))
                 {
                     clog.addLine(HAMMER_HIT, name, String.valueOf(client.getTickCount() - currentRoom.roomStartTick));
+                    sendChatMessage(name + " hit DWH");
+
                 }
                 if (event.getWeapon().equals(SpecialWeapon.ELDER_MAUL))
                 {
-                    clog.addLine(HAMMER_HIT, name, String.valueOf(client.getTickCount() - currentRoom.roomStartTick));
+                    // add to livepanel
+                    liveFrame
+                            .getPanel("Maiden")
+                            .addDefenceReduction(
+                                    new DefenceReduction(name,
+                                            client.getTickCount() - currentRoom.roomStartTick,
+                                            DefenceReduction.TYPE.MAUL,
+                                            event.getHit()));
+
+                    if (event.getHit() == 0) {
+                        sendChatMessage(name + " missed Elder Maul Spec");
+                        clog.addLine(HAMMER_MISS, name, String.valueOf(client.getTickCount() - currentRoom.roomStartTick));
+                    } else {
+                        sendChatMessage(name + " hit Elder Maul Spec");
+                        clog.addLine(HAMMER_HIT, name, String.valueOf(client.getTickCount() - currentRoom.roomStartTick));
+                    }
+
                 }
             }
         }

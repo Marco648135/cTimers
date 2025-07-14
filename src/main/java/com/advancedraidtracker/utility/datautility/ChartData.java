@@ -4,11 +4,8 @@ import com.advancedraidtracker.constants.RaidRoom;
 import com.advancedraidtracker.utility.PlayerDataChanged;
 import com.advancedraidtracker.utility.weapons.AnimationDecider;
 import com.advancedraidtracker.utility.weapons.PlayerAnimation;
-import com.advancedraidtracker.utility.wrappers.DawnSpec;
-import com.advancedraidtracker.utility.wrappers.DinhsSpec;
-import com.advancedraidtracker.utility.wrappers.PlayerDidAttack;
+import com.advancedraidtracker.utility.wrappers.*;
 import com.advancedraidtracker.ui.charts.chartelements.ThrallOutlineBox;
-import com.advancedraidtracker.utility.wrappers.StringInt;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +27,7 @@ public class ChartData
 	public final List<StringInt> playerStoodInThrownBlood = new ArrayList<>();
 	public final List<StringInt> playerStoodInSpawnedBlood = new ArrayList<>();
 	public final List<DinhsSpec> dinhsSpecs = new ArrayList<>();
+    public final List<DefenceReduction> defenceReductions = new ArrayList<>();
 	public final List<StringInt> playerChancedDrain = new ArrayList<>();
 	public final List<StringInt> playerHanded = new ArrayList<>();
 	public final List<StringInt> badChins = new ArrayList<>();
@@ -134,6 +132,11 @@ public class ChartData
     public void addNPCMapping(RaidRoom room, Integer index, String npcDescription)
     {
         npcMapping.computeIfAbsent(room, k -> new HashMap<>()).put(index, npcDescription);
+    }
+
+    public void addDefenceReduction(DefenceReduction dr)
+    {
+        defenceReductions.add(dr);
     }
 
     public void addAttack(RaidRoom room, PlayerDidAttack attack)

@@ -228,6 +228,7 @@ public class ChartFrame extends BaseFrame
 			chartPanel.addPlayerStoodInSpawnedBloods(chartData.playerStoodInSpawnedBlood);
 			chartPanel.addPlayersHanded(chartData.playerHanded);
 			chartPanel.addDinhsSpecs(chartData.dinhsSpecs);
+			chartPanel.addDefenceReductions(chartData.defenceReductions);
 			chartPanel.addBadChins(chartData.badChins);
 			chartPanel.addPlayerDatumChanged(chartData.playerDataChangeds.get(room));
 			if (room.equals(RaidRoom.VERZIK))

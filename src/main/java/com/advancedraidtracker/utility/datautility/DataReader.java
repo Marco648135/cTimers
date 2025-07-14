@@ -13,6 +13,7 @@ import com.advancedraidtracker.utility.datautility.datapoints.inf.Inf;
 import com.advancedraidtracker.utility.datautility.datapoints.toa.Toa;
 import com.advancedraidtracker.utility.datautility.datapoints.tob.Tob;
 import com.advancedraidtracker.utility.wrappers.DawnSpec;
+import com.advancedraidtracker.utility.wrappers.DefenceReduction;
 import com.advancedraidtracker.utility.wrappers.PlayerDidAttack;
 import joptsimple.internal.Strings;
 import lombok.extern.slf4j.Slf4j;
@@ -258,6 +259,16 @@ public class DataReader //todo move any methods that read files to here. I belie
 						case "987":
 							chartData.addPlayerHanded(line[4], Integer.parseInt(line[5]));
 							break;
+                        case "2":
+                        case "20002":
+                            try {
+                                int tick = Integer.parseInt(line[5]);
+                                int damage = line[3].equals("2") ? 1 : 0;
+                                chartData.addDefenceReduction(new DefenceReduction(line[4], tick, DefenceReduction.TYPE.MAUL, damage));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            break;
 						case "111":
 							try
 							{
