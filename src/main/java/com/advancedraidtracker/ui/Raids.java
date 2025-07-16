@@ -668,6 +668,32 @@ public class Raids extends BaseFrame implements UpdateableWindow
 				table.setRowSelectionInterval(r, r);
 			}
 		}
+
+		if (e.getButton() == MouseEvent.BUTTON2) {
+			// LEV
+			int r = table.rowAtPoint(e.getPoint());
+			if (r >= 0 && r < table.getRowCount())
+			{
+				table.setRowSelectionInterval(r, r);
+			}
+
+			int[] toRemove = table.getSelectedRows();
+			if (toRemove.length == 0)
+			{
+				JOptionPane.showMessageDialog(this, "You must select at least one raid to view charts", "Chart Error", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+			Raid raidData = null;
+			for (int i = 0; i < toRemove.length; i++)
+			{
+				raidData = currentData.get(Integer.parseInt(table.getModel().getValueAt(toRemove[i], 0).toString()));
+			}
+			if (raidData != null)
+			{
+				chartFrame.switchTo(raidData);
+				chartFrame.open();
+			}
+		}
 	}
 
 	/**
