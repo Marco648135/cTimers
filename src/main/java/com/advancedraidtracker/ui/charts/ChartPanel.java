@@ -798,14 +798,15 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	public void addDefenceReduction(DefenceReduction dr)
 	{
-		System.out.println("Adding defence reduction " + dr.tick + " damage " + dr.damage );
+		System.out.println(dr.toString());
 
 		synchronized (outlineBoxes)
 		{
 			for (OutlineBox outlineBox : outlineBoxes)
 			{
 				// Check it's a Maul/BGS etc.
-				if (Math.abs(outlineBox.tick - dr.tick) <= 5
+				if (dr.type == DefenceReduction.TYPE.MAUL
+						&& Math.abs(outlineBox.tick - dr.tick) <= 5
 						&& outlineBox.tick <= dr.tick
 						&& outlineBox.playerAnimation.equals(ELDER_MAUL_SPEC)
 						&& outlineBox.player.equalsIgnoreCase(dr.player))
@@ -815,6 +816,15 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 					} else {
 						outlineBox.setTertiaryID(20022);
 					}
+				}
+
+				if (dr.type == DefenceReduction.TYPE.BGS
+						&& Math.abs(outlineBox.tick - dr.tick) <= 5
+						&& outlineBox.tick <= dr.tick
+						&& outlineBox.playerAnimation.equals(BGS_SPEC)
+						&& outlineBox.player.equalsIgnoreCase(dr.player)
+				) {
+					outlineBox.additionalText = String.valueOf(dr.damage);
 				}
 			}
 		}

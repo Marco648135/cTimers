@@ -269,6 +269,14 @@ public class DataReader //todo move any methods that read files to here. I belie
                                 e.printStackTrace();
                             }
                             break;
+                        case "3":
+                            try {
+                                int tick = Integer.parseInt(line[6]);
+                                int damage = Integer.parseInt(line[5]);
+                                chartData.addDefenceReduction(new DefenceReduction(line[4], tick, DefenceReduction.TYPE.BGS, damage));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
 						case "111":
 							try
 							{

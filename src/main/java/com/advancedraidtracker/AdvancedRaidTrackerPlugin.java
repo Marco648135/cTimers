@@ -843,6 +843,13 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                     } else {
                         sendChatMessage(name + " hit BGS, (damage " + event.getHit() + ")");
                     }
+                    liveFrame
+                            .getPanel("Maiden")
+                            .addDefenceReduction(
+                                    new DefenceReduction(name,
+                                            client.getTickCount() - currentRoom.roomStartTick,
+                                            DefenceReduction.TYPE.BGS,
+                                            event.getHit()));
                 }
                 if (event.getWeapon().equals(SpecialWeapon.DRAGON_WARHAMMER))
                 {

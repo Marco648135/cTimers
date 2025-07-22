@@ -19,4 +19,10 @@ public class DefenceReduction {
         this.type = ty;
         this.damage = d;
     }
+
+    @Override
+    public String toString() {
+        String typeStr = this.type == TYPE.MAUL ? "MAUL" : "BGS";
+        return "DefenceReduction[" + typeStr + ",t" + tick + "," + player + "," + damage + "]";
+    }
 }
