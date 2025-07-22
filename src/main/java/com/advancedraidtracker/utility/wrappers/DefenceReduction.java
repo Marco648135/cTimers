@@ -4,7 +4,8 @@ public class DefenceReduction {
 
     public enum TYPE {
       BGS,
-      MAUL
+      MAUL,
+      SHADOW_BARRAGE,
     };
 
     public String player;
@@ -22,7 +23,9 @@ public class DefenceReduction {
 
     @Override
     public String toString() {
-        String typeStr = this.type == TYPE.MAUL ? "MAUL" : "BGS";
+        String typeStr = this.type == TYPE.MAUL ? "MAUL" :
+                              type == TYPE.BGS ? "BGS" :
+                              "SHADOWBARRAGE";
         return "DefenceReduction[" + typeStr + ",t" + tick + "," + player + "," + damage + "]";
     }
 }
