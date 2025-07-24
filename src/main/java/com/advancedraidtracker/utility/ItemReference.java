@@ -7,6 +7,7 @@ public class ItemReference
             {"none", "elite void", "void knight", "fury", "barrows gloves"},
             {
                     "torva",
+					"avernic treads",
                     "defender",
                     "scythe",
                     "osmumten",
@@ -51,6 +52,7 @@ public class ItemReference
             },
             {
                     "masori",
+					"avernic treads",
                     "bow",
                     "range",
                     "blowpipe",
@@ -72,9 +74,11 @@ public class ItemReference
             },
             {
                     "ancestral",
+					"avernic treads",
                     "virtus",
                     "occult",
                     "tormented",
+					"confliction",
                     "tumeken",
                     "staff",
                     "mage",
@@ -85,6 +89,7 @@ public class ItemReference
                     "ice",
                     "ward",
                     "dawnbringer",
+					"ayak",
 					"ancient sceptre"
             }
     };
