@@ -21,6 +21,7 @@ import static com.advancedraidtracker.utility.DataType.STRENGTH;
 import com.advancedraidtracker.utility.datautility.DataReader;
 import com.advancedraidtracker.utility.datautility.DataWriter;
 import com.advancedraidtracker.utility.thrallvengtracking.*;
+import com.advancedraidtracker.utility.weapons.PlayerAnimation;
 import com.advancedraidtracker.utility.wrappers.DefenceReduction;
 import com.advancedraidtracker.utility.wrappers.PlayerCopy;
 import com.advancedraidtracker.utility.wrappers.PlayerDidAttack;
@@ -204,6 +205,10 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 
     Map<Player, Integer> activelyPiping;
     List<Player> wasPiping;
+
+    Map<Player, Integer> activelyAyaking;
+    List<Player> wasAyaking;
+
     private List<NPC> wasBarraged = new ArrayList<>();
     private List<WorldPoint> chinSpawned = new ArrayList<>();
 
@@ -278,6 +283,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         partyIntact = false;
         activelyPiping = new LinkedHashMap<>();
         wasPiping = new ArrayList<>();
+        activelyAyaking = new LinkedHashMap<>();
+        wasAyaking = new ArrayList<>();
         liveFrame = new LiveChart(config, itemManager, clientThread, configManager, spriteManager);
 		liveData = new AdvancedData();
 		liveAdvancedStatistics = new LiveAdvancedStatistics(liveData, itemManager);
@@ -759,6 +766,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         clog.migrateToNewRaid();
         currentRoom = null;
         activelyPiping.clear();
+        activelyAyaking.clear();
         deferredAnimations.clear();
     }
 
@@ -1122,10 +1130,12 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         handleBarraged();
         handleChinSpawns();
         wasPiping.clear();
+        wasAyaking.clear();
         checkGraphics();
         checkAnimationsThatChanged();
         checkOverheadTextsThatChanged();
         checkActivelyPiping();
+        checkActivelyAyaking();
         handleQueuedProjectiles();
         removeDeadProjectiles();
         removeDeadVenges();
@@ -1534,6 +1544,60 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         }
     }
 
+    private void checkActivelyAyaking()
+    {
+        for (Player p : activelyAyaking.keySet())
+        {
+            if ((client.getTickCount() > (activelyAyaking.get(p) + 2)) && ((client.getTickCount() - activelyAyaking.get(p) - 1) % 3 == 0))
+            {
+                if (p.getAnimation() == PlayerAnimation.EYE_OF_AYAK.animations[0])
+                {
+                    PlayerCopy previous = lastTickPlayer.get(p.getName());
+                    if (previous != null)
+                    {
+                        clog.addLine(PLAYER_ATTACK,
+                                previous.name + ":" + (client.getTickCount() - currentRoom.roomStartTick - 1),
+                                previous.animation + ":" + previous.wornItems,
+                                "",
+                                previous.weapon + ":" + previous.interactingIndex + ":" + previous.interactingID,
+                                "-1:" + previous.interactingName, currentRoom.getName());
+                        liveFrame.addAttack(new PlayerDidAttack(itemManager,
+                                previous.name,
+                                String.valueOf(previous.animation),
+                                -1,
+                                previous.weapon,
+                                "-1",
+                                "",
+                                previous.interactingIndex,
+                                previous.interactingID,
+                                previous.interactingName,
+                                previous.wornItems
+                        ), currentRoom.getName());
+                    }
+                }
+            }
+            int interactedIndex = -1;
+            int interactedID = -1;
+            String targetName = "";
+            Actor interacted = p.getInteracting();
+            if (interacted instanceof NPC)
+            {
+                NPC npc = (NPC) interacted;
+                interactedID = npc.getId();
+                interactedIndex = npc.getIndex();
+                targetName = npc.getName();
+            }
+            if (interacted instanceof Player)
+            {
+                Player player = (Player) interacted;
+                targetName = player.getName();
+            }
+            lastTickPlayer.put(p.getName(), new PlayerCopy(
+                    p.getName(), interactedIndex, interactedID, targetName, p.getAnimation(), PlayerWornItems.getStringFromComposition(p.getPlayerComposition()
+            ), p.getPlayerComposition().getEquipmentId(KitType.WEAPON), p.getWorldLocation()));
+        }
+    }
+
     private void checkOverheadTextsThatChanged()
     {
         for (String player : playersWhoHaveOverheadText)
@@ -1646,9 +1710,12 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                     int interactedID = -1;
                     Actor interacted = p.getInteracting();
                     generatePlayerAttackInfo(p, animations.toString(), interacted, -1);
-                    if (p.getAnimation() == BLOWPIPE_ANIMATION || p.getAnimation() == BLOWPIPE_ANIMATION_OR)
+                    if (p.getAnimation() == BLOWPIPE_ANIMATION || p.getAnimation() == BLOWPIPE_ANIMATION_OR || p.getAnimation() == PlayerAnimation.EYE_OF_AYAK.animations[0])
                     {
-                        activelyPiping.put(p, client.getTickCount());
+                        if (p.getAnimation() == BLOWPIPE_ANIMATION || p.getAnimation() == BLOWPIPE_ANIMATION_OR)
+                            activelyPiping.put(p, client.getTickCount());
+                        else
+                            activelyAyaking.put(p, client.getTickCount());
                         String targetName = interacted.getName();
                         if (interacted instanceof NPC)
                         {
@@ -1663,11 +1730,13 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                     } else
                     {
                         activelyPiping.remove(p);
+                        activelyAyaking.remove(p);
                         lastTickPlayer.remove(p.getName());
                     }
                 } else
                 {
                     activelyPiping.remove(p);
+                    activelyAyaking.remove(p);
                 }
 
             }
@@ -1684,6 +1753,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         clog.migrateToNewRaid();
         currentRoom = null;
         activelyPiping.clear();
+        activelyAyaking.clear();
         deferredAnimations.clear();
     }
 
