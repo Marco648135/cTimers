@@ -128,7 +128,7 @@ public enum PlayerAnimation
 	DHAROK_AXE("Dharok's Great Axe", "DH", new Color(100, 70, 70), 7, new int[]{2067}, new int[] {}, new int[]{4886, 4887, 4888, 4889}, new int[] {}, 0, Style.MELEE),
 	SOULFLAME_HORN("Soulflame Horn", "SH", new Color(100, 70, 70), 0, new int[]{12158}, new int[]{}, new int[]{30759}, new int[]{}, 1, Style.NON_COMBAT),
 	EYE_OF_AYAK("Ayak", "AY", new Color(30, 120, 130), 3, new int[]{12397}, new int[]{}, new int[]{31113}, new int[]{3367}, 0, false, Style.MAGE),
-	EYE_OF_AYAK_SPEC("Ayak Spec", "AYS", new Color(30, 120, 130), 3, new int[]{12394}, new int[]{}, new int[]{31113}, new int[]{3367}, 50, true, Style.MAGE),
+	EYE_OF_AYAK_SPEC("Ayak Spec", "AYS", new Color(30, 120, 130), 5, new int[]{12394}, new int[]{}, new int[]{31113}, new int[]{3367}, 50, true, Style.MAGE),
 	EARTHBOUND_TECPATL("Tecpatl", "TCP", new Color(180, 20, 40), 4, new int[]{12342}, new int[]{}, new int[]{30957}, new int[]{}, 0, false, Style.MELEE),
 	BURNING_CLAW_SPEC("Burning Claws Spec", "BC", new Color(100, 70, 70), 4, new int[] {11140}, new int[] {}, new int[]{29577}, new int[] {}, 35, Style.MELEE);
 
