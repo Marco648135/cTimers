@@ -203,11 +203,17 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     @Inject
     private SpriteManager spriteManager;
 
-    Map<Player, Integer> activelyPiping;
-    List<Player> wasPiping;
-
-    Map<Player, Integer> activelyAyaking;
-    List<Player> wasAyaking;
+    private enum ContinuousAnimationType { PIPING, AYAKING }
+    private static class ContinuousAnimationInfo {
+        int tick;
+        ContinuousAnimationType type;
+        ContinuousAnimationInfo(int tick, ContinuousAnimationType type) {
+            this.tick = tick;
+            this.type = type;
+        }
+    }
+    private Map<Player, ContinuousAnimationInfo> continuousAnimations;
+    private Map<Player, ContinuousAnimationType> wasContinuousAnimations;
 
     private List<NPC> wasBarraged = new ArrayList<>();
     private List<WorldPoint> chinSpawned = new ArrayList<>();
@@ -281,10 +287,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         queuedThrallDamage = new ArrayList<>();
         timersPanelPrimary = injector.getInstance(RaidTrackerSidePanel.class);
         partyIntact = false;
-        activelyPiping = new LinkedHashMap<>();
-        wasPiping = new ArrayList<>();
-        activelyAyaking = new LinkedHashMap<>();
-        wasAyaking = new ArrayList<>();
+        continuousAnimations = new LinkedHashMap<>();
+        wasContinuousAnimations = new LinkedHashMap<>();
         liveFrame = new LiveChart(config, itemManager, clientThread, configManager, spriteManager);
 		liveData = new AdvancedData();
 		liveAdvancedStatistics = new LiveAdvancedStatistics(liveData, itemManager);
@@ -765,8 +769,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         clog.writeFile();
         clog.migrateToNewRaid();
         currentRoom = null;
-        activelyPiping.clear();
-        activelyAyaking.clear();
+        continuousAnimations.clear();
+        wasContinuousAnimations.clear();
         deferredAnimations.clear();
     }
 
@@ -1129,18 +1133,15 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 
         handleBarraged();
         handleChinSpawns();
-        wasPiping.clear();
-        wasAyaking.clear();
+        wasContinuousAnimations.clear();
         checkGraphics();
         checkAnimationsThatChanged();
         checkOverheadTextsThatChanged();
-        checkActivelyPiping();
-        checkActivelyAyaking();
+        checkContinuousAnimations();
         handleQueuedProjectiles();
         removeDeadProjectiles();
         removeDeadVenges();
         updateThrallVengTracker();
-
         updateRoom();
         if (inTheatre)
         {
@@ -1490,91 +1491,59 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         playersAttacked.removeIf(p -> p.tick == 0);
     }
 
-    private void checkActivelyPiping()
+    private void checkContinuousAnimations()
     {
-        for (Player p : activelyPiping.keySet())
+        for (Map.Entry<Player, ContinuousAnimationInfo> entry : continuousAnimations.entrySet())
         {
-            if ((client.getTickCount() > (activelyPiping.get(p) + 1)) && ((client.getTickCount() - activelyPiping.get(p) - 1) % 2 == 0))
+            Player p = entry.getKey();
+            ContinuousAnimationInfo info = entry.getValue();
+            int tickDiff = client.getTickCount() - info.tick - 1;
+            boolean shouldLog = false;
+            if (info.type == ContinuousAnimationType.PIPING)
             {
-                if (p.getAnimation() == BLOWPIPE_ANIMATION || p.getAnimation() == BLOWPIPE_ANIMATION_OR)
+                if ((client.getTickCount() > (info.tick + 1)) && (tickDiff % 2 == 0))
                 {
-                    PlayerCopy previous = lastTickPlayer.get(p.getName());
-                    if (previous != null)
+                    if (p.getAnimation() == BLOWPIPE_ANIMATION || p.getAnimation() == BLOWPIPE_ANIMATION_OR)
                     {
-                        clog.addLine(PLAYER_ATTACK,
-                                previous.name + ":" + (client.getTickCount() - currentRoom.roomStartTick - 1),
-                                previous.animation + ":" + previous.wornItems,
-                                "",
-                                previous.weapon + ":" + previous.interactingIndex + ":" + previous.interactingID,
-                                "-1:" + previous.interactingName, currentRoom.getName());
-                        liveFrame.addAttack(new PlayerDidAttack(itemManager,
-                                previous.name,
-                                String.valueOf(previous.animation),
-                                -1,
-                                previous.weapon,
-                                "-1",
-                                "",
-                                previous.interactingIndex,
-                                previous.interactingID,
-                                previous.interactingName,
-                                previous.wornItems
-                        ), currentRoom.getName());
+                        shouldLog = true;
                     }
                 }
             }
-            int interactedIndex = -1;
-            int interactedID = -1;
-            String targetName = "";
-            Actor interacted = p.getInteracting();
-            if (interacted instanceof NPC)
+            else if (info.type == ContinuousAnimationType.AYAKING)
             {
-                NPC npc = (NPC) interacted;
-                interactedID = npc.getId();
-                interactedIndex = npc.getIndex();
-                targetName = npc.getName();
-            }
-            if (interacted instanceof Player)
-            {
-                Player player = (Player) interacted;
-                targetName = player.getName();
-            }
-            lastTickPlayer.put(p.getName(), new PlayerCopy(
-                    p.getName(), interactedIndex, interactedID, targetName, p.getAnimation(), PlayerWornItems.getStringFromComposition(p.getPlayerComposition()
-            ), p.getPlayerComposition().getEquipmentId(KitType.WEAPON), p.getWorldLocation()));
-        }
-    }
-
-    private void checkActivelyAyaking()
-    {
-        for (Player p : activelyAyaking.keySet())
-        {
-            if ((client.getTickCount() > (activelyAyaking.get(p) + 2)) && ((client.getTickCount() - activelyAyaking.get(p) - 1) % 3 == 0))
-            {
-                if (p.getAnimation() == PlayerAnimation.EYE_OF_AYAK.animations[0])
+                if ((client.getTickCount() > (info.tick + 2)) && (tickDiff % 3 == 0))
                 {
-                    PlayerCopy previous = lastTickPlayer.get(p.getName());
-                    if (previous != null)
+                    if (p.getAnimation() == PlayerAnimation.EYE_OF_AYAK.animations[0])
                     {
-                        clog.addLine(PLAYER_ATTACK,
-                                previous.name + ":" + (client.getTickCount() - currentRoom.roomStartTick - 1),
-                                previous.animation + ":" + previous.wornItems,
-                                "",
-                                previous.weapon + ":" + previous.interactingIndex + ":" + previous.interactingID,
-                                "-1:" + previous.interactingName, currentRoom.getName());
-                        liveFrame.addAttack(new PlayerDidAttack(itemManager,
-                                previous.name,
-                                String.valueOf(previous.animation),
-                                -1,
-                                previous.weapon,
-                                "-1",
-                                "",
-                                previous.interactingIndex,
-                                previous.interactingID,
-                                previous.interactingName,
-                                previous.wornItems
-                        ), currentRoom.getName());
+                        shouldLog = true;
                     }
                 }
+            }
+            if (shouldLog)
+            {
+                PlayerCopy previous = lastTickPlayer.get(p.getName());
+                if (previous != null)
+                {
+                    clog.addLine(PLAYER_ATTACK,
+                            previous.name + ":" + (client.getTickCount() - currentRoom.roomStartTick - 1),
+                            previous.animation + ":" + previous.wornItems,
+                            "",
+                            previous.weapon + ":" + previous.interactingIndex + ":" + previous.interactingID,
+                            "-1:" + previous.interactingName, currentRoom.getName());
+                    liveFrame.addAttack(new PlayerDidAttack(itemManager,
+                            previous.name,
+                            String.valueOf(previous.animation),
+                            -1,
+                            previous.weapon,
+                            "-1",
+                            "",
+                            previous.interactingIndex,
+                            previous.interactingID,
+                            previous.interactingName,
+                            previous.wornItems
+                    ), currentRoom.getName());
+                }
+                wasContinuousAnimations.put(p, info.type);
             }
             int interactedIndex = -1;
             int interactedID = -1;
@@ -1712,10 +1681,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                     generatePlayerAttackInfo(p, animations.toString(), interacted, -1);
                     if (p.getAnimation() == BLOWPIPE_ANIMATION || p.getAnimation() == BLOWPIPE_ANIMATION_OR || p.getAnimation() == PlayerAnimation.EYE_OF_AYAK.animations[0])
                     {
-                        if (p.getAnimation() == BLOWPIPE_ANIMATION || p.getAnimation() == BLOWPIPE_ANIMATION_OR)
-                            activelyPiping.put(p, client.getTickCount());
-                        else
-                            activelyAyaking.put(p, client.getTickCount());
+                        ContinuousAnimationType type = (p.getAnimation() == PlayerAnimation.EYE_OF_AYAK.animations[0]) ? ContinuousAnimationType.AYAKING : ContinuousAnimationType.PIPING;
+                        continuousAnimations.put(p, new ContinuousAnimationInfo(client.getTickCount(), type));
                         String targetName = interacted.getName();
                         if (interacted instanceof NPC)
                         {
@@ -1729,14 +1696,12 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                         ), p.getPlayerComposition().getEquipmentId(KitType.WEAPON), p.getWorldLocation()));
                     } else
                     {
-                        activelyPiping.remove(p);
-                        activelyAyaking.remove(p);
+                        continuousAnimations.remove(p);
                         lastTickPlayer.remove(p.getName());
                     }
                 } else
                 {
-                    activelyPiping.remove(p);
-                    activelyAyaking.remove(p);
+                    continuousAnimations.remove(p);
                 }
 
             }
@@ -1752,8 +1717,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         clog.writeFile();
         clog.migrateToNewRaid();
         currentRoom = null;
-        activelyPiping.clear();
-        activelyAyaking.clear();
+        continuousAnimations.clear();
+        wasContinuousAnimations.clear();
         deferredAnimations.clear();
     }
 
@@ -1982,9 +1947,9 @@ public class AdvancedRaidTrackerPlugin extends Plugin
             Player p = (Player) event.getActor();
             if (event.getActor().getAnimation() == 6294 || event.getActor().getAnimation() == 722 || event.getActor().getAnimation() == 6299 || event.getActor().getAnimation() == -1)
             {
-                if (activelyPiping.containsKey(p))
+                if (continuousAnimations.containsKey(p))
                 {
-                    wasPiping.add(p);
+                    wasContinuousAnimations.put(p, continuousAnimations.get(p).type);
                 }
                 checkAnimation(p);
             } else
