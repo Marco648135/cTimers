@@ -1346,6 +1346,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	private BufferedImage missHit;
 	private BufferedImage damageHit;
 	private BufferedImage star;
+	private BufferedImage questionMark;
 
 	public ChartPanel(String room, boolean isLive, AdvancedRaidTrackerConfig config, ClientThread clientThread, ConfigManager configManager, ItemManager itemManager, SpriteManager spriteManager)
 	{
@@ -1378,7 +1379,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		xSymbol = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/x.png");
 		checkSymbol = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/check.png");
 		star = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/star.png");
-
+		questionMark = ImageUtil.loadImageResource(AdvancedRaidTrackerPlugin.class, "/com/advancedraidtracker/questionmark.png");
 
 		if (!isLive)
 		{
@@ -2046,6 +2047,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 						{
 							boolean lateDrop = true;
 							boolean earlyDrop = false;
+							boolean doubleDrop = false;
 							int lastSpecTick = 0;
 							String lastSpecPlayer = "";
 							for (OutlineBox box : outlineBoxes)
@@ -2070,6 +2072,17 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 									}
 								}
 							}
+							if (lastSpecTick > 0)
+							{
+								for (Integer iPrime : specific.keySet())
+								{
+									if (iPrime > lastSpecTick && iPrime < i)
+									{
+										doubleDrop = true;
+										break;
+									}
+								}
+							}
 							if (lateDrop)
 							{
 								lateDroppers.add(lastSpecPlayer);
@@ -2082,7 +2095,12 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 								RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 							g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
 								RenderingHints.VALUE_ANTIALIAS_ON);
-							if (lateDrop)
+							if(doubleDrop)
+							{
+								BufferedImage questionMarkScaled = getSmoothScaledIcon(questionMark, twoThird, twoThird);
+								g.drawImage(questionMarkScaled, xOffset + sixth, yOffset - scale + sixth, null);
+							}
+							else if (lateDrop)
 							{
 								BufferedImage xSymbolScaled = getSmoothScaledIcon(xSymbol, twoThird, twoThird);
 								g.drawImage(xSymbolScaled, xOffset + sixth, yOffset - scale + sixth, null);
