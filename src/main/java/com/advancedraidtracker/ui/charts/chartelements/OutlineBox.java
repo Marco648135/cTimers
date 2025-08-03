@@ -37,6 +37,8 @@ public class OutlineBox
 	public int weapon;
 	public int secondaryID = -2;
 	@Setter
+	public boolean buffed = false;
+	@Setter
 	public int damage = -1;
 
 	@Setter
@@ -128,6 +130,10 @@ public class OutlineBox
 	{
 		if (wornItemNames.length == 0)
 		{
+			return;
+		}
+		if (buffed) {
+			outlineColor = new Color(111, 4, 249);
 			return;
 		}
 		if (cd < 1 || letter.equals("VS") || letter.equals("AO") || letter.equals("HU") || letter.equals("MI") || letter.equals("DB") || letter.equals("SS"))

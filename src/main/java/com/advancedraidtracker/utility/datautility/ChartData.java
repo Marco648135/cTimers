@@ -1,6 +1,7 @@
 package com.advancedraidtracker.utility.datautility;
 
 import com.advancedraidtracker.constants.RaidRoom;
+import com.advancedraidtracker.ui.charts.chartelements.SoulflameOutlineBox;
 import com.advancedraidtracker.utility.PlayerDataChanged;
 import com.advancedraidtracker.utility.weapons.AnimationDecider;
 import com.advancedraidtracker.utility.weapons.PlayerAnimation;
@@ -28,6 +29,7 @@ public class ChartData
 	public final List<StringInt> playerStoodInSpawnedBlood = new ArrayList<>();
 	public final List<DinhsSpec> dinhsSpecs = new ArrayList<>();
     public final List<DefenceReduction> defenceReductions = new ArrayList<>();
+    public final List<SoulflameOutlineBox> soulflameBuffs = new ArrayList<>();
 	public final List<StringInt> playerChancedDrain = new ArrayList<>();
 	public final List<StringInt> playerHanded = new ArrayList<>();
 	public final List<StringInt> badChins = new ArrayList<>();
@@ -137,6 +139,11 @@ public class ChartData
     public void addDefenceReduction(DefenceReduction dr)
     {
         defenceReductions.add(dr);
+    }
+
+    public void addSoulflameBuff(SoulflameOutlineBox sob)
+    {
+        soulflameBuffs.add(sob);
     }
 
     public void addAttack(RaidRoom room, PlayerDidAttack attack)

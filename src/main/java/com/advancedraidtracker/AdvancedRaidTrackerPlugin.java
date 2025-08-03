@@ -14,6 +14,7 @@ import com.advancedraidtracker.ui.charts.ChartTheme;
 import com.advancedraidtracker.ui.charts.LiveChart;
 import com.advancedraidtracker.ui.RaidTrackerSidePanel;
 import com.advancedraidtracker.ui.charts.chartelements.OutlineBox;
+import com.advancedraidtracker.ui.charts.chartelements.SoulflameOutlineBox;
 import com.advancedraidtracker.utility.*;
 import static com.advancedraidtracker.utility.DataType.ATTACK;
 import static com.advancedraidtracker.utility.DataType.RING;
@@ -183,6 +184,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     public boolean loggingIn = false;
 
     private ThrallTracker thrallTracker;
+    private SoulflameHornTracker soulflameHornTracker;
     private VengTracker vengTracker;
     private List<PlayerShell> localPlayers;
     private List<ProjectileQueue> activeProjectiles;
@@ -275,6 +277,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         migrateSavedFilesToZip();
         localPlayers = new ArrayList<>();
         thrallTracker = new ThrallTracker(this);
+        soulflameHornTracker = new SoulflameHornTracker(this, client);
         vengTracker = new VengTracker(this);
         activeProjectiles = new ArrayList<>();
         activeVenges = new ArrayList<>();
@@ -1018,6 +1021,12 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     {
         clog.addLine(THRALL_SPAWN, outlineBox.owner, String.valueOf(outlineBox.spawnTick), String.valueOf(outlineBox.id), currentRoom.getName());
         liveFrame.getPanel(currentRoom.getName()).addThrallBox(outlineBox);
+    }
+
+    public void addSoulflameOutlineBox(SoulflameOutlineBox sob)
+    {
+        clog.addLine(SOULFLAME_HORN, sob.owner, String.valueOf(sob.spawnTick));
+        liveFrame.getPanel(currentRoom.getName()).addSoulflameBox(sob);
     }
 
     public Map<String, PlayerCopy> lastTickPlayer = new HashMap<>();
@@ -1791,6 +1800,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     @Subscribe
     public void onGraphicChanged(GraphicChanged event)
     {
+        if (soulflameHornTracker != null && currentRoom != null)
+            soulflameHornTracker.onGraphicChanged(event);
         if (event.getActor() instanceof Player)
         {
             int id = -1;

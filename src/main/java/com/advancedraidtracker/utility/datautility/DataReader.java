@@ -3,6 +3,7 @@ package com.advancedraidtracker.utility.datautility;
 import com.advancedraidtracker.constants.LogID;
 import com.advancedraidtracker.constants.RaidRoom;
 import com.advancedraidtracker.ui.advancedstatistics.AdvancedData;
+import com.advancedraidtracker.ui.charts.chartelements.SoulflameOutlineBox;
 import com.advancedraidtracker.utility.DataType;
 import com.advancedraidtracker.utility.PlayerDataChanged;
 import com.advancedraidtracker.utility.datautility.datapoints.col.Colo;
@@ -277,6 +278,16 @@ public class DataReader //todo move any methods that read files to here. I belie
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
+                            break;
+                        case "220100":
+                            try {
+                                String playerName = line[4];
+                                int roomTick = Integer.parseInt(line[5]);
+                                chartData.addSoulflameBuff(new SoulflameOutlineBox(playerName, roomTick));
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
+                            break;
 						case "111":
 							try
 							{

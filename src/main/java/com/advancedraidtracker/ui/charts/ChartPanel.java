@@ -8,21 +8,16 @@ import static com.advancedraidtracker.constants.TobIDs.MAGE_THRALL;
 import com.advancedraidtracker.ui.PresetManager;
 import static com.advancedraidtracker.ui.charts.ChartActionType.ADD_ELEMENT;
 import static com.advancedraidtracker.ui.charts.ChartActionType.REMOVE_ELEMENT;
-import static com.advancedraidtracker.ui.charts.ChartObjectType.ATTACK;
-import static com.advancedraidtracker.ui.charts.ChartObjectType.AUTO;
-import static com.advancedraidtracker.ui.charts.ChartObjectType.LINE;
-import static com.advancedraidtracker.ui.charts.ChartObjectType.TEXT;
-import static com.advancedraidtracker.ui.charts.ChartObjectType.THRALL;
+
 import com.advancedraidtracker.ui.charts.chartcreator.ChartCreatorFrame;
 import com.advancedraidtracker.ui.charts.chartcreator.ChartStatusBar;
 import com.advancedraidtracker.ui.charts.chartcreator.CustomPanel;
-import com.advancedraidtracker.ui.charts.chartelements.ChartAuto;
-import com.advancedraidtracker.ui.charts.chartelements.ChartLine;
-import com.advancedraidtracker.ui.charts.chartelements.ChartTextBox;
-import com.advancedraidtracker.ui.charts.chartelements.OutlineBox;
+import com.advancedraidtracker.ui.charts.chartelements.*;
+
+import static com.advancedraidtracker.ui.charts.ChartObjectType.*;
 import static com.advancedraidtracker.ui.charts.chartelements.OutlineBox.getReplacement;
 import static com.advancedraidtracker.ui.charts.chartelements.OutlineBox.getSpellIcon;
-import com.advancedraidtracker.ui.charts.chartelements.ThrallOutlineBox;
+
 import com.advancedraidtracker.ui.dpsanalysis.DPSWindow;
 import com.advancedraidtracker.ui.dpsanalysis.EquipmentData;
 import com.advancedraidtracker.ui.dpsanalysis.NPCData;
@@ -160,6 +155,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 	private Map<Integer, String> NPCMap = new HashMap<>();
 	private final List<DawnSpec> dawnSpecs = new ArrayList<>();
 	private final List<ThrallOutlineBox> thrallOutlineBoxes = new ArrayList<>();
+	private final List<SoulflameOutlineBox> soulflameOutlineBoxes = new ArrayList<>();
 	@Getter
 	private final List<OutlineBox> outlineBoxes = new ArrayList<>();
 	private final Map<Integer, String> specific = new HashMap<>();
@@ -634,6 +630,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		g.drawRoundRect(summaryX, summaryY, boxWidth, boxHeight, 5, 5);
 
 		g.setColor(config.fontColor());
+
 		// Draw the text
 		int textY = summaryY + fm.getAscent() + 5;
 		for (String line : lines)
@@ -788,6 +785,28 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		}
 	}
 
+	public void addSoulflameBox(SoulflameOutlineBox sob)
+	{
+		synchronized (soulflameOutlineBoxes)
+		{
+			postChartChange(new ChartChangedEvent(ADD_ELEMENT, SOULFLAME_BUFF, sob));
+			soulflameOutlineBoxes.add(sob);
+
+			synchronized (outlineBoxes) {
+				for (OutlineBox box : outlineBoxes) {
+					if (!box.player.equalsIgnoreCase(sob.owner))
+						continue;
+					if (box.tick < sob.spawnTick)
+						continue;
+					if (box.playerAnimation.style == Style.MELEE && box.tick <= sob.spawnTick + 10) {
+						box.setBuffed(true);
+						break;
+					}
+				}
+			}
+		}
+	}
+
 	public void addThrallBoxes(List<ThrallOutlineBox> outlineBoxes)
 	{
 		for (ThrallOutlineBox box : outlineBoxes)
@@ -851,6 +870,15 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		for (DefenceReduction dr : defReds)
 		{
 			addDefenceReduction(dr);
+		}
+		drawGraph();
+	}
+
+	public void addSoulflameBuffs(List<SoulflameOutlineBox> sobs)
+	{
+		for (SoulflameOutlineBox sob : sobs)
+		{
+			addSoulflameBox(sob);
 		}
 		drawGraph();
 	}
@@ -2248,6 +2276,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 									{
 										g.setColor(config.attackBoxColor());
 									}
+
 									fillBoxStyleAccordingToConfig(g, xOffset + 2, yOffset + 2, scale - 3, scale - 3, 5, 5);
 									BufferedImage icon = getIcon(box.playerAnimation, box.weapon);
 									if (icon == null)
@@ -2559,6 +2588,46 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 			}
 		}
 		return false;
+	}
+
+	private void drawSoulflameBox(Graphics2D g, SoulflameOutlineBox box, int opacity)
+	{
+		g.setColor(new Color(box.getColor().getRed(), box.getColor().getGreen(), box.getColor().getBlue(), opacity));
+
+		int maxTick = box.spawnTick + 10;
+		int lastEndTick = box.spawnTick;
+		while (lastEndTick < maxTick && shouldTickBeDrawn(lastEndTick))
+		{
+			int yOffset = getYOffset(lastEndTick);
+			try
+			{
+				yOffset += (playerOffsets.get(box.owner) + 1) * scale;
+			}
+			catch (Exception e)
+			{
+				break;
+			}
+			int currentEndTick = (shouldWrap) ? lastEndTick + (ticksToShow - (lastEndTick % ticksToShow) + (startTick % ticksToShow)) : maxTick;
+			if (currentEndTick > maxTick)
+			{
+				currentEndTick = maxTick;
+			}
+			int xOffsetStart = getXOffset(lastEndTick);
+			int xOffsetEnd = getXOffset(currentEndTick - 1);
+			lastEndTick = currentEndTick;
+			if (yOffset > scale + 5 && xOffsetStart > 100)
+			{
+				g.fillRect(xOffsetStart, yOffset + 1, xOffsetEnd - xOffsetStart + scale, scale - 2);
+			}
+		}
+	}
+
+	private void drawSoulflameBuffs(Graphics2D g)
+	{
+		synchronized (soulflameOutlineBoxes) {
+			for (SoulflameOutlineBox box : soulflameOutlineBoxes)
+				drawSoulflameBox(g, box, 15);
+		}
 	}
 
 	private void drawThrallBoxes(Graphics2D g)
@@ -3132,6 +3201,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		drawRoomSpecificData(g);
 		drawDawnSpecs(g);
 		drawThrallBoxes(g);
+		drawSoulflameBuffs(g);
 		drawPrimaryBoxes(g);
 		if (isExtendingAttack)
 		{

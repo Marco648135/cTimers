@@ -229,6 +229,7 @@ public class ChartFrame extends BaseFrame
 			chartPanel.addPlayersHanded(chartData.playerHanded);
 			chartPanel.addDinhsSpecs(chartData.dinhsSpecs);
 			chartPanel.addDefenceReductions(chartData.defenceReductions);
+			chartPanel.addSoulflameBuffs(chartData.soulflameBuffs);
 			chartPanel.addBadChins(chartData.badChins);
 			chartPanel.addPlayerDatumChanged(chartData.playerDataChangeds.get(room));
 			if (room.equals(RaidRoom.VERZIK))

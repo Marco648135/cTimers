@@ -49,7 +49,8 @@ public class ItemReference
 					"blood moon",
 					"dharok",
 					"oathplate",
-					"tecpatl"
+					"tecpatl",
+					"elder maul"
             },
             {
                     "masori",

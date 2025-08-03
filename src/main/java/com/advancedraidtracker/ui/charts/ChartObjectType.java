@@ -7,6 +7,7 @@ public enum ChartObjectType
 	TEXT("Text"),
 	AUTO("Autos"),
 	THRALL("Thralls"),
+	SOULFLAME_BUFF("Soulflame Buff")
 	;
 
 	public final String name;
