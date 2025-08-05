@@ -787,6 +787,9 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	public void addSoulflameBox(SoulflameOutlineBox sob)
 	{
+		if (!room.equalsIgnoreCase(sob.room))
+			return;
+
 		synchronized (soulflameOutlineBoxes)
 		{
 			postChartChange(new ChartChangedEvent(ADD_ELEMENT, SOULFLAME_BUFF, sob));

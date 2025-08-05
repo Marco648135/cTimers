@@ -283,7 +283,11 @@ public class DataReader //todo move any methods that read files to here. I belie
                             try {
                                 String playerName = line[4];
                                 int roomTick = Integer.parseInt(line[5]);
-                                chartData.addSoulflameBuff(new SoulflameOutlineBox(playerName, roomTick));
+                                String room = "unknown";
+                                if (line.length > 6) {
+                                    room = line[6];
+                                }
+                                chartData.addSoulflameBuff(new SoulflameOutlineBox(playerName, roomTick, room));
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }

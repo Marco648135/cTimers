@@ -382,7 +382,7 @@ public enum LogID
             "Thrall Despawn", "Player", "Room Tick"),
     SOULFLAME_HORN(220100, false, ANY_TOB,
             new ParseInstruction(MANUAL_PARSE),
-            "Soulflame Horn Buff", "Player", "Room Tick"),
+            "Soulflame Horn Buff", "Player", "Room Tick", "Room Name"),
     DAWN_SPEC(487, false, VERZIK,
             new ParseInstruction(MANUAL_PARSE),
             "Dawn Spec", "Player", "Room Tick Damage Applied"),

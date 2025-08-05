@@ -9,17 +9,19 @@ public class SoulflameOutlineBox
     public int spawnTick;
     public String owner;
 	public int duration;
+	public String room;
 
-    public SoulflameOutlineBox(String owner, int spawnTick)
+    public SoulflameOutlineBox(String owner, int spawnTick, String room)
     {
-		this(owner, spawnTick,  6);
+		this(owner, spawnTick, 6, room);
     }
 
-	public SoulflameOutlineBox(String owner, int spawnTick, int duration)
+	public SoulflameOutlineBox(String owner, int spawnTick, int duration, String room)
 	{
 		this.spawnTick = spawnTick;
 		this.owner = owner;
 		this.duration = duration;
+		this.room = room;
 	}
 
     public Color getColor()
@@ -34,7 +36,7 @@ public class SoulflameOutlineBox
 		String thrallString;
 		thrallString = "Soulflame Buff (";
 		thrallString += owner;
-		thrallString += ", " + spawnTick + "->" + (spawnTick + duration) + ")";
+		thrallString += ", " + room + ", " + spawnTick + "->" + (spawnTick + duration) + ")";
 		return thrallString;
 	}
 }

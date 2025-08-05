@@ -250,6 +250,10 @@ public class AdvancedRaidTrackerPlugin extends Plugin
         return client.getTickCount();
     }
 
+    public RoomHandler getCurrentRoom() {
+        return currentRoom;
+    }
+
     public boolean isVerzP2()
     {
         if (currentRoom instanceof VerzikHandler)
@@ -1025,7 +1029,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 
     public void addSoulflameOutlineBox(SoulflameOutlineBox sob)
     {
-        clog.addLine(SOULFLAME_HORN, sob.owner, String.valueOf(sob.spawnTick));
+        clog.addLine(SOULFLAME_HORN, sob.owner, String.valueOf(sob.spawnTick), sob.room);
         liveFrame.getPanel(currentRoom.getName()).addSoulflameBox(sob);
     }
 

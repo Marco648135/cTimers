@@ -32,7 +32,11 @@ public class SoulflameHornTracker {
                     System.out.println(event.getActor().getName() + " was buffed by the horn");
                     hornBuffedPlayers.add(Pair.of(event.getActor().getName(), client.getTickCount()));
 
-                    SoulflameOutlineBox sob = new SoulflameOutlineBox(event.getActor().getName(), plugin.getRoomTick());
+                    String roomName = "unknown";
+                    if (plugin.getCurrentRoom() != null) {
+                        roomName = plugin.getCurrentRoom().getName();
+                    }
+                    SoulflameOutlineBox sob = new SoulflameOutlineBox(event.getActor().getName(), plugin.getRoomTick(), roomName);
                     plugin.sendChatMessage("<col=EF1020>" + event.getActor().getName() + "<col=ffffff> was buffed by a Soulflame Horn");
                     plugin.addSoulflameOutlineBox(sob);
                 }
