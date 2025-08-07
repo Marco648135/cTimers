@@ -15,13 +15,10 @@ public class SoulflameHornTracker {
 
     private AdvancedRaidTrackerPlugin plugin;
     private Client client;
-    private ArrayList<Pair<String, Integer>> hornBuffedPlayers = new ArrayList<>();
-
     public SoulflameHornTracker(AdvancedRaidTrackerPlugin plugin, Client client)
     {
         this.plugin = plugin;
         this.client = client;
-        this.hornBuffedPlayers = new ArrayList<>();
     }
 
     public void onGraphicChanged(GraphicChanged event)
@@ -29,9 +26,6 @@ public class SoulflameHornTracker {
         if (plugin.getRoomTick() > 0 && event.getActor() != null && event.getActor() instanceof Player && event.getActor().getSpotAnims() != null) {
             for (ActorSpotAnim spotAnim : event.getActor().getSpotAnims()) {
                 if (spotAnim.getId() == SpotanimID.VFX_SOULFLAME_HORN_IMPACT_SPOTANIM01) {
-                    System.out.println(event.getActor().getName() + " was buffed by the horn");
-                    hornBuffedPlayers.add(Pair.of(event.getActor().getName(), client.getTickCount()));
-
                     String roomName = "unknown";
                     if (plugin.getCurrentRoom() != null) {
                         roomName = plugin.getCurrentRoom().getName();
@@ -42,5 +36,11 @@ public class SoulflameHornTracker {
                 }
             }
         }
+    }
+
+    public void addSelfHorn(String playerName, String roomName) {
+        SoulflameOutlineBox sob = new SoulflameOutlineBox(playerName, plugin.getRoomTick(), roomName);
+        plugin.sendChatMessage("<col=EF1020>" + playerName + "<col=ffffff> has horned.");
+        plugin.addSoulflameOutlineBox(sob);
     }
 }

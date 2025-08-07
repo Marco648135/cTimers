@@ -1030,7 +1030,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     public void addSoulflameOutlineBox(SoulflameOutlineBox sob)
     {
         clog.addLine(SOULFLAME_HORN, sob.owner, String.valueOf(sob.spawnTick), sob.room);
-        liveFrame.getPanel(currentRoom.getName()).addSoulflameBox(sob);
+        if (sob.room.equalsIgnoreCase(currentRoom.getName()))
+            liveFrame.getPanel(currentRoom.getName()).addSoulflameBox(sob);
     }
 
     public Map<String, PlayerCopy> lastTickPlayer = new HashMap<>();
@@ -1688,7 +1689,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                     }
                 } else if (p.getAnimation() == TWO_HAND_SWORD_SWING)
                 {
-                    if ((id == BANDOS_GODSWORD || id == BANDOS_GODSWORD_OR) && !(currentRoom instanceof VerzikHandler && p.getInteracting().getName() != null && p.getInteracting().getName().contains("Matamenos")))
+                    if ((id == BANDOS_GODSWORD || id == BANDOS_GODSWORD_OR) && !(currentRoom instanceof VerzikHandler && p.getInteracting().getName() != null && p.getInteracting().getName().contains("Matomenos")))
                     {
                         if (config.showMistakesInChat())
                         {
@@ -1804,7 +1805,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     @Subscribe
     public void onGraphicChanged(GraphicChanged event)
     {
-        if (soulflameHornTracker != null && currentRoom != null)
+        if (soulflameHornTracker != null && currentRoom != null && inTheatre)
             soulflameHornTracker.onGraphicChanged(event);
         if (event.getActor() instanceof Player)
         {
@@ -2028,6 +2029,10 @@ public class AdvancedRaidTrackerPlugin extends Plugin
             } else if (event.getActor().getName() != null && event.getActor().getName().contains("Maiden") && id == MAIDEN_BLOOD_THROW_ANIM)
             {
                 clog.addLine(BLOOD_THROWN);
+            } else if (event.getActor().getAnimation() == PlayerAnimation.SOULFLAME_HORN.animations[0]) {
+                if (soulflameHornTracker != null && currentRoom != null) {
+                    soulflameHornTracker.addSelfHorn(event.getActor().getName(), currentRoom.getName());
+                }
             }
             if (inTheatre)
             {

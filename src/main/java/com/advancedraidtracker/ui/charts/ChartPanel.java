@@ -947,6 +947,7 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		playerInThrownBloodList.clear();
 		playerInSpawnedBloodList.clear();
 		playerChancedDrainList.clear();
+		soulflameOutlineBoxes.clear();
 		playersHandedList.clear();
 		playerDataManager.clear();
 		finished = false;
