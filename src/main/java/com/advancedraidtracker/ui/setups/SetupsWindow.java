@@ -14,6 +14,7 @@ import java.util.List;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 import net.runelite.api.Client;
+import net.runelite.api.gameval.ItemID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.game.ItemManager;
 
@@ -22,13 +23,15 @@ public class SetupsWindow extends BaseFrame
 {
 	List<Integer> magicDefaults = List.of(
 		21018, 21021, 21024, 21006, 12002, 19544, 13235, 21791,
-		27275, 27251, 28313, 22323, 26241, 26243, 26245, 11663, 27624
+		27275, 27251, 28313, 22323, 26241, 26243, 26245, 11663, 27624,
+			ItemID.CONFLICTION_GAUNTLETS
 	);
 
 	List<Integer> meleeDefaults = List.of(
 		28254, 28256, 28258, 22325, 29801, 22981, 13239, 21295,
 		11804, 28307, 28316, 21003, 13576, 22322, 21015, 23987,
-		13652, 24219, 11665
+		13652, 24219, 11665, ItemID.OATHPLATE_HELM, ItemID.OATHPLATE_CHEST,
+			ItemID.OATHPLATE_LEGS, ItemID.DUAL_MACUAHUITL, ItemID.SULPHUR_BLADES
 	);
 
 	List<Integer> rangedDefaults = List.of(
@@ -38,7 +41,7 @@ public class SetupsWindow extends BaseFrame
 	);
 
 	List<Integer> miscDefaults = List.of(
-		25975, 9763, 12612, 12608, 25818, 10588, 12018, 27281, 27641
+		25975, 9763, 12612, 12608, 25818, 10588, 12018, 27281, 27641, ItemID.SOULFLAME_HORN, ItemID.AVERNIC_TREADS_MAX
 	);
 
 	List<Integer> suppliesDefaults = List.of(

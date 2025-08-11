@@ -11,7 +11,7 @@ public class RuneDepot extends IconGridPanel
 		ItemID.BODY_RUNE, ItemID.COSMIC_RUNE, ItemID.CHAOS_RUNE, ItemID.NATURE_RUNE, ItemID.LAW_RUNE,
 		ItemID.DEATH_RUNE, ItemID.SUNFIRE_RUNE, ItemID.ASTRAL_RUNE, ItemID.BLOOD_RUNE, ItemID.SOUL_RUNE,
 		ItemID.WRATH_RUNE, ItemID.MIST_RUNE, ItemID.DUST_RUNE, ItemID.MUD_RUNE, ItemID.SMOKE_RUNE,
-		ItemID.STEAM_RUNE, ItemID.LAVA_RUNE
+		ItemID.STEAM_RUNE, ItemID.LAVA_RUNE, ItemID.AETHER_RUNE
 	);
 
 	public RuneDepot(ItemManager itemManager, SetupsWindow setupsWindow)
