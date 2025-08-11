@@ -133,7 +133,7 @@ public class MaidenHandler extends TOBRoomHandler
 
     public void startMaiden()
     {
-        if (active)
+        if (active || roomState != RoomState.MaidenRoomState.NOT_STARTED)
             return;
 
         active = true;
