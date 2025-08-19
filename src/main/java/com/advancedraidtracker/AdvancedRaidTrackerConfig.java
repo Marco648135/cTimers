@@ -274,4 +274,12 @@ public interface AdvancedRaidTrackerConfig extends Config
     {
         return true;
     }
+
+    @ConfigItem(
+            position = 80,
+            keyName = "preventSurgePotionSip",
+            name = "Prevent premature surge",
+            description = "Prevents sipping surge potions when the room is not started"
+    )
+    default boolean prematureSurgePotion() { return false; }
 }

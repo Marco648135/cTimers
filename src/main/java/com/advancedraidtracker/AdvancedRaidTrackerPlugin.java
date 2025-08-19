@@ -2097,6 +2097,23 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     }
 
     @Subscribe
+    public void onMenuOptionClicked(MenuOptionClicked event) {
+        if (event.getMenuOption().equalsIgnoreCase("drink")) {
+            int itemId = event.getItemId();
+            if (itemId == net.runelite.api.gameval.ItemID._1DOSESURGE
+                || itemId == net.runelite.api.gameval.ItemID._2DOSESURGE
+                || itemId == net.runelite.api.gameval.ItemID._3DOSESURGE
+                || itemId == net.runelite.api.gameval.ItemID._4DOSESURGE) {
+                if (config.prematureSurgePotion() && inTheatre && currentRoom != null && !currentRoom.isActive()) {
+                    sendChatMessage("Prevented sipping Surge potion without active room state.");
+                    event.consume();
+                    return;
+                }
+            }
+        }
+    }
+
+    @Subscribe
     public void onInteractingChanged(InteractingChanged event)
     {
         if (inTheatre)
