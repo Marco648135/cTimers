@@ -57,6 +57,9 @@ public class PlayerDataManager
 
 	private void applyChangeToPlayerData(PlayerData playerData, PlayerDataChanged change)
 	{
+		if (change.getChangeType() == null)
+			return;
+
 		switch (change.getChangeType())
 		{
 			case RING:
