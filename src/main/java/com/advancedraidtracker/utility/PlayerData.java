@@ -13,6 +13,7 @@ public class PlayerData
 	private int ringId;
 	private int attackLevel;
 	private int strengthLevel;
+	private int magicLevel;
 	private final Map<Prayer, Boolean> prayers;
 
 	public PlayerData()
@@ -20,6 +21,7 @@ public class PlayerData
 		this.ringId = -1; // Default value indicating no ring equipped
 		this.attackLevel = -1;
 		this.strengthLevel = -1;
+		this.magicLevel = -1;
 		this.prayers = new EnumMap<>(Prayer.class);
 	}
 

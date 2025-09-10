@@ -5,7 +5,8 @@ public enum DataType
 	RING("Ring"),
 	ATTACK("Attack"),
 	STRENGTH("Strength"),
-	PRAYER("Prayer");
+	PRAYER("Prayer"),
+	MAGIC("Magic");
 
 	public final String name;
 	DataType(String name)

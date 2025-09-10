@@ -16,9 +16,6 @@ import com.advancedraidtracker.ui.RaidTrackerSidePanel;
 import com.advancedraidtracker.ui.charts.chartelements.OutlineBox;
 import com.advancedraidtracker.ui.charts.chartelements.SoulflameOutlineBox;
 import com.advancedraidtracker.utility.*;
-import static com.advancedraidtracker.utility.DataType.ATTACK;
-import static com.advancedraidtracker.utility.DataType.RING;
-import static com.advancedraidtracker.utility.DataType.STRENGTH;
 import com.advancedraidtracker.utility.datautility.DataReader;
 import com.advancedraidtracker.utility.datautility.DataWriter;
 import com.advancedraidtracker.utility.thrallvengtracking.*;
@@ -79,6 +76,7 @@ import static com.advancedraidtracker.constants.RaidRoom.SOTETSEG;
 import static com.advancedraidtracker.constants.RaidRoom.VERZIK;
 import static com.advancedraidtracker.constants.RaidRoom.XARPUS;
 import static com.advancedraidtracker.constants.TobIDs.*;
+import static com.advancedraidtracker.utility.DataType.*;
 import static com.advancedraidtracker.utility.RoomUtil.inRegion;
 import static com.advancedraidtracker.utility.datautility.LegacyFileUtility.migrateSavedFilesToZip;
 import static com.advancedraidtracker.utility.datautility.LegacyFileUtility.splitLegacyFiles;
@@ -219,6 +217,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 	private int ringData;
 	private int strLevelData;
 	private int attLevelData;
+    private int magicLevelData;
 	private List<Integer> prayerData;
 
     @Override
@@ -1197,6 +1196,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 				ringData = -1;
 				attLevelData = -1;
 				strLevelData = -1;
+                magicLevelData = -1;
 				prayersActivelyBeingTracked = false;
 				playerDataMap.clear();
 			}
@@ -1281,6 +1281,16 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 
 	private final Map<String, PlayerData> playerDataMap = new ConcurrentHashMap<>();
 
+    public PlayerData getPlayerDataFor(String name)
+    {
+        if (playerDataMap.containsKey(name))
+        {
+            return playerDataMap.get(name);
+        }
+
+        return null;
+    }
+
 	private void checkChangedPartyData()
 	{
 		try
@@ -1324,6 +1334,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 	{
 		int att = client.getBoostedSkillLevel(Skill.ATTACK);
 		int str = client.getBoostedSkillLevel(Skill.STRENGTH);
+        int magic = client.getBoostedSkillLevel(Skill.MAGIC);
 
 		if(att != attLevelData)
 		{
@@ -1337,6 +1348,11 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 			//log.info("sending changed strength: " + str);
 			strLevelData = str;
 		}
+        if(magic != magicLevelData)
+        {
+            party.send(new PlayerDataChanged(client.getLocalPlayer().getName(), MAGIC, magic, getRoomTick()));
+            magicLevelData = magic;
+        }
 	}
 
 	private void checkRing()
@@ -1414,6 +1430,10 @@ public class AdvancedRaidTrackerPlugin extends Plugin
 				playerData.setStrengthLevel(dataValue);
 				//log.info("Player {}: Strength level updated to {}", playerName, dataValue);
 				break;
+
+            case MAGIC:
+                playerData.setMagicLevel(dataValue);
+                break;
 
 			default:
 				break;
@@ -2108,7 +2128,8 @@ public class AdvancedRaidTrackerPlugin extends Plugin
                 || itemId == net.runelite.api.gameval.ItemID._2DOSESURGE
                 || itemId == net.runelite.api.gameval.ItemID._3DOSESURGE
                 || itemId == net.runelite.api.gameval.ItemID._4DOSESURGE) {
-                if (config.prematureSurgePotion() && inTheatre && currentRoom != null && !currentRoom.isActive()) {
+                // temporarily disable this
+                if (false && config.prematureSurgePotion() && inTheatre && currentRoom != null && !currentRoom.isActive()) {
                     sendChatMessage("Prevented sipping Surge potion without active room state.");
                     event.consume();
                     return;

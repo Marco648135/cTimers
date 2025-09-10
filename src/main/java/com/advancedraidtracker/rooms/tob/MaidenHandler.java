@@ -2,6 +2,7 @@ package com.advancedraidtracker.rooms.tob;
 
 import com.advancedraidtracker.AdvancedRaidTrackerConfig;
 
+import com.advancedraidtracker.utility.PlayerMagicRoll;
 import com.advancedraidtracker.utility.RoomState;
 import com.advancedraidtracker.constants.RaidRoom;
 import com.advancedraidtracker.constants.TobIDs;
@@ -10,6 +11,7 @@ import com.advancedraidtracker.utility.RoomUtil;
 import com.advancedraidtracker.utility.datautility.DataWriter;
 import com.advancedraidtracker.utility.maidenbloodtracking.BloodDamageToBeApplied;
 import com.advancedraidtracker.utility.maidenbloodtracking.BloodPositionWrapper;
+import com.advancedraidtracker.utility.weapons.PlayerAnimation;
 import com.advancedraidtracker.utility.wrappers.NPCTimeInChunkShell;
 import com.advancedraidtracker.utility.wrappers.PlayerHitsWrapper;
 import com.google.common.collect.ImmutableMap;
@@ -222,7 +224,18 @@ public class MaidenHandler extends TOBRoomHandler
 		else if (event.getActor().getAnimation() == MAIDEN_AUTO_ANIMATION)
         {
             didAuto = true;
-
+        }
+        else if (Arrays.stream(PlayerAnimation.BARRAGE.animations).anyMatch(x -> x == event.getActor().getAnimation()))
+        {
+            // check if the player has enough magic stats
+            if (event.getActor() instanceof Player) {
+                PlayerMagicRoll pmr = new PlayerMagicRoll((Player) event.getActor(), itemManager, plugin, client);
+                if (!pmr.isOk()) {
+                    client.addChatMessage(ChatMessageType.GAMEMESSAGE, "",
+                            event.getActor().getName() + " froze with "
+                                    + pmr.getRollAsPercent() + " accuracy against a crab", null, false);
+                }
+            }
         }
     }
 
