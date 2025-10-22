@@ -7,8 +7,6 @@ import com.google.common.collect.ImmutableMap;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import net.runelite.client.util.Text;
-
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;

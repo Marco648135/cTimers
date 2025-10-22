@@ -239,6 +239,8 @@ public class OutlineBox
 		Map.entry(4411, SpriteID.SPELL_VENGEANCE_OTHER),
 		Map.entry(8316, SpriteID.SPELL_VENGEANCE),
 		Map.entry(6294, SpriteID.SPELL_HUMIDIFY),
+		Map.entry(4413, SpriteID.SPELL_NPC_CONTACT),
+		Map.entry(11904, SpriteID.SPELL_NPC_CONTACT),
 		Map.entry(722, SpriteID.SPELL_MAGIC_IMBUE),
 		Map.entry(836, SpriteID.PLAYER_KILLER_SKULL),
 		Map.entry(10629, SpriteID.PLAYER_KILLER_SKULL),
@@ -266,6 +268,8 @@ public class OutlineBox
 		Map.entry(2605, 8316),
 		Map.entry(141, 722), //magic imbue
 		Map.entry(1061, 6294), //humid
+		Map.entry(728, 1969), //npc contact
+		Map.entry(3055, 1969), //npc contact
 		Map.entry(1062, 6299), //sbs
 		Map.entry(1978, 8977),
 		Map.entry(1851, 18970),

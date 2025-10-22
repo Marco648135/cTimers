@@ -47,6 +47,7 @@ public enum PlayerAnimation
 	AID_OTHER("Aid other", "AO", new Color(100, 100, 100), -1, new int[]{4411}, new int[]{}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
 	VENG_SELF("Veng Self", "VS", new Color(160, 89, 13), -1, new int[]{8316}, new int[]{726}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
 	HUMIDIFY("Humidify", "HU", new Color(20, 20, 200), -1, new int[]{6294}, new int[]{1061}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
+	NPC_CONTACT("NPC Contact", "NC", new Color(20, 20, 200), -1, new int[]{4413, 11904}, new int[]{3055, 728}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
 	MAGIC_IMBUE("Magic Imbue", "MI", new Color(60, 60, 150), -1, new int[]{722}, new int[]{}, new int[]{}, new int[]{}, 0, Style.NON_COMBAT),
 	WEB_WEAVER("Web Weaver Auto", "ww", new Color(240, 18, 119), 3, new int[]{426}, new int[]{}, new int[]{ItemID.WEBWEAVER_BOW}, new int[]{}, 0, true, Style.RANGE),
 	WEB_WEAVER_SPEC("Web Weaver Spec", "WW", new Color(240, 18, 119), 3, new int[]{9964}, new int[]{}, new int[]{ItemID.WEBWEAVER_BOW}, new int[]{}, 50, Style.RANGE),
