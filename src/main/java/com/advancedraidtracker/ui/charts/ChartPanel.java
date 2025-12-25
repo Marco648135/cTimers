@@ -820,8 +820,6 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 
 	public void addDefenceReduction(DefenceReduction dr)
 	{
-		System.out.println(dr.toString());
-
 		synchronized (outlineBoxes)
 		{
 			for (OutlineBox outlineBox : outlineBoxes)

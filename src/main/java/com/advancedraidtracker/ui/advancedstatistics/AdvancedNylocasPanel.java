@@ -150,10 +150,6 @@ public class AdvancedNylocasPanel extends DataTab
 	@Override
 	public void refresh()
 	{
-		int stallEvents = dataSource.getStalls().size();
-		int killedEvents = dataSource.getKilledNylos().size();
-		System.out.println("Nylocas Panel refreshing. Stall Events: " + stallEvents + ", killed events: " + killedEvents);
-
 		earliest = 252;
 		latest = calculateLatest();
 		targetTimeSlider.setMinimum(earliest);
