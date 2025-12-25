@@ -133,7 +133,10 @@ public enum PlayerAnimation
 	EARTHBOUND_TECPATL("Tecpatl", "TCP", new Color(180, 20, 40), 4, new int[]{12342}, new int[]{}, new int[]{30957}, new int[]{}, 0, false, Style.MELEE),
 	BURNING_CLAW_SPEC("Burning Claws Spec", "BC", new Color(100, 70, 70), 4, new int[] {11140}, new int[] {}, new int[]{29577}, new int[] {}, 35, Style.MELEE),
 	GRANITE_MAUL("Granite Maul", "GM", new Color(100, 70, 70), 7, new int[] {1665}, new int[] {}, new int[]{4153}, new int[] {}, 0, Style.MELEE),
-	GRANITE_MAUL_SPEC("Burning Claws Spec", "GS", new Color(100, 70, 70), 7, new int[] {1667}, new int[] {}, new int[]{4153}, new int[] {}, 60, Style.MELEE);
+	GRANITE_MAUL_SPEC("Burning Claws Spec", "GS", new Color(100, 70, 70), 7, new int[] {1667}, new int[] {}, new int[]{4153}, new int[] {}, 60, Style.MELEE),
+	HUNTER_KIT("Hunter Kit", "HK", new Color(50, 50, 50), -1, new int[]{6303},new int[]{1074},new int[]{},new int[]{},0, Style.NON_COMBAT)
+	;
+
 
 	public final String name;
 	public final String shorthand;

@@ -249,6 +249,7 @@ public class OutlineBox
 		Map.entry(8970, SpriteID.SPELL_DEATH_CHARGE),
 		Map.entry(4409, SpriteID.SPELL_HEAL_GROUP),
 		Map.entry(8973, 2979), //resurrect greater ghost; not in the API 2979
+		Map.entry(6303, SpriteID.SPELL_HUNTER_KIT),
 		Map.entry(827, SpriteID.TAB_INVENTORY),
 		Map.entry(832, SpriteID.MAP_ICON_WATER_SOURCE),
 		Map.entry(-3, SpriteID.SPELL_VENGEANCE_OTHER_DISABLED),
@@ -276,6 +277,7 @@ public class OutlineBox
 		Map.entry(1852, 28970),
 		Map.entry(1876, 8978),
 		Map.entry(1877, 8977),
+		Map.entry(1074, 6303),
 		Map.entry(1881, 8979),
 		Map.entry(-3, -3) //veng disabled
 
