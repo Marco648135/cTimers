@@ -8,11 +8,11 @@ import java.awt.Dimension;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.util.List;
-import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
+import lombok.Getter;
+import lombok.Setter;
 import net.runelite.api.Client;
 import net.runelite.api.gameval.ItemID;
 import net.runelite.client.callback.ClientThread;
@@ -22,30 +22,30 @@ import net.runelite.client.game.ItemManager;
 public class SetupsWindow extends BaseFrame
 {
 	List<Integer> magicDefaults = List.of(
-		21018, 21021, 21024, 21006, 12002, 19544, 13235, 21791,
-		27275, 27251, 28313, 22323, 26241, 26243, 26245, 11663, 27624,
+			21018, 21021, 21024, 21006, 12002, 19544, 13235, 21791,
+			27275, 27251, 28313, 22323, 26241, 26243, 26245, 11663, 27624,
 			ItemID.CONFLICTION_GAUNTLETS
 	);
 
 	List<Integer> meleeDefaults = List.of(
-		28254, 28256, 28258, 22325, 29801, 22981, 13239, 21295,
-		11804, 28307, 28316, 21003, 13576, 22322, 21015, 23987,
-		13652, 24219, 11665, ItemID.OATHPLATE_HELM, ItemID.OATHPLATE_CHEST,
+			28254, 28256, 28258, 22325, 29801, 22981, 13239, 21295,
+			11804, 28307, 28316, 21003, 13576, 22322, 21015, 23987,
+			13652, 24219, 11665, ItemID.OATHPLATE_HELM, ItemID.OATHPLATE_CHEST,
 			ItemID.OATHPLATE_LEGS, ItemID.DUAL_MACUAHUITL, ItemID.SULPHUR_BLADES
 	);
 
 	List<Integer> rangedDefaults = List.of(
-		11664, 13072, 13073, 20997, 19547, 8842, 13237, 28951,
-		12926, 26374, 27235, 27238, 27241, 26235, 11959, 21000,
-		11212, 21944, 28922, 28310
+			11664, 13072, 13073, 20997, 19547, 8842, 13237, 28951,
+			12926, 26374, 27235, 27238, 27241, 26235, 11959, 21000,
+			11212, 21944, 28922, 28310
 	);
 
 	List<Integer> miscDefaults = List.of(
-		25975, 9763, 12612, 12608, 25818, 10588, 12018, 27281, 27641, ItemID.SOULFLAME_HORN, ItemID.AVERNIC_TREADS_MAX
+			25975, 9763, 12612, 12608, 25818, 10588, 12018, 27281, 27641, ItemID.SOULFLAME_HORN, ItemID.AVERNIC_TREADS_MAX
 	);
 
 	List<Integer> suppliesDefaults = List.of(
-		11090, 13441, 12695, 4417, 23685, 2444, 23733, 3024, 6685
+			11090, 13441, 12695, 4417, 23685, 2444, 23733, 3024, 6685
 	);
 	RecentItems recentItems;
 	private static SetupsWindow instance;
@@ -59,6 +59,15 @@ public class SetupsWindow extends BaseFrame
 	private ItemManager itemManager;
 	private ClientThread clientThread;
 	private Client client;
+
+	@Getter @Setter
+	private PixelBox hoveredBox;
+
+	@Getter @Setter
+	private GridPanel hoveredGrid;
+
+	@Getter @Setter
+	private Point hoveredGridPoint;
 
 	public SetupsWindow(ItemManager itemManager, ClientThread clientThread, Client client)
 	{

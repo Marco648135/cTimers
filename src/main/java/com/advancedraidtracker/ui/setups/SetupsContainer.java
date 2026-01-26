@@ -1,11 +1,9 @@
 package com.advancedraidtracker.ui.setups;
 
 import static com.advancedraidtracker.ui.RaidTrackerSidePanel.config;
-
 import com.advancedraidtracker.utility.UISwingUtility;
 import static com.advancedraidtracker.utility.UISwingUtility.getThemedMenu;
 import static com.advancedraidtracker.utility.UISwingUtility.getThemedMenuItem;
-
 import static com.advancedraidtracker.utility.UISwingUtility.getThemedSeperator;
 import static com.advancedraidtracker.utility.datautility.DataWriter.PLUGIN_DIRECTORY;
 import com.google.gson.Gson;
@@ -72,6 +70,8 @@ import javax.swing.RepaintManager;
 import javax.swing.SwingUtilities;
 import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.game.ItemManager;
 import net.runelite.client.util.AsyncBufferedImage;
@@ -84,6 +84,149 @@ enum BoxType
 }
 
 @Slf4j
+class SelectionManager
+{
+	@Getter
+	private static final List<PixelBox> selectedBoxes = new ArrayList<>();
+	@Getter @Setter
+	private static GridPanel selectionSourceGrid = null;
+
+	private static int startRow = -1;
+	private static int startCol = -1;
+
+	public static void startSelection(GridPanel grid, int r, int c)
+	{
+		selectedBoxes.clear();
+		selectionSourceGrid = grid;
+		startRow = r;
+		startCol = c;
+		updateSelection(grid, r, c);
+	}
+
+	public static void updateSelection(GridPanel grid, int currentR, int currentC)
+	{
+		if (selectionSourceGrid != grid)
+		{
+			return;
+		}
+
+		selectedBoxes.clear();
+
+		int r1 = Math.min(startRow, currentR);
+		int r2 = Math.max(startRow, currentR);
+		int c1 = Math.min(startCol, currentC);
+		int c2 = Math.max(startCol, currentC);
+
+		for (int r = r1; r <= r2; r++)
+		{
+			for (int c = c1; c <= c2; c++)
+			{
+				if (r >= 0 && r < grid.rows && c >= 0 && c < grid.cols)
+				{
+					if (grid.boxes[r][c] != null)
+					{
+						selectedBoxes.add(grid.boxes[r][c]);
+					}
+				}
+			}
+		}
+	}
+
+	public static void clearSelection()
+	{
+		selectedBoxes.clear();
+		if (selectionSourceGrid != null)
+		{
+			selectionSourceGrid.repaint();
+		}
+		selectionSourceGrid = null;
+		startRow = -1;
+		startCol = -1;
+	}
+
+	public static boolean isSelected(PixelBox box)
+	{
+		return selectedBoxes.contains(box);
+	}
+}
+
+class InternalClipboard
+{
+	static class ClipboardItem
+	{
+		int id;
+		int relativeRow;
+		int relativeCol;
+
+		public ClipboardItem(int id, int relativeRow, int relativeCol)
+		{
+			this.id = id;
+			this.relativeRow = relativeRow;
+			this.relativeCol = relativeCol;
+		}
+	}
+
+	private static List<ClipboardItem> copiedItems = new ArrayList<>();
+	private static BoxType sourceBoxType;
+
+	public static void copySelection()
+	{
+		List<PixelBox> selection = SelectionManager.getSelectedBoxes();
+		if (selection.isEmpty()) return;
+
+		copiedItems.clear();
+		sourceBoxType = selection.get(0).boxType;
+
+		// Find top-left anchor to normalize coordinates
+		int minRow = Integer.MAX_VALUE;
+		int minCol = Integer.MAX_VALUE;
+
+		for (PixelBox box : selection)
+		{
+			if (box.gridRow < minRow) minRow = box.gridRow;
+			if (box.gridCol < minCol) minCol = box.gridCol;
+		}
+
+		for (PixelBox box : selection)
+		{
+			if (box.getId() != -1)
+			{
+				copiedItems.add(new ClipboardItem(box.getId(), box.gridRow - minRow, box.gridCol - minCol));
+			}
+		}
+	}
+
+	public static boolean hasItems()
+	{
+		return !copiedItems.isEmpty();
+	}
+
+	public static void paste(GridPanel grid, int startRow, int startCol)
+	{
+		if (grid == null || copiedItems.isEmpty()) return;
+
+		if (grid.getBoxType() != sourceBoxType) return;
+
+		for (ClipboardItem item : copiedItems)
+		{
+			int targetRow = startRow + item.relativeRow;
+			int targetCol = startCol + item.relativeCol;
+
+			// Boundary Check
+			if (targetRow >= 0 && targetRow < grid.rows && targetCol >= 0 && targetCol < grid.cols)
+			{
+				PixelBox box = grid.boxes[targetRow][targetCol];
+				// Check for null (e.g. gaps in equipment grid)
+				if (box != null)
+				{
+					box.setId(item.id);
+				}
+			}
+		}
+	}
+}
+
+@Slf4j
 class DragState
 {
 	public static boolean dragging = false;
@@ -91,23 +234,33 @@ class DragState
 	public static int dragItemId = -1;
 	public static boolean ctrlPressed = false;
 	public static boolean rmb = false;
+	public static boolean shiftPressed = false;
 	public static List<PixelBox> affectedBoxes = new ArrayList<>();
 
-	public static void startDrag(PixelBox sourceBox, boolean isCtrlPressed, boolean isRmb)
+	public static void startDrag(PixelBox sourceBox, boolean isCtrlPressed, boolean isRmb, boolean isShiftPressed)
 	{
 		dragging = true;
 		dragSourceBox = sourceBox;
 		ctrlPressed = isCtrlPressed;
 		rmb = isRmb;
+		shiftPressed = isShiftPressed;
 		affectedBoxes.clear();
 
-		if (sourceBox.getId() != -1)
+		if (isShiftPressed)
 		{
-			dragItemId = sourceBox.getId();
+			// Logic handled via SelectionManager direct calls now
 		}
 		else
 		{
-			dragItemId = sourceBox.getSetupsWindow().getSelectedItem();
+			SelectionManager.clearSelection();
+			if (sourceBox.getId() != -1)
+			{
+				dragItemId = sourceBox.getId();
+			}
+			else
+			{
+				dragItemId = sourceBox.getSetupsWindow().getSelectedItem();
+			}
 		}
 	}
 
@@ -117,6 +270,7 @@ class DragState
 		dragSourceBox = null;
 		dragItemId = -1;
 		ctrlPressed = false;
+		shiftPressed = false;
 		clearAffectedBoxes();
 	}
 
@@ -213,6 +367,20 @@ class PixelBox extends JButton
 				{
 					mousePressPoint = e.getPoint();
 				}
+
+				if (e.isShiftDown())
+				{
+					DragState.startDrag(PixelBox.this, false, false, true);
+					SelectionManager.startSelection(parentGridPanel, gridRow, gridCol);
+					parentGridPanel.repaint();
+				}
+				else
+				{
+					if (!SelectionManager.getSelectedBoxes().contains(PixelBox.this))
+					{
+						SelectionManager.clearSelection();
+					}
+				}
 			}
 
 			@Override
@@ -222,15 +390,24 @@ class PixelBox extends JButton
 				{
 					return;
 				}
+
 				if (DragState.dragging)
 				{
-					parentGridPanel.handleMouseReleased(e);
+					if (!DragState.shiftPressed)
+					{
+						parentGridPanel.handleMouseReleased(e);
+					}
+					// If shift pressed, we just finish the drag but keep selection
 				}
 				else
 				{
 					if (SwingUtilities.isLeftMouseButton(e))
 					{
-						onBoxClicked();
+						if (!e.isShiftDown())
+						{
+							onBoxClicked();
+							SelectionManager.clearSelection();
+						}
 					}
 					else if (SwingUtilities.isRightMouseButton(e))
 					{
@@ -246,17 +423,29 @@ class PixelBox extends JButton
 				}
 				DragState.stopDrag();
 				SetupsWindow.getInstance().hideDragImage();
+
+				// Repaint parent grid to update selection visuals
+				parentGridPanel.repaint();
 			}
 
 			@Override
 			public void mouseEntered(MouseEvent e)
 			{
+				SetupsWindow.getInstance().setHoveredBox(PixelBox.this);
+				SetupsWindow.getInstance().setHoveredGrid(parentGridPanel);
+				SetupsWindow.getInstance().setHoveredGridPoint(new Point(gridRow, gridCol));
 				onHover();
 			}
 
 			@Override
 			public void mouseExited(MouseEvent e)
 			{
+				if (SetupsWindow.getInstance().getHoveredBox() == PixelBox.this)
+				{
+					SetupsWindow.getInstance().setHoveredBox(null);
+					// Don't clear hoveredGrid/Point here; let the next component set it
+					// or GridPanel mouse listener clear it if leaving the whole structure
+				}
 				isHoveringSubBox = false;
 				if (!DragState.dragging)
 				{
@@ -309,10 +498,13 @@ class PixelBox extends JButton
 					if (!DragState.dragging)
 					{
 						boolean ctrlPressed = e.isControlDown();
-						if (id != -1 || setupsWindow.getSelectedItem() != -1)
+						boolean shiftPressed = e.isShiftDown();
+
+						if (shiftPressed || id != -1 || setupsWindow.getSelectedItem() != -1)
 						{
-							DragState.startDrag(PixelBox.this, ctrlPressed, SwingUtilities.isRightMouseButton(e));
-							if (id != -1)
+							DragState.startDrag(PixelBox.this, ctrlPressed, SwingUtilities.isRightMouseButton(e), shiftPressed);
+
+							if (id != -1 && !shiftPressed)
 							{
 								AsyncBufferedImage itemImage = itemManager.getImage(id);
 								itemImage.onLoaded(() -> {
@@ -326,26 +518,42 @@ class PixelBox extends JButton
 					}
 					if (DragState.dragging)
 					{
-						parentGridPanel.handleMouseDragged(e);
-						SetupsWindow.getInstance().updateDragImagePosition(e.getXOnScreen(), e.getYOnScreen());
-
-						Component rootComponent = setupsWindow.getSetupsContainer();
-
-						Point rootPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), rootComponent);
-
-						Component targetComponent = SwingUtilities.getDeepestComponentAt(rootComponent, rootPoint.x, rootPoint.y);
-
-						PixelBox targetBox = null;
-						while (targetComponent != null && !(targetComponent instanceof PixelBox))
+						if (DragState.shiftPressed)
 						{
-							targetComponent = targetComponent.getParent();
-						}
-						if (targetComponent instanceof PixelBox)
-						{
-							targetBox = (PixelBox) targetComponent;
-						}
+							// Handle Selection Drag
+							Point gridPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), parentGridPanel);
+							Point cell = parentGridPanel.getGridCellAt(gridPoint);
 
-						SetupsWindow.getInstance().setTargetBox(targetBox);
+							if (cell != null)
+							{
+								SelectionManager.updateSelection(parentGridPanel, cell.x, cell.y);
+								parentGridPanel.repaint();
+							}
+						}
+						else
+						{
+							// Handle Item Move Drag
+							parentGridPanel.handleMouseDragged(e);
+							SetupsWindow.getInstance().updateDragImagePosition(e.getXOnScreen(), e.getYOnScreen());
+
+							Component rootComponent = setupsWindow.getSetupsContainer();
+
+							Point rootPoint = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), rootComponent);
+
+							Component targetComponent = SwingUtilities.getDeepestComponentAt(rootComponent, rootPoint.x, rootPoint.y);
+
+							PixelBox targetBox = null;
+							while (targetComponent != null && !(targetComponent instanceof PixelBox))
+							{
+								targetComponent = targetComponent.getParent();
+							}
+							if (targetComponent instanceof PixelBox)
+							{
+								targetBox = (PixelBox) targetComponent;
+							}
+
+							SetupsWindow.getInstance().setTargetBox(targetBox);
+						}
 					}
 				}
 			}
@@ -465,11 +673,25 @@ class PixelBox extends JButton
 		{
 			return;
 		}
+
+		Graphics2D g2d = (Graphics2D) g.create();
+
+		// Draw Selection Overlay
+		if (SelectionManager.isSelected(this))
+		{
+			g2d.setColor(new Color(255, 255, 255, 60));
+			g2d.fillRect(0, 0, getWidth(), getHeight());
+			g2d.setColor(Color.WHITE);
+			g2d.setStroke(new BasicStroke(2));
+			g2d.drawRect(1, 1, getWidth() - 2, getHeight() - 2);
+		}
+
 		if (id != -1)
 		{
+			g2d.dispose();
 			return;
 		}
-		Graphics2D g2d = (Graphics2D) g.create();
+
 
 		subBoxBounds.setBounds(getWidth() - 12, 1, 10, 10);
 
@@ -553,15 +775,16 @@ class PixelBox extends JButton
 
 	public void resetPreview()
 	{
+		isPreviewing = false;
 		if (id != -1)
 		{
 			setId(id);
 		}
 		else
 		{
-			isPreviewing = false;
 			setIcon(null);
 		}
+		repaint();
 	}
 
 	private void onBoxClicked()
@@ -633,7 +856,9 @@ class GridPanel extends JPanel
 	public PixelBox[][] boxes;
 	private ItemManager itemManager;
 	private SetupsWindow setupsWindow;
+	@Getter
 	private BoxType boxType;
+	private Point dragStartPoint;
 
 	public GridPanel(int rows, int cols, ItemManager itemManager, SetupsWindow setupsWindow, BoxType boxType)
 	{
@@ -686,6 +911,132 @@ class GridPanel extends JPanel
 				add(box, gbc);
 			}
 		}
+
+		// Mouse Listener for the GridPanel itself (handling clicks in margins/gaps)
+		addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent e) {
+				if (e.isShiftDown())
+				{
+					Point cell = getGridCellAt(e.getPoint());
+					if (cell != null)
+					{
+						// We found a valid grid cell location, even if no box is there or clicked on margin
+						DragState.startDrag(
+								boxes[cell.x][cell.y] != null ? boxes[cell.x][cell.y] : new PixelBox(itemManager, setupsWindow, boxType, GridPanel.this, cell.x, cell.y),
+								false, false, true
+						);
+						SelectionManager.startSelection(GridPanel.this, cell.x, cell.y);
+						repaint();
+					}
+				}
+				else
+				{
+					if (SelectionManager.getSelectionSourceGrid() != null)
+					{
+						SelectionManager.clearSelection();
+					}
+				}
+			}
+
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				if (DragState.dragging && DragState.shiftPressed)
+				{
+					DragState.stopDrag();
+					repaint();
+				}
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+				SetupsWindow.getInstance().setHoveredGrid(null);
+				SetupsWindow.getInstance().setHoveredGridPoint(null);
+				repaint();
+			}
+		});
+
+		addMouseMotionListener(new MouseAdapter() {
+			@Override
+			public void mouseDragged(MouseEvent e) {
+				if (DragState.dragging && DragState.shiftPressed)
+				{
+					Point cell = getGridCellAt(e.getPoint());
+					if (cell != null)
+					{
+						SelectionManager.updateSelection(GridPanel.this, cell.x, cell.y);
+						repaint();
+					}
+				}
+			}
+
+			@Override
+			public void mouseMoved(MouseEvent e) {
+				Point cell = getGridCellAt(e.getPoint());
+				SetupsWindow.getInstance().setHoveredGrid(GridPanel.this);
+				SetupsWindow.getInstance().setHoveredGridPoint(cell);
+
+				// Force repaint if we are hovering a null box to show visual indicator
+				if (cell != null && boxes[cell.x][cell.y] == null) {
+					repaint();
+				} else {
+					repaint();
+				}
+			}
+		});
+	}
+
+	@Override
+	protected void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		// Draw soft indicator if applicable
+		SetupsWindow win = SetupsWindow.getInstance();
+		if (win.getHoveredGrid() == this && win.getHoveredGridPoint() != null) {
+			Point p = win.getHoveredGridPoint();
+			if (p.x >= 0 && p.x < rows && p.y >= 0 && p.y < cols) {
+				if (boxes[p.x][p.y] == null) {
+					// It's a skipped/empty slot
+					int w = getWidth() / cols;
+					int h = getHeight() / rows;
+					int x = p.y * w;
+					int y = p.x * h;
+
+					Graphics2D g2d = (Graphics2D) g;
+					g2d.setColor(new Color(255, 255, 255, 30)); // Soft white
+					g2d.fillRoundRect(x + 2, y + 2, w - 4, h - 4, 10, 10);
+					g2d.setColor(new Color(255, 255, 255, 80)); // Outline
+					g2d.setStroke(new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0, new float[]{9}, 0));
+					g2d.drawRoundRect(x + 2, y + 2, w - 4, h - 4, 10, 10);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Returns the grid cell (row, col) at the given point, or null if out of bounds.
+	 * Returns Point(row, col).
+	 */
+	public Point getGridCellAt(Point p)
+	{
+		int width = getWidth();
+		int height = getHeight();
+		if (width == 0 || height == 0) return null;
+
+		int cellWidth = width / cols;
+		int cellHeight = height / rows;
+
+		if (cellWidth == 0 || cellHeight == 0) return null;
+
+		int c = p.x / cellWidth;
+		int r = p.y / cellHeight;
+
+		// Clamp to valid range
+		if (r < 0) r = 0;
+		if (r >= rows) r = rows - 1;
+		if (c < 0) c = 0;
+		if (c >= cols) c = cols - 1;
+
+		return new Point(r, c);
 	}
 
 	public void updateBoxSize(int boxSize)
@@ -1038,7 +1389,7 @@ class DragGlassPane extends JComponent
 	@Override
 	protected void paintComponent(Graphics g)
 	{
-		if (dragImage != null && dragPoint != null && !DragState.ctrlPressed && !DragState.rmb)
+		if (dragImage != null && dragPoint != null && !DragState.ctrlPressed && !DragState.rmb && !DragState.shiftPressed)
 		{
 			Graphics2D g2d = (Graphics2D) g.create();
 			int x = dragPoint.x - dragImage.getWidth(this) / 2;
@@ -1253,6 +1604,7 @@ public class SetupsContainer extends JPanel
 				{
 					requestFocus();
 					repaint();
+					SelectionManager.clearSelection();
 				}
 			}
 		});
@@ -1292,7 +1644,28 @@ public class SetupsContainer extends JPanel
 		getActionMap().put("copyImage", new AbstractAction() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				copySetupContainerImageToClipboard();
+				if (!SelectionManager.getSelectedBoxes().isEmpty())
+				{
+					InternalClipboard.copySelection();
+					SelectionManager.clearSelection(); // Deselect after copy
+				}
+				else
+				{
+					copySetupContainerImageToClipboard();
+				}
+			}
+		});
+
+		getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(KeyEvent.VK_V, menuShortcutKey), "pasteSelection");
+		getActionMap().put("pasteSelection", new AbstractAction() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				SetupsWindow win = SetupsWindow.getInstance();
+				// Use the more granular hovered grid/point which covers both boxes and empty gaps
+				if (win.getHoveredGrid() != null && win.getHoveredGridPoint() != null && InternalClipboard.hasItems())
+				{
+					InternalClipboard.paste(win.getHoveredGrid(), win.getHoveredGridPoint().x, win.getHoveredGridPoint().y);
+				}
 			}
 		});
 
