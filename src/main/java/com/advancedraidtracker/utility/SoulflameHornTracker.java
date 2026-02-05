@@ -25,22 +25,38 @@ public class SoulflameHornTracker {
     public void onGraphicChanged(GraphicChanged event)
     {
         try {
-            if (plugin.getRoomTick() > 0 && event.getActor() != null && event.getActor() instanceof Player && event.getActor().getSpotAnims() != null) {
-                for (ActorSpotAnim spotAnim : event.getActor().getSpotAnims()) {
-                    if (spotAnim.getId() == SpotanimID.VFX_SOULFLAME_HORN_IMPACT_SPOTANIM01) {
-                        String roomName = "unknown";
-                        if (plugin.getCurrentRoom() != null) {
-                            roomName = plugin.getCurrentRoom().getName();
-                        }
-                        SoulflameOutlineBox sob = new SoulflameOutlineBox(event.getActor().getName(), plugin.getRoomTick(), roomName);
-                        plugin.sendChatMessage("<col=EF1020>" + event.getActor().getName() + "<col=ffffff> was buffed by a Soulflame Horn");
-                        plugin.addSoulflameOutlineBox(sob);
+            if (plugin.getRoomTick() <= 0 || event.getActor() == null || !(event.getActor() instanceof Player)) {
+                return;
+            }
+
+            Player player = (Player) event.getActor();
+            String playerName = player.getName();
+
+            // Player name can be null during loading
+            if (playerName == null) {
+                return;
+            }
+
+            var spotAnims = player.getSpotAnims();
+            if (spotAnims == null) {
+                return;
+            }
+
+            // Check for soulflame horn
+            for (ActorSpotAnim spotAnim : spotAnims) {
+                if (spotAnim != null && spotAnim.getId() == SpotanimID.VFX_SOULFLAME_HORN_IMPACT_SPOTANIM01) {
+                    String roomName = "unknown";
+                    if (plugin.getCurrentRoom() != null) {
+                        roomName = plugin.getCurrentRoom().getName();
                     }
+                    SoulflameOutlineBox sob = new SoulflameOutlineBox(playerName, plugin.getRoomTick(), roomName);
+                    plugin.sendChatMessage("<col=EF1020>" + playerName + "<col=ffffff> was buffed by a Soulflame Horn");
+                    plugin.addSoulflameOutlineBox(sob);
                 }
             }
         } catch (Exception e) {
-            client.addChatMessage(ChatMessageType.GAMEMESSAGE, "Something went wrong while tracking the soulflame horn", null, "");
             e.printStackTrace();
+            client.addChatMessage(ChatMessageType.GAMEMESSAGE, "", "Error tracking soulflame horn: " + e.getMessage(), "");
         }
     }
 
