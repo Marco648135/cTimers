@@ -790,12 +790,12 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		if (!room.equalsIgnoreCase(sob.room))
 			return;
 
-		synchronized (soulflameOutlineBoxes)
-		{
+		//synchronized (soulflameOutlineBoxes)
+		//{
 			postChartChange(new ChartChangedEvent(ADD_ELEMENT, SOULFLAME_BUFF, sob));
 			soulflameOutlineBoxes.add(sob);
 
-			synchronized (outlineBoxes) {
+		//	synchronized (outlineBoxes) {
 				for (OutlineBox box : outlineBoxes) {
 					if (!box.player.equalsIgnoreCase(sob.owner))
 						continue;
@@ -806,8 +806,8 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 						break;
 					}
 				}
-			}
-		}
+			//}
+		//}
 	}
 
 	public void addThrallBoxes(List<ThrallOutlineBox> outlineBoxes)

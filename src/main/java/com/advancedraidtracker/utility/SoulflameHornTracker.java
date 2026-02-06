@@ -10,6 +10,7 @@ import net.runelite.api.events.GraphicChanged;
 import net.runelite.api.gameval.SpotanimID;
 import org.apache.commons.lang3.tuple.Pair;
 
+import javax.swing.*;
 import java.util.ArrayList;
 
 public class SoulflameHornTracker {
@@ -51,7 +52,9 @@ public class SoulflameHornTracker {
                     }
                     SoulflameOutlineBox sob = new SoulflameOutlineBox(playerName, plugin.getRoomTick(), roomName);
                     plugin.sendChatMessage("<col=EF1020>" + playerName + "<col=ffffff> was buffed by a Soulflame Horn");
-                    plugin.addSoulflameOutlineBox(sob);
+                    SwingUtilities.invokeLater(() -> {
+                        plugin.addSoulflameOutlineBox(sob);
+                    });
                 }
             }
         } catch (Exception e) {
@@ -63,6 +66,8 @@ public class SoulflameHornTracker {
     public void addSelfHorn(String playerName, String roomName) {
         SoulflameOutlineBox sob = new SoulflameOutlineBox(playerName, plugin.getRoomTick(), roomName);
         plugin.sendChatMessage("<col=EF1020>" + playerName + "<col=ffffff> has horned.");
-        plugin.addSoulflameOutlineBox(sob);
+        SwingUtilities.invokeLater(() -> {
+            plugin.addSoulflameOutlineBox(sob);
+        });
     }
 }

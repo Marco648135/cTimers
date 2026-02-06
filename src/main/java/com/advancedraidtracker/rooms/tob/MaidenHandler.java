@@ -16,7 +16,6 @@ import com.advancedraidtracker.utility.wrappers.NPCTimeInChunkShell;
 import com.advancedraidtracker.utility.wrappers.PlayerHitsWrapper;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.google.errorprone.annotations.Immutable;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.coords.WorldPoint;
