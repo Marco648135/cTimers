@@ -790,24 +790,29 @@ public class ChartPanel extends JPanel implements MouseListener, MouseMotionList
 		if (!room.equalsIgnoreCase(sob.room))
 			return;
 
-		//synchronized (soulflameOutlineBoxes)
-		//{
+		synchronized (soulflameOutlineBoxes)
+		{
 			postChartChange(new ChartChangedEvent(ADD_ELEMENT, SOULFLAME_BUFF, sob));
 			soulflameOutlineBoxes.add(sob);
+		}
 
-		//	synchronized (outlineBoxes) {
-				for (OutlineBox box : outlineBoxes) {
-					if (!box.player.equalsIgnoreCase(sob.owner))
-						continue;
-					if (box.tick < sob.spawnTick)
-						continue;
-					if (box.playerAnimation.style == Style.MELEE && box.tick <= sob.spawnTick + 10) {
-						box.setBuffed(true);
-						break;
-					}
+		synchronized (outlineBoxes) {
+			for (OutlineBox box : outlineBoxes) {
+				if (!box.player.equalsIgnoreCase(sob.owner))
+					continue;
+				if (box.tick < sob.spawnTick)
+					continue;
+				if (box.playerAnimation.style == Style.MELEE && box.tick <= sob.spawnTick + 10) {
+					box.setBuffed(true);
+					break;
 				}
-			//}
-		//}
+			}
+		}
+
+		if (live)
+		{
+			drawGraph();
+		}
 	}
 
 	public void addThrallBoxes(List<ThrallOutlineBox> outlineBoxes)

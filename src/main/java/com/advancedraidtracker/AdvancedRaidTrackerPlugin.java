@@ -1030,7 +1030,7 @@ public class AdvancedRaidTrackerPlugin extends Plugin
     {
         clog.addLine(SOULFLAME_HORN, sob.owner, String.valueOf(sob.spawnTick), sob.room);
         if (sob.room.equalsIgnoreCase(currentRoom.getName()))
-            liveFrame.getPanel(currentRoom.getName()).addSoulflameBox(sob);
+            SwingUtilities.invokeLater(() -> liveFrame.getPanel(sob.room).addSoulflameBox(sob));
     }
 
     public Map<String, PlayerCopy> lastTickPlayer = new HashMap<>();
